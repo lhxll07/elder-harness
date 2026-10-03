@@ -2,6 +2,10 @@
 """生成答辩演示 HTML。改内容只改本文件，然后跑 ./build_slides_pdf.sh 导 PDF。"""
 import pathlib
 
+# 全画幅页：画面铺满，文字按该图自身的留白定位
+def bleed(body):
+    return f'<section class="slide bleed">{body}</section>\n'
+
 def page(title, num, body, cls=""):
     hd = (f'<div class="hd"><img src="assets/aic-logo-header.png">'
           f'<span class="t">{title}</span><span class="n">能工智人 · AIC-2026-86471901</span></div>\n') if title else ""
@@ -19,22 +23,18 @@ def divider(no, title, lead, num, motif="solution"):
 
 B = []
 
-# P1 封面 · 一句话价值主张 + 一行进展
-B.append('''<section class="slide dark cover2">
-  <div>
-    <span class="kicker">2026 AIC · 算法创新赛 · AI+软件创新</span>
-    <div class="brand"><img src="assets/mark.svg"><h1>银龄智办</h1></div>
-    <div class="rule"></div>
-    <h2 style="font-size:26px;font-weight:700;color:#fff;line-height:1.42">老人只说一句话，<br>手机替他把事跑完</h2>
-    <div class="meta" style="margin-top:26px">
-      真机已跑通 <b>13 项任务 / 8 款第三方应用</b><br>
-      团队 <b>能工智人</b>　｜　参赛编号 <b>AIC-2026-86471901</b>
+# P1 封面（文字落在右侧虚空）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/cover-hero.png">
+  <img src="assets/mark.svg" style="position:absolute;left:64px;top:52px;width:54px;z-index:2">
+  <div style="position:absolute;right:74px;top:92px;width:524px;z-index:2">
+    <span style="display:inline-block;font-size:17px;font-weight:700;letter-spacing:2px;color:#0A2E3A;background:#D9722B;padding:6px 14px;border-radius:20px;margin-bottom:20px">2026 AIC · 算法创新赛 · AI+软件创新</span>
+    <h1 style="font-size:72px;color:#fff;margin:0;letter-spacing:-2px">银龄智办</h1>
+    <h2 style="font-size:32px;font-weight:700;color:#fff;line-height:1.44;letter-spacing:-.6px">老人只说一句话，<br>手机替他把事跑完</h2>
+    <div style="margin-top:26px;font-size:21px;color:rgba(255,255,255,.80);line-height:1.95">
+      真机已跑通 <b style="color:#E9A06B">13 项任务 / 8 款第三方应用</b><br>
+      团队 <b style="color:#E9A06B">能工智人</b>　｜　编号 <b style="color:#E9A06B">AIC-2026-86471901</b>
     </div>
-  </div>
-  <img class="bgmotif" src="assets/motif-solution.svg">
-  <div class="phones">
-    <div class="phone"><img src="figures/shot-home.png"><div class="cap">老人端首页</div></div>
-    <div class="phone" style="margin-top:54px"><img src="figures/shot-result-card.png"><div class="cap">任务结论卡</div></div>
   </div>
 </section>\n''')
 
@@ -54,33 +54,41 @@ B.append(page("", 2, '''<h1 style="font-size:40px;letter-spacing:-1px">老人要
 </div>
 <div class="sub" style="font-size:19px;margin-top:10px">上图为团队真机测试截图；<b>截至提交尚无老年用户试用数据</b>（见 P10）。</div>'''))
 
-# P3 问题 · 不是没有 AI，是没人敢用
-B.append(page("", 3, '''<div class="statement">
-  <div class="kick">问题</div>
-  <h1>不是没有 AI 会点外卖，<br>是<span class="hl">没人敢让 AI 替老人点</span></h1>
-  <div class="lead">通用手机智能体有三个硬伤，每一个都足以让家人不敢把它交到老人手里。</div>
-  <div class="facts">
-    <div class="f"><b>谎报</b><span>说“已发送、已下单”，其实根本没做成</span></div>
-    <div class="f"><b>越权</b><span>替老人点了付款、动了钱</span></div>
-    <div class="f"><b>僵化</b><span>卡住就停，或原地空转到步数上限</span></div>
+# P3 问题（顺着画面：线从左边进来，炸成一片）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/problem-fragmentation.png">
+  <div style="position:absolute;left:76px;top:52px;width:590px;z-index:2">
+    <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#E9A06B;margin-bottom:14px">问题</div>
+    <h1 style="font-size:45px;color:#fff;line-height:1.24;letter-spacing:-1.1px;margin:0">不是没有 AI 会点外卖，<br>是<span style="color:#D9722B">没人敢</span>让 AI 替老人点</h1>
   </div>
-  <div class="quote" style="margin-top:44px;font-size:22px;line-height:1.6">
-    “已帮您把消息发出去了……时间是 17:37，发送成功”
-    <span class="src">—— 真机上遇到的原话。而它只是读到了<b>本轮开始前就存在</b>的旧消息，把别人的成果算成了自己的。</span></div>
-</div>'''))
+  <div style="position:absolute;left:76px;bottom:56px;width:620px;z-index:2">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:18px">
+      <div><div style="font-size:25px;font-weight:800;color:#fff">谎报</div><div style="font-size:17.5px;color:rgba(255,255,255,.62);line-height:1.45;margin-top:3px">说已发送<br>其实没做成</div></div>
+      <div><div style="font-size:25px;font-weight:800;color:#fff">越权</div><div style="font-size:17.5px;color:rgba(255,255,255,.62);line-height:1.45;margin-top:3px">替老人<br>点了付款</div></div>
+      <div><div style="font-size:25px;font-weight:800;color:#fff">僵化</div><div style="font-size:17.5px;color:rgba(255,255,255,.62);line-height:1.45;margin-top:3px">卡住就停<br>或空转到底</div></div>
+    </div>
+    <div style="font-size:19px;color:rgba(255,255,255,.72);line-height:1.55;border-left:4px solid #D9722B;padding-left:16px">
+      “已帮您把消息发出去了……发送成功”——真机原话。<br>而它只是读到了<b style="color:#fff">本轮开始前就存在</b>的旧消息。</div>
+  </div>
+</section>\n''')
 
-# P4 主张
-B.append(page("", 4, '''<div class="statement">
-  <div class="kick">我们的答案</div>
-  <h1>我们把“可信”<br>从<span class="hl">提示词</span>里搬进了<span class="hl">架构</span>里</h1>
-  <div class="lead">当前主流是“更强的模型 + 更细的提示词 + 事后过滤”。我们走另一条路。</div>
-  <div class="facts">
-    <div class="f"><b>闸门</b><span>只看<b>动作内容</b>——不看模型说了什么，也不看它是否被说服</span></div>
-    <div class="f"><b>账本</b><span>完成与否由<b>本轮自己的执行记录</b>判定，不由模型自述</span></div>
-    <div class="f"><b>只读</b><span>无障碍树<b>只作观察</b>，来源再“可信”也不因此放行</span></div>
+# P4 主张（画作横带贯中，顺「乱→闸→序」读）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/principle-gate.png" style="height:56%;top:22%;object-fit:cover">
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#fff 0%,#fff 20%,rgba(255,255,255,0) 27%,rgba(255,255,255,0) 73%,#fff 80%,#fff 100%)"></div>
+  <div style="position:absolute;left:0;right:0;top:52px;text-align:center;z-index:2">
+    <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#C2410C;margin-bottom:14px">我们的答案</div>
+    <h1 style="font-size:52px;color:#0E3F4E;line-height:1.2;letter-spacing:-1.4px;margin:0">我们把“可信”从<span style="color:#C2410C">提示词</span>里搬进了<span style="color:#C2410C">架构</span>里</h1>
   </div>
-  <div class="lead" style="margin-top:36px;font-size:19px">这三条是<b>可检查的设计决定</b>，不是形容词。</div>
-</div>'''))
+  <div style="position:absolute;left:0;right:0;bottom:58px;z-index:2;display:flex;justify-content:center;gap:56px">
+    <div style="width:280px"><div style="font-size:26px;font-weight:800;color:#0E3F4E">闸门 · 只看动作内容</div>
+      <div style="font-size:19px;color:#6B7280;line-height:1.55;margin-top:6px">不看模型说了什么，也不看它是否被说服</div></div>
+    <div style="width:280px"><div style="font-size:26px;font-weight:800;color:#0E3F4E">账本 · 只看执行记录</div>
+      <div style="font-size:19px;color:#6B7280;line-height:1.55;margin-top:6px">完成与否不由模型自述，也不交给第二个模型打分</div></div>
+    <div style="width:280px"><div style="font-size:26px;font-weight:800;color:#0E3F4E">只读 · 树只作观察</div>
+      <div style="font-size:19px;color:#6B7280;line-height:1.55;margin-top:6px">来源再“可信”，也不因此放行</div></div>
+  </div>
+</section>\n''')
 
 # P5 产品（全幅）
 B.append('''<section class="slide dark fullbleed">
@@ -97,19 +105,16 @@ B.append('''<section class="slide dark fullbleed">
   </div>
 </section>\n''')
 
-# P6 记忆点
-B.append(page("", 6, '''<div class="statement">
-  <div class="kick">全篇唯一记忆点</div>
-  <h1>AI 说办好了<span style="color:#C2410C">不算数</span>——<br>只有手机上<span class="hl">真的发生的动作</span>才算数</h1>
-  <div class="facts" style="margin-top:46px">
-    <div class="f"><b>判据：能不能撤销</b><span>一条判据管住所有不可逆动作——屏幕动作按可逆性分级；
-      删除／恢复出厂设置／解绑并入不可逆族；导航越出任务应用集合时首次确认一次。<br>
-      <b>效果：美团 10 步点餐全程打扰 0 次</b>，结算一步交还老人。</span></div>
-    <div class="f"><b>核验：查账不查嘴</b><span>完成声明必须能被<b>本轮自己的执行记录</b>支持：
-      引用的文字要真的输入过、提到的时刻不能早于本轮开始、声称改变过就必须真做过改变类动作。<br>
-      证据不足时，它说的是“<b>我没法确认这件事真的办成了</b>”。</span></div>
+# P6 记忆点（地形在左上，话放在它断掉的虚空里）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/insight-partial-sight.png">
+  <div style="position:absolute;left:0;right:0;bottom:56px;text-align:center;z-index:2">
+    <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#E9A06B;margin-bottom:16px">全篇唯一记忆点</div>
+    <h1 style="font-size:60px;color:#fff;line-height:1.24;letter-spacing:-1.8px;margin:0">AI 说办好了<span style="color:#D9722B">不算数</span>——<br>只有手机上<span style="color:#8FE3D6">真的发生的动作</span>才算数</h1>
+    <div style="font-size:22px;color:rgba(255,255,255,.72);line-height:1.7;margin-top:24px">
+      判据：动作的后果能不能撤销　·　核验：查本轮自己的执行记录，不查模型的说法</div>
   </div>
-</div>'''))
+</section>\n''')
 
 # P7 证据（大字 + 留白：数字本身就是图）
 B.append(page("", 7, '''<h1 style="font-size:44px;letter-spacing:-1px">13 项真机任务、149 条断言、<span style="color:var(--teal)">五组对抗实验</span></h1>
@@ -183,16 +188,18 @@ B.append(page("", 11, '''<div class="statement">
   </div>
 </div>'''))
 
-# P12 收尾
-B.append(page("", 12, '''<div style="display:flex;flex-direction:column;gap:26px;height:100%;justify-content:center;align-items:center;text-align:center">
-  <img src="assets/mark.svg" style="width:74px">
-  <h1 style="font-size:52px;letter-spacing:-1.4px;line-height:1.28">技术的终点，<br>是让老人<span style="color:#8fe3d6">不必学会技术</span></h1>
-  <div style="font-size:19px;color:rgba(255,255,255,.72);line-height:1.9">
-    把“可信”做成<b style="color:#8fe3d6">架构约束</b>，而不是提示词里的请求。</div>
-  <div style="margin-top:18px;font-size:16px;color:rgba(255,255,255,.55);line-height:1.9">
-    银龄智办 · 可信自进化跨应用助老智能体<br>
-    团队 能工智人　｜　参赛编号 AIC-2026-86471901</div>
-</div>''', cls="dark"))
+# P12 收尾（文字在上，路从下面出去）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/closing-path.png">
+  <div style="position:absolute;left:0;right:0;top:96px;text-align:center;z-index:2">
+    <img src="assets/mark.svg" style="width:70px;margin-bottom:24px">
+    <h1 style="font-size:60px;letter-spacing:-1.8px;line-height:1.26;color:#fff;margin:0">技术的终点，<br>是让老人<span style="color:#E9A06B">不必学会技术</span></h1>
+    <div style="font-size:24px;color:rgba(255,255,255,.78);line-height:1.8;margin-top:28px">
+      把“可信”做成<b style="color:#E9A06B">架构约束</b>，而不是提示词里的请求。</div>
+    <div style="margin-top:26px;font-size:19px;color:rgba(255,255,255,.5);line-height:1.9">
+      银龄智办 · 可信自进化跨应用助老智能体<br>团队 能工智人　｜　参赛编号 AIC-2026-86471901</div>
+  </div>
+</section>\n''')
 
 # ── 备用页（答辩追问）──
 A = []

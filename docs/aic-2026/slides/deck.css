@@ -285,3 +285,24 @@ th,td{ padding:11px 14px; }
 .divider .no{ font-size:150px; }
 .divider h1{ font-size:72px; }
 .divider .lead{ font-size:28px; }
+
+/* ══════════ v8 主视觉版式 ══════════ */
+/* 分栏页：左白底文字 + 右整幅画（不裁切、不透明） */
+.split{ padding:0 !important; display:grid; grid-template-columns:1fr 1fr; position:relative; }
+.split .l{ padding:36px 34px 62px 52px; display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.split .r{ position:relative; overflow:hidden; }
+.split .r img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.split .ft{ left:52px; right:auto; width:calc(50% - 92px); }
+/* 全画幅封面：画面铺满，文字压在右侧空处 */
+.cover-art{ padding:0 !important; position:relative; }
+.cover-art .art{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.cover-art .txt{ position:absolute; right:72px; top:50%; transform:translateY(-50%); width:540px; z-index:2; }
+.cover-art .phone{ position:absolute; left:84px; bottom:-36px; width:174px; z-index:2; }
+.cover-art .phone .cap{ display:none; }
+/* 全画幅收尾页 */
+.cover-art .txt.center{ left:50%; right:auto; transform:translate(-50%,-50%); width:900px; text-align:center; }
+
+/* ══════════ v9 按画面构图的版式 ══════════ */
+.slide.bleed{ padding:0 !important; position:relative; overflow:hidden; }
+.slide.bleed .art{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+.slide.bleed > div{ z-index:2; }
