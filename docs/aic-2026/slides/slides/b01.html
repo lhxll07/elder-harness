@@ -1,0 +1,12 @@
+<section class="slide ">
+<div class="hd"><img src="assets/aic-logo-header.png"><span class="t">备用页 · 算法 2 与代码一致吗？</span><span class="n">能工智人 · AIC-2026-86471901</span></div>
+<div class="body">
+<div class="sub">一致。第三部分（四）与附录代码段均描述现行实现；附录代码为<b>逐行取自 <span class="mono">AgentLoop.kt</span></b> 的节选（27 行有效代码全部可在仓库检索到）。</div>
+<ul>
+  <li>现行机制：<b>动作周期</b>（窗口 12，尾部按周期 2~3 完整重复 3 次且含 ≥2 种工具）+ <b>无效重复</b>（同工具同参数且 <span class="mono">screenChanged</span> 恒为 false）</li>
+  <li>停止条件：动作循环提醒 5 次、无效重复提醒 3 次 / 停止 5 次</li>
+  <li><b>刻意不用页面指纹</b>：真实应用会动画、重算价格、轮播推广，指纹会产生假重复；翻页而文本不变同样会漏判</li>
+</ul>
+<div class="quote">放弃指纹不是退让：把“什么算进展”建立在一个在真实应用里不成立的假设上，比不做这项判定更危险。</div></div>
+<div class="ft"><span>银龄智办 · 可信自进化跨应用助老智能体</span><span class="r">B1</span></div>
+</section>

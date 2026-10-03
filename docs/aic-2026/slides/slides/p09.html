@@ -1,0 +1,29 @@
+<section class="slide bleed">
+  <img class="art" src="art/reach-outward.png" alt="">
+  <!-- 暗罩基色 = art/reach-outward.png 四角实测底色 ≈ rgb(9,49,65)（本页画面比其它页略亮，末端要压到实色才无横向色缝） -->
+  <!-- 上半段几乎不加罩：保住左三分之一橙点扩散出的同心等高环；下半段在标题第一行之前快速压到实色，保证标题与三栏可读 -->
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(9,49,65,0) 0%,rgba(9,49,65,.05) 20%,rgba(9,49,65,.10) 36%,rgba(9,49,65,.20) 46%,rgba(9,49,65,.46) 53%,rgba(9,49,65,.80) 58%,rgba(9,49,65,.93) 63%,rgba(9,49,65,.94) 100%)"></div>
+
+  <!-- 页眉 / 页码 -->
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div>
+  <div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;padding-right:62px;color:rgba(255,255,255,.42)">9</div>
+
+  <!-- 底部结论文案：标题两行 + 三栏（政策指向 / 落地形态轻 / 可复制） -->
+  <div style="position:absolute;left:76px;right:76px;bottom:52px;z-index:2">
+    <h1 style="font-size:46px;color:#fff;line-height:1.22;letter-spacing:-1.2px;margin:0 0 34px;font-weight:800">改变的不是“能不能上网”，<br>是<span style="color:#E9A06B">能不能自己办完一件小事</span></h1>
+    <div style="display:grid;grid-template-columns:1.06fr .97fr .97fr;gap:30px">
+      <div style="border-top:3px solid #D9722B;padding-top:14px">
+        <div style="font-size:24px;font-weight:800;color:#E9A06B;letter-spacing:.3px">政策指向</div>
+        <div style="font-size:19px;color:rgba(255,255,255,.76);line-height:1.62;margin-top:9px">国办发〔2020〕45号、工信部专项行动、《无障碍环境建设法》——<b style="color:#fff">都指向“让老人真正用得上”</b></div>
+      </div>
+      <div style="border-top:3px solid #D9722B;padding-top:14px">
+        <div style="font-size:24px;font-weight:800;color:#E9A06B;letter-spacing:.3px">落地形态轻</div>
+        <div style="font-size:19px;color:rgba(255,255,255,.76);line-height:1.62;margin-top:9px"><b style="color:#fff">不换手机、不换 App、零学习成本</b>；<br>家人端零安装</div>
+      </div>
+      <div style="border-top:3px solid #D9722B;padding-top:14px">
+        <div style="font-size:24px;font-weight:800;color:#E9A06B;letter-spacing:.3px">可复制</div>
+        <div style="font-size:19px;color:rgba(255,255,255,.76);line-height:1.62;margin-top:9px">不绑定具体应用，<b style="color:#fff">新增 App 无需改造&nbsp;对方</b></div>
+      </div>
+    </div>
+  </div>
+</section>

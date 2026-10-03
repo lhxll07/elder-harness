@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+# ══════════════════════════════════════════════════════════════════════════════
+# ⚠️ 已废弃（DEPRECATED）——请勿再运行本文件
+#
+# 现行管线：
+#   slides/p01.html … p12.html   正文，每页一个文件
+#   slides/b01.html … b12.html   备用页，每页一个文件
+#   python3 build.py             组装 → 答辩演示.html
+#   ./build_slides_pdf.sh        导出 → 银龄智办-答辩演示.pdf
+#   ./render_one.sh p07          单页预览 → /tmp/one-p07.png
+#
+# 本文件保留仅作历史备份。它生成的 HTML 里 <img class="art"> 标签曾是
+# 破损形态（缺收尾 >，会把后面的页眉/页码 div 吞进属性区），
+# 所有页已转入手工维护并逐个修复，重新运行本文件会**重新引入该 bug**。
+# ══════════════════════════════════════════════════════════════════════════════
 """生成答辩演示 HTML。改内容只改本文件，然后跑 ./build_slides_pdf.sh 导 PDF。"""
 import pathlib
 
@@ -57,6 +71,7 @@ B.append(page("", 2, '''<h1 style="font-size:40px;letter-spacing:-1px">老人要
 # P3 问题（顺着画面：线从左边进来，炸成一片）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/problem-fragmentation.png">
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">3</div>>
   <div style="position:absolute;left:76px;top:52px;width:590px;z-index:2">
     <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#E9A06B;margin-bottom:14px">问题</div>
     <h1 style="font-size:45px;color:#fff;line-height:1.24;letter-spacing:-1.1px;margin:0">不是没有 AI 会点外卖，<br>是<span style="color:#D9722B">没人敢</span>让 AI 替老人点</h1>
@@ -74,7 +89,8 @@ B.append('''<section class="slide bleed">
 
 # P4 主张（画作横带贯中，顺「乱→闸→序」读）
 B.append('''<section class="slide bleed">
-  <img class="art" src="art/principle-gate.png" style="height:56%;top:22%;object-fit:cover">
+  <img class="art" src="art/principle-gate.png">
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">4</div> style="height:56%;top:22%;object-fit:cover">
   <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#fff 0%,#fff 17%,rgba(255,255,255,.55) 22%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.55) 78%,#fff 83%,#fff 100%)"></div>
   <div style="position:absolute;left:0;right:0;top:52px;text-align:center;z-index:2">
     <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#C2410C;margin-bottom:14px">我们的答案</div>
@@ -92,7 +108,8 @@ B.append('''<section class="slide bleed">
 
 # P5 产品（真机铺右，文字固定在左侧窄区，不与之相碰）
 B.append('''<section class="slide bleed">
-  <img class="art" src="figures/shot-home.png" style="left:auto;right:0;width:auto;height:100%;object-fit:contain;object-position:right center;background:#0A2E3A">
+  <img class="art" src="figures/shot-home.png">
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">5</div> style="left:auto;right:0;width:auto;height:100%;object-fit:contain;object-position:right center;background:#0A2E3A">
   <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#0A2E3A 0%,#0A2E3A 46%,rgba(10,46,58,.86) 56%,rgba(10,46,58,.25) 70%,rgba(10,46,58,0) 84%)"></div>
   <div style="position:absolute;left:76px;top:86px;width:510px;z-index:2;color:#fff">
     <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#E9A06B;margin-bottom:16px">产品形态</div>
@@ -111,6 +128,7 @@ B.append('''<section class="slide bleed">
 # P6 记忆点（地形在左上，话放在它断掉的虚空里）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/insight-partial-sight.png">
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">6</div>>
   <div style="position:absolute;left:0;right:0;bottom:56px;text-align:center;z-index:2">
     <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#E9A06B;margin-bottom:16px">全篇唯一记忆点</div>
     <h1 style="font-size:60px;color:#fff;line-height:1.24;letter-spacing:-1.8px;margin:0">AI 说办好了<span style="color:#D9722B">不算数</span>——<br>只有手机上<span style="color:#8FE3D6">真的发生的动作</span>才算数</h1>
@@ -122,7 +140,8 @@ B.append('''<section class="slide bleed">
 # P7 证据（网格=可测量，数字压在其上）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/evidence-grid.png">
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.30) 0%,rgba(10,46,58,.42) 42%,rgba(10,46,58,.86) 100%)"></div>
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">7</div>>
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,51,64,.30) 0%,rgba(10,51,64,.42) 42%,rgba(10,51,64,.86) 100%)"></div>
   <div style="position:absolute;left:76px;right:76px;top:52px;z-index:2">
     <h1 style="font-size:40px;color:#fff;letter-spacing:-1px;margin:0">13 项真机任务、149 条断言、<span style="color:#E9A06B">五组对抗实验</span></h1>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:34px;margin-top:44px">
@@ -145,7 +164,8 @@ B.append('''<section class="slide bleed">
 # P8 对比（两条路分岔的画面为底，表格改深色排版）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/two-paths.png">
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.88) 0%,rgba(10,46,58,.86) 30%,rgba(10,46,58,.30) 52%,rgba(10,46,58,.55) 72%,rgba(10,46,58,.90) 100%)"></div>
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">8</div>>
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(7,48,63,.88) 0%,rgba(7,48,63,.86) 30%,rgba(7,48,63,.30) 52%,rgba(7,48,63,.55) 72%,rgba(7,48,63,.90) 100%)"></div>
   <div style="position:absolute;left:76px;right:76px;top:48px;z-index:2">
     <h1 style="font-size:42px;color:#fff;letter-spacing:-1px;margin:0 0 26px">别人靠模型的<span style="color:#E9A06B">自律</span>，我们靠架构的<span style="color:#E9A06B">兜底</span></h1>
     <table style="font-size:21px;color:#fff">
@@ -173,7 +193,8 @@ B.append('''<section class="slide bleed">
 # P9 价值（从一个人到一个圈子；文字压底部空白）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/reach-outward.png">
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.12) 0%,rgba(10,46,58,.20) 48%,rgba(10,46,58,.86) 72%,rgba(10,46,58,.95) 100%)"></div>
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">9</div>>
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(9,49,65,.12) 0%,rgba(9,49,65,.20) 48%,rgba(9,49,65,.86) 72%,rgba(9,49,65,.95) 100%)"></div>
   <div style="position:absolute;left:76px;right:76px;bottom:60px;z-index:2">
     <h1 style="font-size:44px;color:#fff;line-height:1.24;letter-spacing:-1.2px;margin:0 0 30px">改变的不是“能不能上网”，<br>是<span style="color:#E9A06B">能不能自己办完一件小事</span></h1>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px">
@@ -190,6 +211,7 @@ B.append('''<section class="slide bleed">
 # P10 边界（地形被一刀切开，卡片压在切线下）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/boundary-edge.png">
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">10</div>>
   <div style="position:absolute;left:76px;right:76px;bottom:52px;z-index:2">
     <h1 style="font-size:42px;color:#fff;letter-spacing:-1px;margin:0 0 24px">这三件事，我们现在<span style="color:#D9722B">还不敢让它做</span></h1>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:26px">
@@ -209,7 +231,8 @@ B.append('''<section class="slide bleed">
 # P11 展望（三个路标；文字压左下安静区）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/waypoints.png">
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.10) 0%,rgba(10,46,58,.30) 40%,rgba(10,46,58,.88) 72%,rgba(10,46,58,.96) 100%)"></div>
+  <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div><div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">11</div>>
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(8,50,65,.10) 0%,rgba(8,50,65,.30) 40%,rgba(8,50,65,.88) 72%,rgba(8,50,65,.96) 100%)"></div>
   <div style="position:absolute;left:76px;bottom:56px;width:1128px;z-index:2">
     <h1 style="font-size:44px;color:#fff;letter-spacing:-1.2px;margin:0 0 26px">先补上<span style="color:#E9A06B">人</span>，再补上<span style="color:#E9A06B">证据层</span></h1>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px">
