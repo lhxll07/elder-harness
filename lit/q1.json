@@ -1,0 +1,14 @@
+{
+"mobile_gui_agent": "abs:\"mobile\" AND abs:\"GUI agent\"",
+"mobile_agent_v2": "ti:\"mobile agent\" AND abs:\"smartphone\"",
+"android_agent": "abs:\"Android\" AND abs:\"agent\" AND abs:\"LLM\"",
+"phone_use_agent": "abs:\"phone-use\" OR abs:\"phone use agent\"",
+"gui_grounding": "abs:\"GUI grounding\"",
+"gui_element_locating": "ti:\"GUI\" AND ti:\"grounding\"",
+"screen_understanding": "abs:\"GUI\" AND abs:\"vision-language\" AND abs:\"grounding\"",
+"agent_safety": "abs:\"GUI agent\" AND (abs:\"safety\" OR abs:\"attack\" OR abs:\"security\")",
+"agent_hallucination": "abs:\"agent\" AND ti:\"hallucination\"",
+"human_oversight": "abs:\"human oversight\" AND abs:\"LLM\"",
+"agent_benchmark_mobile": "ti:\"benchmark\" AND abs:\"mobile\" AND abs:\"agent\"",
+"gui_benchmark": "ti:\"benchmark\" AND abs:\"GUI agent\""
+}

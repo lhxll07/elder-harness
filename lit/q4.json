@@ -1,0 +1,21 @@
+{
+"old_bench": "abs:\"older adults\" AND (ti:\"benchmark\" OR abs:\"benchmark\")",
+"elderly_bench": "abs:\"elderly\" AND ti:\"benchmark\"",
+"aging_agent": "abs:\"aging\" AND abs:\"agent\" AND abs:\"LLM\"",
+"old_gui": "abs:\"older adults\" AND (abs:\"GUI\" OR abs:\"smartphone\")",
+"old_smartphone_assist": "abs:\"older adults\" AND (abs:\"assistant\" OR abs:\"agent\") AND abs:\"smartphone\"",
+"elderly_llm_mobile": "abs:\"elderly\" AND abs:\"mobile\" AND abs:\"LLM\"",
+"old_ai_agent": "abs:\"older adult\" AND abs:\"AI agent\"",
+"old_voice_assistant": "abs:\"older adults\" AND (abs:\"voice assistant\" OR abs:\"voice-based\")",
+"old_conversational": "abs:\"older adults\" AND abs:\"conversational agent\"",
+"old_chatbot": "abs:\"older adults\" AND abs:\"chatbot\"",
+"old_trust_ai": "abs:\"older adults\" AND abs:\"trust\" AND (abs:\"AI\" OR abs:\"LLM\")",
+"old_explanation": "abs:\"older adults\" AND abs:\"explanation\"",
+"conv_breakdown_repair": "abs:\"conversational breakdown\"",
+"digital_divide_ai": "abs:\"digital divide\" AND abs:\"older\"",
+"ageism_ai": "abs:\"age\" AND abs:\"accessibility\" AND abs:\"agent\"",
+"assistive_phone": "abs:\"assistive\" AND abs:\"smartphone\" AND abs:\"agent\"",
+"accessibility_agent_bench": "abs:\"accessibility\" AND abs:\"agent\" AND ti:\"benchmark\"",
+"old_task_automation": "abs:\"older adults\" AND abs:\"task automation\"",
+"old_ai_literacy": "abs:\"older adults\" AND abs:\"artificial intelligence\" AND abs:\"usability\""
+}

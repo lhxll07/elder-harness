@@ -1,0 +1,16 @@
+{
+"handback": "abs:\"older adults\" AND (abs:\"human-in-the-loop\" OR abs:\"user control\" OR abs:\"human oversight\")",
+"escalation_caregiver": "abs:\"agent\" AND abs:\"caregiver\" AND (abs:\"escalat\" OR abs:\"handoff\" OR abs:\"hand-off\")",
+"shared_control_elder": "(abs:\"shared control\" OR abs:\"mixed-initiative\") AND (abs:\"older adults\" OR abs:\"elderly\")",
+"agent_verify_user": "abs:\"GUI agent\" AND (abs:\"user confirmation\" OR abs:\"verification\" OR abs:\"human approval\")",
+"elderly_user_simulation": "(abs:\"elderly\" OR abs:\"older adult\") AND (abs:\"user simulator\" OR abs:\"persona\")",
+"gui_agent_accessibility": "abs:\"GUI agent\" AND (abs:\"accessibility\" OR abs:\"older\" OR abs:\"elderly\")",
+"smartphone_learning_elder": "abs:\"older adults\" AND (abs:\"smartphone\" OR abs:\"mobile app\") AND (abs:\"learning\" OR abs:\"tutorial\" OR abs:\"guidance\")",
+"trust_calibration_ai_elder": "abs:\"older adults\" AND (abs:\"over-reliance\" OR abs:\"overreliance\" OR abs:\"calibrat\")",
+"age_benchmark_agent": "ti:\"benchmark\" AND (abs:\"aging\" OR abs:\"age-related\") AND abs:\"agent\"",
+"dementia_agent_assist": "(abs:\"dementia\" OR abs:\"cognitive impairment\") AND abs:\"agent\" AND abs:\"smartphone\"",
+"elderly_hci_2026": "abs:\"older adults\" AND (abs:\"design\" AND abs:\"AI assistant\")",
+"screen_reader_llm": "abs:\"screen reader\" AND (abs:\"LLM\" OR abs:\"agent\")",
+"digital_divide_llm": "abs:\"digital divide\" AND (abs:\"LLM\" OR abs:\"large language model\")",
+"elder_safety_chatbot": "(ti:\"safety\" OR ti:\"risk\") AND (abs:\"older adults\" OR abs:\"elderly\") AND abs:\"chatbot\""
+}

@@ -1,0 +1,12 @@
+{
+"elderly_llm": "abs:\"older adults\" AND abs:\"large language model\"",
+"elderly_ai_assistant": "abs:\"older adults\" AND abs:\"AI assistant\"",
+"digital_divides": "abs:\"digital divide\" AND abs:\"older adults\"",
+"aging_technology": "ti:\"older adults\" AND abs:\"usability\"",
+"accessibility_llm": "abs:\"accessibility\" AND abs:\"large language model\" AND abs:\"screen reader\"",
+"elderly_smartphone": "abs:\"older adults\" AND abs:\"smartphone\"",
+"ageism_ai": "abs:\"ageism\" OR abs:\"age-friendly\" AND abs:\"LLM\"",
+"ai_literacy_elderly": "abs:\"elderly\" AND abs:\"generative AI\"",
+"voice_assistant_elderly": "abs:\"older adults\" AND abs:\"voice assistant\"",
+"cognitive_accessibility": "abs:\"cognitive accessibility\" AND abs:\"mobile\""
+}

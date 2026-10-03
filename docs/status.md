@@ -249,10 +249,12 @@ isRecognitionAvailable` = false），也没有 `RECOGNIZE_SPEECH` 的 Activity�
 **观察与输入**
 
 - 微信、银行类应用屏蔽无障碍读取，页面控件列表为空，只能靠截图 + 比例坐标点按
-- 微信不接受程序写入文字，也不接受外部注入；可行路径是"剪贴板 → 输入法候选栏"
+- 微信不接受程序写入文字，也不接受外部注入；可行路径是"剪贴板 → 输入法候选栏"，且已加 `finally { clearPrimaryClip() }` 在粘贴完成后立即清理剪贴板隐私
+- **截图坐标增强**：在 10% 主刻度网格基础上增加 5% 半透明辅助网格，坐标参考密度翻倍，辅助视觉大模型提高点按定位精度
+- **坐标量化校准模式（`calibrate_coords`）**：在真机上用已知控件的真实 bounds（自动处理文字子节点与点击父节点层级），量化评测视觉模型对屏幕控件中心点的预测误差（命中率、mean/p50/p90 像素误差、系统性偏移 dx/dy）
 - **喜鹊儿课表：无障碍树里只有节次数字和日期表头，一个课程名都没有**（自绘/WebView）。唯一答案来源是截图
 - 12306 首页公告含"收款方"，曾使整页被误判为敏感页而**全盘禁用**。整页敏感判定已放宽为"存在可见密码框，或敏感词出现在**可操作**控件上"
-- ColorOS 字体设置：字体大小是 5 档滑动条，改完需点底部"应用"。滑动条无文字、不报告 clickable，需靠 `rangeInfo` 识别；调整用 `scroll down/up`（内部走 `ACTION_SCROLL_FORWARD/BACKWARD`）
+- ColorOS 字体设置：字体大小是 5 档滑动条，改完需点底部"应用"。滑动条无文字、不报告 clickable，需靠 `isSlider`（识别 `SeekBar`/`AbsSeekBar`/`rangeInfo`）识别；调整用 `scroll down/up`（内部走 `ACTION_SCROLL_FORWARD/BACKWARD`），且少控件页面不会被误当成纯图页吞掉
 - 美团有完整控件树，视觉未用上（截图 0 张）
 
 **截图管线**
@@ -269,7 +271,7 @@ isRecognitionAvailable` = false），也没有 `RECOGNIZE_SPEECH` 的 Activity�
 
 **密钥与隐私**
 
-- 访问密钥用 Android Keystore（AES-GCM）加密后存在本机 `shared_prefs`：家人配置一次，重启/被杀/重启手机后仍可用。换机需重填；Keystore 密钥失效（改锁屏、数据恢复）时清除存储并提示重填，不猜
+- 访问密钥用 Android Keystore（AES-GCM）加密后存在本机 `shared_prefs`：家人配置一次，重启/被杀/重启手机后仍可用。换机需重填；Keystore 密钥失效（改锁屏、数据恢复）时清除存储并提示重填，不猜；`SecretStore` 加密版本号与 `ServerClient` 内存 token 缓存联动失效，避免配对重置时读取脏 token
 - 密钥不写进对话记录、任务存档；`files/loop.log` 只记"已设置(35位)"——此前会写前 6 位，已改掉
 - 真机上"设备被 root"仍可提取，彻底方案是自建中转（密钥放服务端），但那要服务端 + 账号 + 隐私说明；中转同时也是"页面文本脱敏"的唯一介入点
 
@@ -282,7 +284,8 @@ isRecognitionAvailable` = false），也没有 `RECOGNIZE_SPEECH` 的 Activity�
 ## 回归校验
 
 ```bash
-harness/run.sh     # 51 项检查
+harness/run.sh      # 144 项 JVM 检查
+cd server && pytest # 31 项服务端检查
 ```
 
-JVM 上对着严格校验 transcript 的 mock 提供方跑（**73 项**）：循环、协议转换、审批策略、停滞与周期检测、观察层呈现、收尾语义、结果校验（含用一个会撒谎的 mock 提供方跑完整循环）。**Android 侧（辅助功能服务、截图管线、悬浮窗、真实应用）没有自动化测试**，靠真机手工验证，结果记在上面。详见 `harness/README.md`。
+JVM 上对着严格校验 transcript 的 mock 提供方跑（**144 项**）：循环、协议转换、审批策略、停滞与周期检测、观察层呈现、收尾语义、结果校验（含多引用正文与收件人解耦测试、用一个会撒谎的 mock 提供方跑完整循环）。服务端有 **28 项** pytest 覆盖鉴权隔离、心跳失联、配对码 TTL 与音频转写防护。此外，`core` 模块补充了 `AgentLoopCancellationTest`（协程取消安全性）与 `OutcomeCheckTest` 单元测试。**Android 侧（辅助功能服务、截图管线、悬浮窗、真实应用）没有自动化测试**，靠真机手工验证，结果记在上面。详见 `harness/README.md` 与 `server/README.md`。

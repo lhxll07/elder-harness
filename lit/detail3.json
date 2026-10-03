@@ -1,0 +1,397 @@
+[
+ {
+  "id": "2605.20203",
+  "status": 200,
+  "title": "GrandGuard: Taxonomy, Benchmark, and Safeguards for Elderly-Chatbot Interaction Safety",
+  "date": "2026/04/07",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Fan, Changxuan",
+   "Yang, Xi",
+   "Zheng, Yueyuan",
+   "Zhou, Bin",
+   "Wang, Yuanping",
+   "Hu, Wenbin",
+   "Jing, Huihao",
+   "Hung, Ki Sen",
+   "Du, Dazhao",
+   "Li, Haoran",
+   "Hsiao, Janet Hui-wen",
+   "Song, Yangqiu"
+  ],
+  "abstract": "As older adults increasingly use LLM-based chatbots for companionship and assistance, a safety gap is emerging. Older adults may face vulnerabilities from social isolation, limited digital literacy, and cognitive decline, yet existing safety benchmarks largely target general harms and overlook elderly-specific risks. For example, a prompt such as &#34;how to repair a ceiling light alone in the dark&#34; may be benign for most users but poses a serious fall risk for older adults with mobility limitations. We introduce GrandGuard, the first comprehensive framework for assessing and mitigating elderly-specific contextual risks in LLM interactions. We develop a three-level taxonomy with 50 fine-grained risk types across mental well-being, financial, medical, toxicity, and privacy domains, grounded in real-world incidents, community discussions, and analysis of stakeholder studies. Using this taxonomy, we construct a benchmark of 10,404 labeled prompts and responses, showing that several leading LLMs mishandle elderly-specific contextual risks in over 50% of cases. We mitigate these failures with two safeguards: a fine-tuned Llama-Guard-3 and a policy-enhanced gpt-oss-safeguard-20b, achieving up to 96.2% and 90.9% unsafe-prompt detection accuracy, respectively. GrandGuard lays the groundwork for AI systems that move beyond general safety to support aging populations.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2606.28777",
+  "status": 200,
+  "title": "Designing Automation Boundaries for Trustworthy Smart Medication Support",
+  "date": "2026/06/27",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "You, Liqian",
+   "Zhou, Jianlong"
+  ],
+  "abstract": "Smart medication systems increasingly automate medication recognition, reminders, and logging. However, automation in home medication routines should be carefully bounded, as users may have different capabilities, privacy expectations, and needs for control over decisions. We present a mixed-methods study of a Smart Medication Support system comparing three automation conditions: confirmation required, automatic logging with undo, and fully automatic support. Across 53 participants and interviews with 11 older adults, we found that higher automation did not necessarily lead to higher trust or acceptance. Participants preferred automation that reduced routine effort while preserving opportunities for correction. Fully automatic support was less interruptive but was rated lower in autonomy, trust, transparency, dignity, and satisfaction. Interviews also showed clear differences among older adults. Their preferences were shaped by privacy concerns, digital confidence, perceived vulnerability, and caregiver involvement. We contribute empirical evidence and design implications for calibrating automation in smart medication systems according to task risk, user control, and ethical acceptability.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2608.17175",
+  "status": 200,
+  "title": "Balancing Safety and Autonomy: Accessibility-Oriented Interventions in Generative AI for Cognitive Impairment",
+  "date": "2026/08/17",
+  "doi": "10.1145/3797867.3829017",
+  "journal": "",
+  "authors": [
+   "Meng, Yibo",
+   "Chen, Jingruo",
+   "Ye, Lyumanshan",
+   "Liu, Bingyi",
+   "Lu, Zhicong"
+  ],
+  "abstract": "Generative AI systems are increasingly used by older adults with cognitive impairment for everyday tasks such as information seeking, health management, and communication. While these systems provide flexible, language-based support, their open-ended outputs introduce risks of over-reliance, misinterpretation, and inappropriate decision-making. Prior work has focused on usability and adoption, with limited attention to how system design shapes users&#39; participation in decision-making and the distribution of agency in care contexts. We present a qualitative study of 45 individuals with cognitive impairment and their caregivers. We identify five accessibility-oriented mechanisms: AI Capability Constraint, Human Oversight Embedding, Cognitive Engagement Maintenance, Human-AI Relationship Regulation, and Risk Transparency and Control, through which systems structure interaction. These mechanisms both support and constrain users by redistributing decision-making across users and caregivers. We show that their effects vary by impairment level: while protective mechanisms support users with severe impairment, they can restrict autonomy for those with mild impairment. As impairment progresses, tensions become less visible as user participation diminishes. Our findings highlight the need for dynamic designs that balance safety and autonomy in AI-supported care.",
+  "comments": "Accepted to ASSETS 2026",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2505.14872",
+  "status": 200,
+  "title": "Unremarkable to Remarkable AI Agent: Exploring Boundaries of Agent Intervention for Adults With and Without Cognitive Impairment",
+  "date": "2025/05/20",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Chang, Mai Lee",
+   "Reig, Samantha",
+   "Alicia",
+   "Lee",
+   "Huang, Anna",
+   "Simão, Hugo",
+   "Han, Nara",
+   "Khanuja, Neeta M",
+   "Ali, Abdullah Ubed Mohammad",
+   "Martinez, Rebekah",
+   "Zimmerman, John",
+   "Forlizzi, Jodi",
+   "Steinfeld, Aaron"
+  ],
+  "abstract": "As the population of older adults increases, there is a growing need for support for them to age in place. This is exacerbated by the growing number of individuals struggling with cognitive decline and shrinking number of youth who provide care for them. Artificially intelligent agents could provide cognitive support to older adults experiencing memory problems, and they could help informal caregivers with coordination tasks. To better understand this possible future, we conducted a speed dating with storyboards study to reveal invisible social boundaries that might keep older adults and their caregivers from accepting and using agents. We found that healthy older adults worry that accepting agents into their homes might increase their chances of developing dementia. At the same time, they want immediate access to agents that know them well if they should experience cognitive decline. Older adults in the early stages of cognitive decline expressed a desire for agents that can ease the burden they saw themselves becoming for their caregivers. They also speculated that an agent who really knew them well might be an effective advocate for their needs when they were less able to advocate for themselves. That is, the agent may need to transition from being unremarkable to remarkable. Based on these findings, we present design opportunities and considerations for agents and articulate directions of future research.",
+  "comments": "To appear in 2025 ACM Conference on Computer-Supported Cooperative Work and Social Computing (CSCW)",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2608.09944",
+  "status": 200,
+  "title": "Navigation Alone Is Not Enough: Evaluating Explanatory Assistive UI Agents",
+  "date": "2026/07/01",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Patapati, Santosh"
+  ],
+  "abstract": "Modern web interfaces are increasingly difficult to use with screen readers, particularly when pages update dynamically or hide important structure behind visual layout. Recent UI agents can act on such interfaces; however, for assistive agents to be truly useful, they must behave as collaborators that keep users informed and in control, rather than as tools that simply take actions on users&#39; behalf. Most existing benchmarks judge systems primarily by task completion, without assessing how well they explain their actions or support user oversight. We introduce NeXUI, a benchmark for assistive agents that must navigate interfaces while explaining each step in clear language for nonvisual use. NeXUI pairs realistic user goals with instrumented interface states, enabling agents to reason from both visual context and structural information. Its evaluation measures safety, efficiency, and task success, while also checking whether explanations are grounded in the interface state. In our experiments, we find that NeXUI remains challenging even for state-of-the-art foundation models, with % Gemini-3.5-Flash achieving only a 44\\% success rate and poor explanation scores, making it a useful foundation for future research and development. By focusing on navigation, explanation, and user control, NeXUI provides a clearer way to study agents that can support blind and visually impaired users in modern computing environments.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2609.00524",
+  "status": 200,
+  "title": "Are We There Yet? Assessing Computer-Use Agents for Blind Users&#39; Accessible Interaction with Desktop Applications",
+  "date": "2026/09/01",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Kodandaram, Satwik Ram",
+   "Reddy, Monalika Padma",
+   "Bi, Xiaojun",
+   "Zhou, Jiawei",
+   "Ramakrishnan, I. V.",
+   "Ashok, Vikas"
+  ],
+  "abstract": "Computer-use agents are emerging as a paradigm for agentic human-AI interaction, combining language reasoning with multi-modal interface grounding to operate GUIs. Yet their effectiveness for blind screen-reader users in real-world desktop workflows remains unclear. We present a three-week diary study with 8 blind users using OLLA, a screen-reader-accessible CUA prototype, collecting 1,258 commands across 12 applications with screenshots, UI trees, model responses, and action traces. We evaluate GPT-5 during deployment and re-execute the same commands with four additional models. GPT-5 achieved the highest success rate at 52.5%. Trace analysis reveals grounding, planning, constraint-tracking, and termination failures, while interviews reveal beyond-automation needs.",
+  "comments": "Accepted to the EMNLP 2026 Main Conference",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2510.06697",
+  "status": 200,
+  "title": "Sometimes You Need Facts, and Sometimes a Hug: Understanding Older Adults&#39; Preferences for Explanations in LLM-Based Conversational AI Systems",
+  "date": "2025/10/08",
+  "doi": "10.1145/3772318.3790812",
+  "journal": "",
+  "authors": [
+   "Mathur, Niharika",
+   "Zubatiy, Tamara",
+   "Rozga, Agata",
+   "Forlizzi, Jodi",
+   "Mynatt, Elizabeth"
+  ],
+  "abstract": "Designing Conversational AI systems to support older adults requires these systems to explain their behavior in ways that align with older adults&#39; preferences and context. While prior work has emphasized the importance of AI explainability in building user trust, relatively little is known about older adults&#39; requirements and perceptions of AI-generated explanations. To address this gap, we conducted an exploratory Speed Dating study with 23 older adults to understand their responses to contextually grounded AI explanations. Our findings reveal the highly context-dependent nature of explanations, shaped by conversational cues such as the content, tone, and framing of explanation. We also found that explanations are often interpreted as interactive, multi-turn conversational exchanges with the AI, and can be helpful in calibrating urgency, guiding actionability, and providing insights into older adults&#39; daily lives for their family members. We conclude by discussing implications for designing context-sensitive and personalized explanations in Conversational AI systems.",
+  "comments": "To be published at ACM CHI 2026",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2603.08164",
+  "status": 200,
+  "title": "Tell Me Why, When, and How: Effects of Personality, Evidence, and Context on Older Adults&#39; Perceptions of Conversational AI Explanations",
+  "date": "2026/03/09",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Mathur, Niharika",
+   "Rahman, Hasibur",
+   "Desai, Smit"
+  ],
+  "abstract": "Large Language Model-based voice assistants (LLM-VAs) have shown potential to support older adults aging in place through proactive reminders, health information, and everyday assistance. As LLM-VAs become more conversational, designing explanations of their behavior requires understanding what information they communicate and how they deliver it. While prior work has studied older adults&#39; explainability requirements, relatively little is known about their perceptions of explanations when an LLM-VA&#39;s conversational personality varies. To address this gap, we conducted a mixed-design study with 140 older adults, examining two dimensions of explanation design: evidential grounding (source of information) and the VA&#39;s conversational personality (agreeableness and extraversion), across two contexts of use. Our results show that both dimensions influenced older adults&#39; perceptions in distinct but interdependent ways, challenging one-size-fits-all explanation strategies. We conclude with practical design implications for coordinating explanation content, conversational delivery, and context in future LLM-VAs supporting aging in place.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2609.24706",
+  "status": 200,
+  "title": "&#34;MeBo Leaves a Piece of You Behind&#34;: Designing a Relational Voice-Based Memory Companion for Older Adults",
+  "date": "2026/09/21",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Rahman, Hasibur",
+   "Nasri, Mahsa",
+   "Vaidya, Manasi",
+   "Vafafar, Melika",
+   "Chin, Jessie",
+   "Desai, Smit"
+  ],
+  "abstract": "Autobiographical remembering supports identity, well-being, and social connection in later life, yet voice-based memory technologies largely rely on isolated prompts. We designed and built MeBo, a fully functional relational voice-based memory companion, through participatory design with 11 older adults. Their accounts shaped four Design Strategies that guided MeBo&#39;s interaction design and multi-agent implementation. In a mixed-methods evaluation with 20 older adults, participants found MeBo exceptionally usable (SUS = 87.75), enjoyable, sociable, emotionally responsive, and trustworthy. Participants reported higher positive affect and momentary social connection and lower negative affect after the session than before. Participants described how MeBo followed their stories, returned to earlier memories, adapted to their preferences, and made its growing memory visible and controllable. MeBo&#39;s relational framing surfaces tensions around what it should remember, who may access memories produced through interaction, and what becomes of them when the user or MeBo is no longer present.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2608.24297",
+  "status": 200,
+  "title": "When AI &#34;Works,&#34; When Does Help Begin?: Intergenerational Support Around Older Adults&#39; LLM Usage",
+  "date": "2026/08/25",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Chu, Hyehyun",
+   "Lee, Yuri",
+   "Park, Yeon Su",
+   "Yang, Saelyne",
+   "Kim, Juho"
+  ],
+  "abstract": "LLMs are becoming part of everyday life, including for older adults (OAs). OAs often learn digital technologies with younger family members, who have traditionally served as &#34;warm experts&#34; providing trusted and personalized operational help. LLMs expand this role: family supporters may also help OAs judge appropriate uses, consider what information to disclose, assess the credibility of outputs, and decide when AI-generated advice is safe to act on. We conducted a formative qualitative study with six OAs and seven younger adults (YAs), using semi-structured interviews and scenario-based think-aloud activities. OA participants described using LLMs to lighten their recurring reliance on family, while preserving family as a selectively invoked support channel. However, because LLMs rarely produced visible operational breakdowns, YAs had limited signals for when support was actually needed. Instead, YAs relied on OAs&#39; partial disclosures and negotiated intervention through general warnings and self-imposed action boundaries. As a result, family support often solved an immediate problem without leaving reusable calibration knowledge for future use. Based on these findings, we propose design implications for intergenerational LLM support (e.g., consentful help requests, learning-oriented family support that preserves OA task ownership).",
+  "comments": "5 pages, 1 table, Accepted by CSCW 2026 workshop Growing Up (and Old) with AI: Co-Constructing the Future for Family-Centered AI",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2510.06690",
+  "status": 200,
+  "title": "&#34;It feels like hard work trying to talk to it&#34;: Understanding Older Adults&#39; Experiences of Encountering and Repairing Conversational Breakdowns with AI Systems",
+  "date": "2025/10/08",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Mathur, Niharika",
+   "Zubatiy, Tamara",
+   "Rozga, Agata",
+   "Mynatt, Elizabeth"
+  ],
+  "abstract": "Designing Conversational AI systems to support older adults requires more than usability and reliability, it also necessitates robustness in handling conversational breakdowns. In this study, we investigate how older adults navigate and repair such breakdowns while interacting with a voice-based AI system deployed in their homes for medication management. Through a 20-week in-home deployment with 7 older adult participant dyads, we analyzed 844 recoded interactions to identify conversational breakdowns and user-initiated repair strategies. Through findings gleaned from post-deployment interviews, we reflect on the nature of these breakdowns and older adults&#39; experiences of mitigating them. We identify four types of conversational breakdowns and demonstrate how older adults draw on their situated knowledge and environment to make sense of and recover from these disruptions, highlighting the cognitive effort required in doing so. Our findings emphasize the collaborative nature of interactions in human-AI contexts, and point to the need for AI systems to better align with users&#39; expectations for memory, their routines, and external resources in their environment. We conclude by discussing opportunities for AI systems to integrate contextual knowledge from older adults&#39; sociotechnical environment and to facilitate more meaningful and user-centered interactions.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2507.17959",
+  "status": 200,
+  "title": "OPEN: A Benchmark Dataset and Baseline for Older Adult Patient Engagement Recognition in Virtual Rehabilitation Learning Environments",
+  "date": "2025/07/23",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Abedi, Ali",
+   "Safa, Sadaf",
+   "Colella, Tracey J. F.",
+   "Khan, Shehroz S."
+  ],
+  "abstract": "Engagement in virtual learning is essential for participant satisfaction, performance, and adherence, particularly in online education and virtual rehabilitation, where interactive communication plays a key role. Yet, accurately measuring engagement in virtual group settings remains a challenge. There is increasing interest in using artificial intelligence (AI) for large-scale, real-world, automated engagement recognition. While engagement has been widely studied in younger academic populations, research and datasets focused on older adults in virtual and telehealth learning settings remain limited. Existing methods often neglect contextual relevance and the longitudinal nature of engagement across sessions. This paper introduces OPEN (Older adult Patient ENgagement), a novel dataset supporting AI-driven engagement recognition. It was collected from eleven older adults participating in weekly virtual group learning sessions over six weeks as part of cardiac rehabilitation, producing over 35 hours of data, making it the largest dataset of its kind. To protect privacy, raw video is withheld; instead, the released data include facial, hand, and body joint landmarks, along with affective and behavioral features extracted from video. Annotations include binary engagement states, affective and behavioral labels, and context-type indicators, such as whether the instructor addressed the group or an individual. The dataset offers versions with 5-, 10-, 30-second, and variable-length samples. To demonstrate utility, multiple machine learning and deep learning models were trained, achieving engagement recognition accuracy of up to 81 percent. OPEN provides a scalable foundation for personalized engagement modeling in aging populations and contributes to broader engagement recognition research.",
+  "comments": "14 pages, 3 figures, 7 tables",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2603.11303",
+  "status": 200,
+  "title": "Bridging the Cognitive Gap: Co-Designing and Evaluating a Voice-Enabled Community Chatbot for Older Adults",
+  "date": "2026/03/11",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Chen, Feng",
+   "Li, Luna Xingyu",
+   "Chung, Ray-Yuan",
+   "Zeng, Wenyu",
+   "Jeon, Yein",
+   "Hu, Yizhou",
+   "Zaslavsky, Oleg"
+  ],
+  "abstract": "Digital portals in retirement communities often create physical and cognitive barriers for older adults, leading to digital avoidance. Generative AI offers a solution by enabling natural language interaction, yet its adoption is hindered by the opaque, &#34;Black Box&#34; nature of these systems and lingering usability challenges. To address this, we evaluated a voice-enabled Large Language Model (LLM) chatbot at a continuing care retirement community in the Pacific Northwest. Through a mixed-methods Co-Design and Literacy Workshop (N=25), we applied a &#34;Glass Box&#34; approach combining multimodal accessibility with intentional AI education. The intervention significantly improved participants&#39; technical understanding (p=0.004) and perceived transparency (p=0.001), shifting their interaction model from blind trust to informed reliance prioritizing verifiable evidence. While voice input reduced cognitive load, usability scores dropped significantly for users aged 80 and older (r=-0.50), indicating that truly age-inclusive AI must evolve beyond touch-based interfaces toward zero-touch navigation.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2508.08684",
+  "status": 200,
+  "title": "Out of the Box, into the Clinic? Evaluating State-of-the-Art ASR for Clinical Applications for Older Adults",
+  "date": "2025/08/12",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "van Dijk, Bram",
+   "Kuiper, Tiberon",
+   "Ahmed, Sirin Aoulad si",
+   "Levebvre, Armel",
+   "Johnson, Jake",
+   "Duin, Jan",
+   "Mooijaart, Simon",
+   "Spruit, Marco"
+  ],
+  "abstract": "Voice-controlled interfaces can support older adults in clinical contexts -- with chatbots being a prime example -- but reliable Automatic Speech Recognition (ASR) for underrepresented groups remains a bottleneck. This study evaluates state-of-the-art ASR models on language use of older Dutch adults, who interacted with the this http URL chatbot designed for geriatric contexts. We benchmark generic multilingual ASR models, and models fine-tuned for Dutch spoken by older adults, while also considering processing speed. Our results show that generic multilingual models outperform fine-tuned models, which suggests recent ASR models can generalise well out of the box to real-world datasets. Moreover, our results indicate that truncating generic models is helpful in balancing the accuracy-speed trade-off. Nonetheless, we also find inputs which cause a high word error rate and place them in context.",
+  "comments": "Forthcoming in the Proceedings of the Fourth Workshop on Bridging Human Computer Interaction and Natural Language Processing HCINLP (EMNLP)",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2604.03050",
+  "status": 200,
+  "title": "MECO: A Multimodal Dataset for Emotion and Cognitive Understanding in Older Adults",
+  "date": "2026/04/03",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Chen, Hongbin",
+   "Li, Jie",
+   "Wang, Wei",
+   "Song, Siyang",
+   "Gu, Xiao",
+   "Li, Jianqing",
+   "Xiang, Wentao"
+  ],
+  "abstract": "While affective computing has advanced considerably, multimodal emotion prediction in aging populations remains underexplored, largely due to the scarcity of dedicated datasets. Existing multimodal benchmarks predominantly target young, cognitively healthy subjects, neglecting the influence of cognitive decline on emotional expression and physiological responses. To bridge this gap, we present MECO, a Multimodal dataset for Emotion and Cognitive understanding in Older adults. MECO includes 42 participants and provides approximately 38 hours of multimodal signals, yielding 30,592 synchronized samples. To maximize ecological validity, data collection followed standardized protocols within community-based settings. The modalities cover video, audio, electroencephalography (EEG), and electrocardiography (ECG). In addition, the dataset offers comprehensive annotations of emotional and cognitive states, including self-assessed valence, arousal, six basic emotions, and Mini-Mental State Examination cognitive scores. We further establish baseline benchmarks for both emotion and cognitive prediction. MECO serves as a foundational resource for multimodal modeling of affect and cognition in aging populations, facilitating downstream applications such as personalized emotion recognition and early detection of mild cognitive impairment (MCI) in real-world settings. The complete dataset and supplementary materials are available at this https URL .",
+  "comments": "8 pages, 3 figures",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2507.14912",
+  "status": 200,
+  "title": "Redefining Elderly Care with Agentic AI: Challenges and Opportunities",
+  "date": "2025/07/20",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Khalil, Ruhul Amin",
+   "Ahmad, Kashif",
+   "Ali, Hazrat"
+  ],
+  "abstract": "The global ageing population necessitates new and emerging strategies for caring for older adults. In this article, we explore the potential for transformation in elderly care through Agentic Artificial Intelligence (AI), powered by Large Language Models (LLMs). We discuss the proactive and autonomous decision-making facilitated by Agentic AI in elderly care. Personalized tracking of health, cognitive care, and environmental management, all aimed at enhancing independence and high-level living for older adults, represents important areas of application. With a potential for significant transformation of elderly care, Agentic AI also raises profound concerns about data privacy and security, decision independence, and access. We share key insights to emphasize the need for ethical safeguards, privacy protections, and transparent decision-making. Our goal in this article is to provide a balanced discussion of both the potential and the challenges associated with Agentic AI, and to provide insights into its responsible use in elderly care, to bring Agentic AI into harmony with the requirements and vulnerabilities specific to the elderly. Finally, we identify the priorities for the academic research communities, to achieve human-centered advancements and integration of Agentic AI in elderly care. To the best of our knowledge, this is no existing study that reviews the role of Agentic AI in elderly care. Hence, we address the literature gap by analyzing the unique capabilities, applications, and limitations of LLM-based Agentic AI in elderly care. We also provide a companion interactive dashboard at this https URL .",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2506.06225",
+  "status": 200,
+  "title": "&#34;We need to avail ourselves of GenAI to enhance knowledge distribution&#34;: Empowering Older Adults through GenAI Literacy",
+  "date": "2025/06/06",
+  "doi": "10.1145/3706599.3720032",
+  "journal": "",
+  "authors": [
+   "Ko, Eunhye Grace",
+   "Nanayakkara, Shaini",
+   "Huff Jr, Earl W."
+  ],
+  "abstract": "As generative AI (GenAI) becomes increasingly widespread, it is crucial to equip users, particularly vulnerable populations such as older adults (65 and older), with the knowledge to understand its benefits and potential risks. Older adults often exhibit greater reservations about adopting emerging technologies and require tailored literacy support. Using a mixed methods approach, this study examines strategies for delivering GenAI literacy to older adults through a chatbot named Litti, evaluating its impact on their AI literacy (knowledge, safety, and ethical use). The quantitative data indicated a trend toward improved AI literacy, though the results were not statistically significant. However, qualitative interviews revealed diverse levels of familiarity with generative AI and a strong desire to learn more. Findings also show that while Litti provided a positive learning experience, it did not significantly enhance participants&#39; trust or sense of safety regarding GenAI. This exploratory case study highlights the challenges and opportunities in designing AI literacy education for the rapidly growing older adult population.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2503.23153",
+  "status": 200,
+  "title": "Conversational Agents for Older Adults&#39; Health: A Systematic Literature Review",
+  "date": "2025/03/29",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "An, Jiaxin",
+   "Yi, Siqi",
+   "Lyu, Yao",
+   "Liu, Houjiang",
+   "Zhang, Yan"
+  ],
+  "abstract": "There has been vast literature that studies Conversational Agents (CAs) in facilitating older adults&#39; health. The vast and diverse studies warrants a comprehensive review that concludes the main findings and proposes research directions for future studies, while few literature review did it from human-computer interaction (HCI) perspective. In this study, we present a survey of existing studies on CAs for older adults&#39; health. Through a systematic review of 72 papers, this work reviewed previously studied older adults&#39; characteristics and analyzed participants&#39; experiences and expectations of CAs for health. We found that (1) Past research has an increasing interest on chatbots and voice assistants and applied CA as multiple roles in older adults&#39; health. (2) Older adults mainly showed low acceptance CAs for health due to various reasons, such as unstable effects, harm to independence, and privacy concerns. (3) Older adults expect CAs to be able to support multiple functions, to communicate using natural language, to be personalized, and to allow users full control. We also discuss the implications based on the findings.",
+  "comments": "31 pages, 4 figures",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2604.16343",
+  "status": 200,
+  "title": "Elder-Sim: A Psychometrically Validated Platform for Personality-Stable Elderly Digital Twins",
+  "date": "2026/03/16",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Wang, Jiaqing",
+   "Yang, Zhongfang",
+   "Zhu, Xingyuan",
+   "Huang, Zong&#39;an",
+   "Wang, Hao",
+   "Tian, Li",
+   "Cao, Ying",
+   "Qu, Xiaomin",
+   "Qi, Xiang",
+   "Wu, Bei",
+   "Zhu, Zheng"
+  ],
+  "abstract": "Background: LLMs enable patient-facing conversational agents, creating a pathway toward digital twins that capture older adults&#39; lived experiences and behavioral responses across time. A central barrier is personality drift -- inconsistent trait expression across repeated interactions -- which undermines reliability of generated trajectories and intervention-response simulation in geriatric care. Objective: To develop ELDER-SIM, a multi-role elderly-care conversational platform for building personality-stable digital twin agents, and to propose a psychometric validation framework for quantifying personality consistency in LLM-based agents. Methods: ELDER-SIM was implemented via n8n workflow orchestration with local LLM inference (Ollama/vLLM), integrating (1) Big Five (OCEAN) trait specifications, (2) a Cognitive Conceptualization Diagram (CCD) grounded in Beck&#39;s CBT framework, and (3) a MySQL-based long-term memory module. Ablation studies across four conditions -- Baseline, +Memory, +CCD, and +LoRA (fine-tuned on 19,717 instruction pairs from CHARLS) -- were evaluated via Cronbach&#39;s $\\alpha$, ICC, and role discrimination accuracy. Results: Reliability was acceptable to excellent across conditions (Cronbach&#39;s $\\alpha$: 0.70--0.94; ICC: 0.85--0.96). Role discrimination improved from 83.3% (Baseline) to 88.9% (+Memory), 94.4% (+CCD), and 97.2% (+LoRA). CCD produced the largest consistency gain (mean $\\alpha$ 0.702$\\to$0.892), while LoRA achieved the highest overall consistency ($\\alpha$ 0.940; ICC 0.958). Conclusions: ELDER-SIM provides a psychometrically validated approach for constructing personality-consistent elderly digital twin agents. Structured cognitive modeling and domain adaptation reduce personality drift, supporting reliable longitudinal simulation for elderly mental health care and reproducible in silico evaluation before clinical deployment.",
+  "comments": "",
+  "journal_ref": "",
+  "doi_info": ""
+ },
+ {
+  "id": "2604.22356",
+  "status": 200,
+  "title": "Large Language Model Counterarguments in Older Adults: Cognitive Offloading or Susceptibility to Moral Persuasion?",
+  "date": "2026/04/24",
+  "doi": "",
+  "journal": "",
+  "authors": [
+   "Tamura, Kou",
+   "Ishibashi, Sayaka",
+   "Goma, Ayana",
+   "Yamamoto, Kenta",
+   "Masumoto, Kouhei"
+  ],
+  "abstract": "This study examined whether counterarguments generated by large language models (LLMs) influence the moral judgments of younger and older adults, and whether these effects vary by dilemma type, cognitive functioning, trust in AI, and prior LLM experience. Using the switch and footbridge trolley dilemmas, 130 participants (56 younger adults and 74 older adults) were presented with ChatGPT-generated counterarguments that opposed their initial judgments. More than 30% of participants reversed their judgments in both dilemmas (32.31% in the switch dilemma and 36.92% in the footbridge dilemma). Older adults tended to be more likely than younger adults to reverse their judgments and showed a significantly greater degree of judgment change in the switch dilemma. In the emotionally aversive footbridge dilemma, older adults with lower cognitive functioning were significantly more likely to align with the LLM-generated counterargument. General trust in AI and prior LLM experience did not predict judgment reversal, whereas lower initial confidence and higher perceived task difficulty were associated with greater susceptibility to LLM influence. These findings suggest that LLMs may support cognitive offloading but increase susceptibility among individuals with limited cognitive resources. The ecological generalizability of these findings to everyday dilemma situations remains to be examined in future research.",
+  "comments": "This paper has been published in Computers in Human Behavior. The final published version is available at this https URL",
+  "journal_ref": "",
+  "doi_info": ""
+ }
+]

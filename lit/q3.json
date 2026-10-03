@@ -1,0 +1,9 @@
+{
+"mobile_agent_v3": "ti:\"Mobile-Agent\"",
+"ui_tars": "ti:\"UI-TARS\"",
+"gui_owl": "ti:\"GUI-Owl\"",
+"uground": "ti:\"UGround\"",
+"gui_agent_survey2025": "ti:\"GUI Agent\" AND abs:\"survey\"",
+"trustworthy_gui_agents": "ti:\"Trustworthy GUI Agents\"",
+"mobile_agent_foundation": "abs:\"GUI agent\" AND abs:\"reinforcement learning\" AND abs:\"mobile\""
+}
