@@ -1,5 +1,7 @@
 package com.yinling.hotline
 
+import com.yinling.core.MarkdownLite
+import com.yinling.core.SpokenSummary
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
@@ -48,6 +50,15 @@ class Speaker(private val app: HotlineApp) {
     /** The utterance currently allowed to change [isSpeaking]; older flushed ones are ignored. */
     @Volatile
     private var currentUtterance: String? = null
+
+    /** 上一条已播报的文本与时刻。
+     *  同一条结论会经两条路径各送一次（循环的 onMessage 与任务收尾），
+     *  而 QUEUE_FLUSH 会让第二次打断第一次并从头重念——老人听到的是"半句 + 重来"。
+     *  因此对**极短时间内完全相同的文本**去重；窗口取得比"老人重复问一遍"短得多，
+     *  以免真的重复提问时反而不出声。 */
+    private var lastSpokenText: String = ""
+    private var lastSpokenAt: Long = 0L
+    private val dedupeWindowMs = 3_000L
     private var utteranceSerial = 0
 
     /** Fallback so a ROM that forgets onDone cannot leave the UI stuck on "speaking" forever. */
@@ -131,15 +142,19 @@ class Speaker(private val app: HotlineApp) {
 
     /** Speaks [text], replacing whatever was being said: the newest news is the relevant one. */
     fun say(text: String) {
-        if (text.isBlank()) return
+        // 老人是"听"这句话的：模型输出的 Markdown 记号读出来只是噪音
+        //（真机上曾把「**取件码：30-1-4006**」连星号一起念）。剥离放在这里，
+        // 所有播报路径（进度、结论、提问、家人留言）一次性受益。
+        val spoken = MarkdownLite.plain(text)
+        if (spoken.isBlank()) return
         if (!enabled) return
         prepare()
         if (!ready) {
             // The engine takes a moment to come up; keep the latest line and speak it when it does.
-            pending = text
+            pending = spoken
             return
         }
-        speakNow(text)
+        speakNow(spoken)
     }
 
     private fun speakNow(text: String) {
@@ -150,6 +165,20 @@ class Speaker(private val app: HotlineApp) {
             .replace(Regex("\\s+"), " ")
             .trim()
         if (clean.isBlank()) return
+        // 长结论只念要点，其余请老人看屏幕。原先的 take(240) 会把句子砍在半截，
+        // 而被砍掉的往往正是关键信息（取件码、车次）。策略在 core 的 [SpokenSummary]。
+        val now = System.currentTimeMillis()
+        if (clean == lastSpokenText && now - lastSpokenAt < dedupeWindowMs) {
+            LoopLog.event("[speak] 同一条内容刚念过，跳过重复播报")
+            return
+        }
+        lastSpokenText = clean
+        lastSpokenAt = now
+
+        val toSpeak = SpokenSummary.of(clean)
+        if (toSpeak.length < clean.length) {
+            LoopLog.event("[speak] 结论较长，只念要点（${clean.length}→${toSpeak.length} 字），其余在屏幕上")
+        }
         val utterance = "hotline_${++utteranceSerial}"
         currentUtterance = utterance
         // Do not wait for onStart: some engines are late, and the UI should show "speaking" as
@@ -165,7 +194,7 @@ class Speaker(private val app: HotlineApp) {
         }
         speakingTimeout = timeout
         handler.postDelayed(timeout, MAX_SPEAK_MS)
-        engine?.speak(clean.take(240), TextToSpeech.QUEUE_FLUSH, null, utterance)
+        engine?.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null, utterance)
     }
 
     private fun finishSpeaking(utteranceId: String?) {

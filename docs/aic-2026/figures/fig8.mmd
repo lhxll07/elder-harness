@@ -1,0 +1,15 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TD
+  S[今天要不要发声] --> G1{① 守望在运行?}
+  G1 -->|否| N[不判断、不报异常]
+  G1 -->|是| G2{② 今天用过手机?}
+  G2 -->|是| OK[报平安：每天一条]
+  G2 -->|否| G3{③ 有 ≥3 天基线?}
+  G3 -->|否| NB[只记录，不发声]
+  G3 -->|是| G4{④ 晚于平时 90 分钟?}
+  G4 -->|否| W[继续等待]
+  G4 -->|是| AL[提醒家人打个电话]
+  classDef calm fill:#eef4f3,stroke:#0f7b6c
+  classDef warn fill:#fdf3e3,stroke:#c9a227
+  class N,NB,W calm
+  class OK,AL warn

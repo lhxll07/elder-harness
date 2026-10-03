@@ -9,6 +9,12 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
+import android.text.style.TypefaceSpan
+import com.yinling.core.MarkdownLite
 
 /**
  * The floating panel's vocabulary, in plain Views.
@@ -45,11 +51,43 @@ object OverlayUi {
     }
 
     /** A tinted, rounded block used for the part of the message that matters. */
-    fun tinted(context: Context, text: String, tint: Int, textColor: Int = Elder.ink.toArgb()): TextView =
-        text(context, text, Elder.body.value, textColor).apply {
+    fun tinted(context: Context, value: String, tint: Int, textColor: Int = Elder.ink.toArgb()): TextView =
+        markdown(context, value, Elder.body.value, textColor).apply {
             setPadding(dp(context, 14), dp(context, 12), dp(context, 14), dp(context, 12))
             background = rounded(tint, dp(context, 12).toFloat())
         }
+
+    /**
+     * 结论文本的排版。
+     *
+     * 模型习惯输出 `**加粗**`、标题与列表；直接显示给老人就是一堆看不懂的符号——真机实测里
+     * `**取件码：30-1-4006**` 就这样压在了最关键的信息上。解析逻辑在 core 的 [MarkdownLite]
+     *（有回归覆盖），这里只把它映射成 View 的 span。
+     */
+    fun markdown(context: Context, value: String, sizeSp: Float, color: Int): TextView = TextView(context).apply {
+        textSize = sizeSp
+        setTextColor(color)
+        // 行距略放开：老人的结论文本常常是多行列表
+        setLineSpacing(0f, 1.3f)
+        text = SpannableStringBuilder().apply {
+            MarkdownLite.lines(value).forEachIndexed { index, line ->
+                if (index > 0) append('\n')
+                if (line.bullet) append("· ")
+                val lineStart = length
+                line.spans.forEach { span ->
+                    val from = length
+                    append(span.text)
+                    if (span.bold) setSpan(StyleSpan(Typeface.BOLD), from, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    if (span.code) setSpan(TypefaceSpan("monospace"), from, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+                if (line.heading > 0) {
+                    val scale = when (line.heading) { 1 -> 1.25f; 2 -> 1.12f; else -> 1.05f }
+                    setSpan(RelativeSizeSpan(scale), lineStart, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    setSpan(StyleSpan(Typeface.BOLD), lineStart, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
+        }
+    }
 
     /** `● 正在办` — the same shape as the home screen's status line. */
     fun statusRow(context: Context, phase: TaskPhase): LinearLayout = LinearLayout(context).apply {

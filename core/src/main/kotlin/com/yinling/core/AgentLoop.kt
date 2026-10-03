@@ -103,6 +103,18 @@ interface ActionApproval {
 
     /** Blocks until the person answers. False stops the task without executing the call. */
     suspend fun confirm(invocation: ToolInvocation): Boolean
+
+    /**
+     * Confirms a **navigation** that leaves the apps this task has already touched.
+     *
+     * Opening an app used to be an unconditionally-executed low-risk action, which left goal
+     * hijacking completely undetected: an injected page could make the agent leave the task's own
+     * apps and never be questioned. The loop cannot judge whether "open 设置" still serves the
+     * person's goal, so the person decides — once per new app, which is exactly the decision point.
+     *
+     * Defaults to true for hosts that do not implement it; the Android host shows a card.
+     */
+    suspend fun confirmNewApp(app: String, invocation: ToolInvocation): Boolean = true
 }
 
 /** Progress reporting. The loop never touches UI state directly. */
@@ -265,6 +277,19 @@ class AgentLoop(
     /** Recent action signatures, used to spot an enter/back style cycle. */
     private val recentActions = ArrayDeque<String>()
 
+    /** Signature of the previous batch, and how many times it has repeated with no screen change. */
+    private var repeatSignature: String? = null
+    private var repeatCount = 0
+
+    /**
+     * Apps this task has legitimately involved: every observed foreground app, plus the apps the
+     * person agreed to open. Anything outside this set is a navigation the loop cannot vouch for.
+     */
+    private val visitedApps = mutableSetOf<String>()
+
+    /** Apps the person already agreed to open in this task, so the question is asked once each. */
+    private val approvedNewApps = mutableSetOf<String>()
+
     /** Information the run has already fetched; asking twice is pointless. */
     private val fetched = HashSet<String>()
 
@@ -288,6 +313,8 @@ class AgentLoop(
         // repeated pattern from before the pause cannot make the resumed work look like a loop.
         cycleNotices = 0
         recentActions.clear()
+        repeatSignature = null
+        repeatCount = 0
         return loop()
     }
 
@@ -326,6 +353,10 @@ class AgentLoop(
         repairs = 0
         cycleNotices = 0
         recentActions.clear()
+        repeatSignature = null
+        repeatCount = 0
+        visitedApps.clear()
+        approvedNewApps.clear()
         fetched.clear()
         blindNoticeGiven = false
         screenshotFailures = 0
@@ -580,7 +611,7 @@ class AgentLoop(
 
         val safetyScreen = tools.observe()
         val failures = invocations.map { invocation ->
-            ManualActionPolicy.checkText(invocation) ?: ManualActionPolicy.checkScreen(invocation.tool, safetyScreen)
+            ManualActionPolicy.checkText(invocation) ?: ManualActionPolicy.checkScreen(invocation, safetyScreen)
         }
         val safetyFailure = failures.firstOrNull { it != null }
         if (safetyFailure != null) {
@@ -589,6 +620,25 @@ class AgentLoop(
                 failure ?: ToolResult(false, "同一批次包含需要本人完成的操作，本批次未执行。", "blocked_by_safety")
             })
             return AgentOutcome.PAUSED(safetyFailure.detail, needsPerson = true, reason = PauseReason.PERSON_ACTION)
+        }
+
+        // Goal consistency. The current foreground app belongs to the task by definition; a
+        // *different* app is a navigation the loop cannot judge, and an injected page can ask for it.
+        safetyScreen.app?.let { visitedApps += it }
+        val opening = invocations.firstOrNull { it.tool == OPEN_APP_TOOL }
+        if (opening != null) {
+            val app = opening.arguments["argument"].orEmpty()
+            if (app.isNotBlank() && app !in visitedApps && app !in approvedNewApps) {
+                hook.onApprovalRequest("要打开「$app」吗？它不在这件事已经用到的应用里。")
+                if (approval.confirmNewApp(app, opening)) {
+                    approvedNewApps += app
+                } else {
+                    pending = emptyList()
+                    val refused = ToolResult(false, "老人没有同意打开「$app」，这一步没有执行。", "denied_by_user")
+                    appendResults(invocations, invocations.map { refused })
+                    return AgentOutcome.PAUSED(refused.detail)
+                }
+            }
         }
 
         val needsAnswer = invocations.filter { spec(it.tool)?.needsApproval == true }
@@ -702,7 +752,7 @@ class AgentLoop(
                     // batch made the second call fail as stale_screen after the first one changed the
                     // page (tap the input box, then paste the text).
                     val dispatchScreen = tools.observe()
-                    ManualActionPolicy.checkScreen(invocation.tool, dispatchScreen) ?: run {
+                    ManualActionPolicy.checkScreen(invocation, dispatchScreen) ?: run {
                         val call = resolveCoordinates(invocation, dispatchScreen)
                         tools.execute(call)
                     }
@@ -777,6 +827,23 @@ class AgentLoop(
         val actionCycle = !observational && isCyclic(recentActions)
         if (actionCycle) cycleNotices += 1 else cycleNotices = 0
 
+        // Same action, same arguments, and the execution layer reports "no screen change" every
+        // time — the "keeps pressing the same thing forever" shape. Scrolling a long list and
+        // holding backspace are legitimate repeats, so those tools never count.
+        val batchSignature = executed.joinToString("|") { (call, _) ->
+            call.tool + ":" + call.arguments.entries
+                .sortedBy { it.key }
+                .joinToString(",") { "${it.key}=${it.value}" }
+        }
+        val repeatable = executed.any { (call, _) -> call.tool in REPEATABLE_TOOLS }
+        val noEffect = executed.isNotEmpty() && executed.all { it.second.screenChanged == false }
+        if (!observational && !repeatable && noEffect && batchSignature == repeatSignature) {
+            repeatCount += 1
+        } else {
+            repeatSignature = if (observational || repeatable) null else batchSignature
+            repeatCount = 1
+        }
+
         return when {
             // An explicit decision by the model wins over inferred signals.
             handoffReason != null -> AgentOutcome.FAMILY(handoffReason)
@@ -803,6 +870,19 @@ class AgentLoop(
                         "请直接用 screenshot 看，不要靠一个个点进去探索。）",
                 )
                 hook.onWarning("在重复进入又退出的循环，正在提醒它换路。")
+                null
+            }
+            repeatCount >= REPEAT_STOP_LIMIT -> AgentOutcome.STUCK(
+                "它一直在做同一个动作，页面也没有变化，我已经停了。",
+            )
+            repeatCount >= REPEAT_NOTICE_LIMIT -> {
+                transcript += AgentMessage(
+                    AgentMessage.Role.USER,
+                    content = "（系统提示：你刚刚连续做了同一个动作，而且页面没有任何变化。" +
+                        "换个做法，或者直接用 screenshot 看清页面；" +
+                        "如果这件事确实做不到，就如实说明做不到。）",
+                )
+                hook.onWarning("同一个动作反复做且页面无变化，正在提醒它换路。")
                 null
             }
             else -> null
@@ -935,9 +1015,23 @@ class AgentLoop(
         /** Cycle warnings before giving up. Single-action repeats are left to the step limit. */
         const val CYCLE_NOTICE_LIMIT = 5
 
+        /**
+         * Repeating the *same* action (same tool and same arguments) with no screen change at all is
+         * a different failure from a cycle: it is the "keeps pressing the same thing forever" shape
+         * reported as Operational Hallucination. A page fingerprint is deliberately NOT used here —
+         * real apps animate and rotate promotions — so the signal is the execution layer's own
+         * `screenChanged == false` plus an identical signature. Tools that are legitimately repeated
+         * (scrolling a long list, holding backspace) are excluded, and a wizard whose page changes on
+         * every tap resets the counter.
+         */
+        const val REPEAT_NOTICE_LIMIT = 3
+        const val REPEAT_STOP_LIMIT = 5
+        val REPEATABLE_TOOLS = setOf("scroll", "swipe", "back", "wait")
+
         /** Give up on screenshots after this many consecutive refusals. */
         const val SCREENSHOT_FAILURE_LIMIT = 2
         const val HANDOFF_TOOL = "handoff"
+        const val OPEN_APP_TOOL = "open_app"
         const val IMPOSSIBLE_TOOL = "impossible"
         const val ASK_PERSON_TOOL = "ask_person"
         const val ASK_USER_TOOL = "ask_user"

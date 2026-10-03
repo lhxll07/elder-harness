@@ -1,0 +1,1226 @@
+ 
+ ElderBench: Benchmarking Autonomous Mobile Agents for Older Adults 
+ Report GitHub Issue 
+ × 
+ Title: 
+ Content selection saved. Describe the issue below: 
+ Description: 
+ Submit without GitHub 
+ Submit in GitHub 
+ arXiv is now an independent nonprofit! 
+ Learn more 
+ &times; 
+ Back to arXiv 
+ Why HTML? 
+ Report Issue 
+ Back to Abstract 
+ Download PDF 
+ Abstract 
+ 1 Introduction 
+ 2 Related Work 
+ 2.1 GUI Agents 
+ 2.2 GUI Agent Benchmarks 
+ 2.3 Language Characteristics of Older Adults 
+ 3 Data Collection and Linguistic Analysis 
+ 3.1 Data Collection 
+ 3.2 Data Analysis 
+ 3.2.1 Syntactic Dimension 
+ 3.2.2 Semantic Dimension 
+ 3.2.3 Pragmatic Dimension 
+ 4 Benchmark 
+ 4.1 Operating Environment 
+ 4.2 Evaluation Protocol 
+ 4.2.1 Online Evaluation 
+ 4.2.2 Offline Evaluation 
+ 4.2.3 Evaluation metrics 
+ (1) Task Success Rate (SR): 
+ (2) Average Inference Latency (AIL): 
+ (3) Monetary Cost Metric (MCM): 
+ 5 Experiments 
+ 5.1 Evaluated Models and Settings 
+ 5.2 Results and Analysis 
+ 5.3 Controlled Instruction Normalization 
+ 5.4 Failure Analysis 
+ 5.5 Linguistic Feature Analysis 
+ 5.5.1 Single Feature Association 
+ 5.5.2 Cross Feature Interaction 
+ 6 Design Insights 
+ 7 Conclusion 
+ References 
+ A Participant Demographics 
+ B Data Collection Details 
+ B.1 Interview Protocol 
+ B.2 Instruction Filtering 
+ C LLM-based Linguistic Annotation 
+ C.1 Annotation Overview 
+ C.2 Prompt Template 
+ D Extended Linguistic Analysis 
+ D.1 Syntactic Dimension 
+ D.2 Semantic Dimension 
+ D.3 Pragmatic Dimension 
+ E Extended Feature Attribution Analysis 
+ E.1 Single Feature Influence 
+ E.2 Cross Feature Influence 
+ F Benchmark Implementation Details 
+ F.1 Overall Benchmark Statistics 
+ G Online Evaluation Environment 
+ G.1 Device Configuration 
+ G.2 Application Configuration 
+ H Offline Task Graph Construction 
+ H.1 Human Demonstration Collection 
+ H.2 Multi-path Task Graph Generation 
+ I Evaluation Setting Details 
+ I.1 Single-turn Evaluation 
+ J Controlled Instruction Normalization 
+ K Failure Analysis 
+ K.1 Intent Understanding and Capability Boundary 
+ K.2 Planning and State Tracking 
+ K.3 Environment Awareness 
+ K.4 Visual Localization and Action Execution 
+ L Additional Implementation Details 
+ License: arXiv.org perpetual non-exclusive license
+arXiv:2609.04850v1 [cs.AI] 04 Sep 2026 
+ ElderBench: Benchmarking Autonomous Mobile Agents for Older Adults 
+ Weide Zhan 
+ Fudan University 
+ Shanghai, China 
+ wdzhan25@m.fudan.edu.cn 
+ Qumu Shaqu 
+ Fudan University 
+ Shanghai, China 
+ 25213050317@m.fudan.edu.cn 
+ Yuanqing Liu 
+ Fudan University 
+ Shanghai, China 
+ 25213050283@m.fudan.edu.cn 
+ Peng Zhang 
+ Fudan University 
+ Shanghai, China 
+ zhangpeng_@fudan.edu.cn 
+ Jiahao Liu 
+ Fudan University 
+ Shanghai, China 
+ jiahaoliu21@m.fudan.edu.cn 
+ Kam Him Lam 
+ Fudan University 
+ Shanghai, China 
+ 24302010074@m.fudan.edu.cn 
+ Ning Gu 
+ Fudan University 
+ Shanghai, China 
+ ninggu@fudan.edu.cn 
+ Zhan Hu 
+ Fudan University 
+ Shanghai, China 
+ huzhan@fudan.edu.cn 
+ Tun Lu 
+ Fudan University 
+ Shanghai, China 
+ lutun@fudan.edu.cn 
+ Abstract 
+ While autonomous mobile agents hold great potential for assisting older adults with smartphone usage, existing GUI benchmarks mainly rely on explicit, goal-oriented instructions and rarely capture the naturally occurring language patterns of older users, such as indirect speech, referential ambiguity, and under-specified requests. This mismatch between benchmark instructions and real-world elderly interactions may hinder reliable agent deployment. To address this gap, we present ElderBench, the first benchmark for evaluating mobile GUI agents in authentic elderly-oriented scenarios. ElderBench is constructed from 249 naturally elicited smartphone tasks collected from older adults across 20 applications. We first characterize the linguistic divergence between elderly instructions and existing GUI benchmark instructions from syntactic, semantic, and pragmatic perspectives. We then evaluate mainstream GUI agents and Vision-Language Models under both online and offline settings, revealing substantial performance degradation when handling elderly-oriented instructions. Through controlled instruction normalization, failure analysis, and fine-grained linguistic feature analysis, we further identify how elderly-specific language patterns contribute to agent failures. Our findings provide actionable design insights toward more adaptive, interpretable, and age-inclusive GUI agents for older adults. 
+ 1 Introduction 
+ Recent advances in large language models (LLMs) have substantially expanded the capabilities of intelligent assistants, particularly in language understanding, reasoning, planning, and tool use Yao et al. (2022) ; Shu et al. (2024) . Building on these capabilities, LLM-based agents are evolving beyond conventional conversational systems toward autonomous assistants that can maintain contextual information, reason over user needs, and interact with external tools and digital services Liu et al. (2025a) ; Liu et al. (2025b) . Recent studies further suggest that such assistants may increasingly serve as intermediaries between users and everyday digital services, supporting activities such as search, shopping, travel planning, scheduling, recommendation, and content access Liu et al. (2026) . This shift moves human–computer interaction beyond merely responding to user queries toward interpreting user intent and translating it into concrete actions in digital environments. 
+ Graphical User Interface (GUI) agents represent an important realization of this emerging paradigm. By combining multimodal perception, reasoning, and action generation, GUI agents can directly operate digital interfaces through human-like actions such as clicking, swiping, and typing, allowing users to accomplish smartphone tasks through natural-language instructions Zhang et al. (2025a) ; Wang et al. (2023) ; Hong et al. (2024) ; Rawles et al. (2023) . Recent advances in Vision-Language Models (VLMs) have further strengthened agents’ ability to perceive interface states, identify actionable elements, and plan multi-step interaction trajectories OpenAI (2023) ; Anthropic (2023) ; Glm et al. (2024) . Compared with traditional conversational assistants that primarily provide textual guidance, GUI agents can directly carry out interface operations on behalf of users, potentially reducing the need to understand application-specific procedures. 
+ This capability is particularly valuable for older adults, who often encounter difficulties in smartphone usage due to limited ICT literacy, unfamiliar interface conventions, and challenges in understanding complex digital procedures Korpela et al. (2023) ; Leung et al. (2012) ; Pang et al. (2015) . Tasks such as online shopping, transportation booking, and mobile payment, which may be routine for younger users, can therefore become substantial barriers for older adults. By allowing users to express their needs in natural language and delegating the corresponding interface operations to an agent, GUI agents offer a promising approach to lowering these barriers while preserving a visible and inspectable interaction process. 
+ However, whether current GUI agents can reliably assist older adults remains unclear. Existing GUI agent benchmarks, such as AndroidWorld Rawles et al. (2025) , MobileWorld Kong et al. (2026) , and AndroidLab Xu et al. (2025b) , primarily evaluate agents using explicit, goal-oriented, and carefully specified instructions. For example, a typical benchmark instruction may specify the exact target, location, and required operation: "Find the resume file downloaded within the last month in the Download folder, and send it to HR_chen@gmail.com with the subject candidates_cv." Although such instructions facilitate reliable evaluation, they do not reflect how older adults naturally express smartphone needs. In real-world interactions, older users often provide indirect requests, incomplete descriptions, referential expressions, and non-standard language patterns due to limited technical vocabulary and unfamiliarity
+with digital interfaces Sharifi et al. (2025) . This discrepancy between benchmark instructions and elderly users’ natural expressions creates a critical evaluation gap for age-inclusive GUI agents. 
+ Despite the importance of this problem, existing benchmarks provide limited support for evaluating GUI agents in elderly-oriented scenarios, mainly due to the lack of naturally collected older-adult interaction data. This motivates three research questions: RQ1: How do naturally elicited elderly GUI instructions differ from conventional GUI benchmark instructions? RQ2: How well can current GUI agents and VLMs execute tasks described through elderly-oriented instructions? RQ3: What linguistic and execution-level factors contribute to agent failures in elderly scenarios? 
+ To answer these questions, we introduce ElderBench , the first benchmark designed for evaluating mobile GUI agents under authentic elderly-oriented instructions. We collect 249 naturally elicited smartphone tasks from older adults through semi-structured interviews, covering 20 Android applications. ElderBench provides (1) linguistic characterization of elderly GUI instructions, (2) online and offline evaluation protocols for measuring agent execution performance, and (3) analysis tools including controlled instruction normalization, failure analysis, and linguistic factor analysis to understand the causes of agent failures. 
+ Our contributions are summarized as follows: 
+ • 
+ We introduce the first real-world elderly-oriented GUI instruction benchmark, consisting of 249 naturally elicited smartphone tasks collected from older adults. We systematically characterize their linguistic differences from conventional GUI instructions across syntactic, semantic, and pragmatic dimensions. 
+ • 
+ We establish ElderBench, an evaluation framework for mobile GUI agents and VLMs under elderly-oriented scenarios. Through online and offline evaluations, we reveal substantial limitations of current agents in handling naturally occurring older-adult instructions. 
+ • 
+ We conduct controlled normalization, failure analysis, and linguistic factor analysis to identify the sources of agent failures and derive practical design insights for developing more adaptive and age-inclusive GUI agents. 
+ Table 1: Comparison with representative mobile GUI-agent benchmarks. TU denotes target-user elicitation; PS denotes population-specific design; Nat. denotes naturally elicited user language phenomena; and LA denotes systematic linguistic analysis. ✓ \checkmark , △ \triangle , and × \times indicate full, partial, and no support, respectively. 
+ Benchmark 
+ Apps 
+ Tasks 
+ TU 
+ PS 
+ Nat. 
+ LA 
+ AndroidWorld Rawles et al. (2025) 
+ 20 
+ 116 
+ × \times 
+ × \times 
+ × \times 
+ × \times 
+ AndroidLab Xu et al. (2025b) 
+ 9 
+ 138 
+ × \times 
+ × \times 
+ × \times 
+ × \times 
+ A3 Chai et al. (2026) 
+ 20 
+ 100 
+ × \times 
+ × \times 
+ × \times 
+ × \times 
+ ProBench Yang et al. (2026) 
+ 34 
+ 217 
+ × \times 
+ × \times 
+ × \times 
+ × \times 
+ MobileWorld Kong et al. (2026) 
+ 20 
+ 201 
+ × \times 
+ × \times 
+ △ \triangle 
+ × \times 
+ KnowU-Bench Chen et al. (2026) 
+ 23 
+ 192 
+ × \times 
+ ✓ \checkmark 
+ △ \triangle 
+ × \times 
+ ElderBench 
+ 20 
+ 249 
+ ✓ \checkmark 
+ ✓ \checkmark 
+ ✓ \checkmark 
+ ✓ \checkmark 
+ 2 Related Work 
+ 2.1 GUI Agents 
+ Driven by the rapid advancement of Large Foundation Models (LFMs), AI systems have evolved from conventional conversational assistants toward autonomous agents capable of planning and executing complex tasks Chen et al. (2024) ; Cheng et al. (2024) ; Zhao et al. (2023) ; Yao et al. (2022) .
+Among these emerging paradigms, GUI agents have attracted increasing attention due to their ability to directly interact with digital environments through human-like actions, such as tapping, swiping, and typing, across smartphones, desktops, and web platforms Lu et al. (2024) ; Iong et al. (2024) ; Hong et al. (2024) ; Nguyen et al. (2025) . 
+ GUI agents provide a promising approach for assisting older adults by executing operations directly on interfaces rather than requiring users to understand complicated procedures. Their visible interaction process also improves transparency and preserves users’ sense of control when delegating smartphone tasks Zhang et al. (2025b) . 
+ The effectiveness of GUI agents largely depends on the visual understanding and reasoning capabilities of Vision-Language Models (VLMs). OmniParser Lu et al. (2024) explores VLM-based UI parsing by transforming screenshots into structured interface elements. AutoGLM Liu et al. (2024) further incorporates multimodal context understanding and strategic planning to automate user tasks. UI-TARS Wang et al. (2025) investigates large-scale VLM-based GUI interaction through reinforcement learning. Specifically targeting older adults, WePilot Zhang et al. (2025b) leverages visual understanding capabilities to assist older users in completing smartphone operations and reducing digital barriers. 
+ 2.2 GUI Agent Benchmarks 
+ Reliable benchmarks are essential for evaluating the capabilities and limitations of GUI agents. Existing benchmarks mainly follow two evaluation paradigms: online interaction-based evaluation and offline trajectory-based evaluation. 
+ Online benchmarks evaluate agents in executable environments where actions dynamically change system states. In mobile scenarios, AndroidWorld Rawles et al. (2025) provides a functional Android environment with programmatically generated tasks across real-world applications, AndroidLab Xu et al. (2025b) introduces an infrastructure for evaluating multimodal agents on mobile devices, and MobileWorld Kong et al. (2026) further explores long-horizon cross-application interaction in a virtual emulator environment. 
+ Offline benchmarks instead evaluate agents using pre-recorded trajectories and annotated GUI states. AitW Rawles et al. (2023) provides large-scale human demonstrations containing screenshots, actions, and task goals, while AMEX Chai et al. (2025) enriches offline evaluation with multi-level GUI annotations. 
+ Beyond standard task completion, recent benchmarks have begun exploring more realistic interaction challenges, including incomplete instructions and ambiguous user intents. Mobile-Bench-v2 Xu et al. (2025a) introduces an ambiguous instruction setting by removing task-specific slots from complete instructions and evaluating whether agents can recover missing information or initiate clarification. These studies demonstrate the importance of moving beyond fully specified instructions toward uncertain user-agent interactions. 
+ As summarized in Table  1 , existing mobile GUI benchmarks provide broad application and task coverage, but rarely combine target-user elicitation, population-specific design, naturally occurring language phenomena, and systematic linguistic analysis. ElderBench contains 249 tasks across 20 applications, representing the largest task collection among the compared benchmarks. More importantly, its instructions are directly elicited from older adults rather than constructed or modified from predefined task templates, enabling the evaluation of indirect speech, referential ambiguity, disfluency, and under-specification in authentic usage scenarios. 
+ 2.3 Language Characteristics of Older Adults 
+ Older adults increasingly rely on digital technologies for communication, healthcare, transportation, and daily services. However, many older adults still use only a limited subset of available applications and functions due to restricted digital literacy and insufficient technical support Gelderblom et al. (2010) ; Li and Luximon (2016) ; Li et al. (2018) ; Olphert et al. (2005) ; Barnard et al. (2013) ; Kim and Choudhury (2020) ; Pang et al. (2021) . 
+ Beyond operational difficulties, prior studies have shown that older adults exhibit distinctive communication patterns when describing technology-related needs. Compared with younger users, older adults are more likely to rely on contextual descriptions, fragmented expressions, and ambiguous references when seeking technical assistance Sharifi et al. (2025) ; Cho et al. (2021) . These language characteristics create additional challenges for autonomous agents that typically assume explicit and standardized user commands. 
+ Although GUI agents provide a promising approach for reducing digital barriers among older adults, existing evaluation frameworks rarely consider how older users naturally formulate their intentions. ElderBench therefore complements previous GUI benchmarks by focusing on the linguistic challenges arising from authentic elderly-oriented interactions. 
+ 3 Data Collection and Linguistic Analysis 
+ 3.1 Data Collection 
+ Participant Recruitment. We recruited a heterogeneous cohort of 28 older adults aged between 59 and 84 years old to capture diverse linguistic expressions and smartphone usage patterns among older users. The participants consisted of 8 males (28.57%) and 20 females (71.43%), covering different age ranges within the older adult population. Beyond demographic diversity, participants exhibited substantial variation in smartphone familiarity and usage habits: some participants had more than ten years of smartphone experience, while others had only 1–8 years of experience. Their daily smartphone engagement also varied considerably, ranging from light users with approximately 1–2 hours of daily usage to highly engaged users spending more than 5–6 hours per day on mobile devices.
+To further increase contextual diversity, participants were recruited from multiple provinces and municipalities in China, including Shanghai, Anhui, Jiangsu, Hebei, and other regions.
+Before collecting task instructions, we explained the research objectives and anonymization policy for raw data. All data collection activities were conducted upon receiving verbal informed consent from participants. Demographics are summarized in supplements. 
+ Data Collection. To capture naturally occurring elderly GUI instructions, we conducted semi-structured interviews Pierrès et al. (2025) ; Liu et al. (2025c) without predefined task categories or linguistic examples. The interviews consisted of two phases. First, participants described their routine smartphone activities and digital tasks encountered in daily life. After introducing the concept of GUI agents, participants discussed how such agents could assist their existing smartphone usage. Second, we explored additional scenarios where participants experienced difficulties or desired assistance, allowing them to describe tasks they would like agents to perform. 
+ After removing two invalid instructions through discussion among three authors, we obtained 249 valid elderly GUI instructions from 251 collected instructions. 
+ 3.2 Data Analysis 
+ To characterize how elderly GUI instructions (ElderBench’s instructions) differ from conventional GUI instructions, we compare ElderBench instructions with MobileWorld instructions Kong et al. (2026) as a representative baseline. Following linguistic theory Silverstein (1972) ; Kasirzadeh and Gabriel (2023) , we analyze instructions from three dimensions: syntax, semantics, and pragmatics. We report the main findings below, while complete statistics are provided in the supplementary material. 
+ 3.2.1 Syntactic Dimension 
+ Grounded in linguistic theory Silverstein (1972) ; Kasirzadeh and Gabriel (2023) , we analyze instruction length, predicate density (verb counts), and structural patterns, considering that GUI tasks are fundamentally action-oriented. Compared with baseline instructions, which are mainly explicit and action-driven descriptions designed for complex workflows, ElderBench instructions exhibit shorter and more heterogeneous structures. 
+ Conversely, ElderBench’s instructions are uniquely characterized by “minimalist” and multi-dimensional heterogeneity. Specifically, 78.31% of ElderBench instructions contain fewer than 20 characters. Moreover, while baseline instructions are dominated by compound structures, elderly instructions are distributed across multiple syntactic patterns. Elliptical and narrative structures, which rarely appear in baseline instructions, account for 47.80% of elderly instructions. 
+ This structural gap indicates that elderly-oriented GUI scenarios introduce challenges beyond long-horizon planning: agents must first infer user intent from short, incomplete, and non-canonical expressions before generating executable actions. 
+ Figure 1: Overview of the ElderBench benchmarking framework. The architecture has a dual-module assessment mode supporting both Online and Offline evaluation modes to systematically evaluate autonomous mobile agents under elderly GUI instructions. 
+ 3.2.2 Semantic Dimension 
+ We perform thematic analysis
+ Clarke and Braun (2017) to identify semantic differences between ElderBench and baseline instructions. We categorize elderly instructions into five phenomena: Clear and Explicit, Disfluency/Correction, Indirect Speech, Referential Ambiguity, and Under-specification (definitions and complete distributions are provided in the supplementary material). 
+ Implicit state descriptions. Baseline instructions primarily specify explicit actions, resulting in 0.00% occurrence of Disfluency/Correction, Referential Ambiguity, and Indirect Speech. In contrast, ElderBench contains 19.28% Indirect Speech examples, such as “The sound is too low, I cannot hear it.” Among these instructions, 22.92% contain no explicit verbs, suggesting that older adults often describe desired states or difficulties rather than directly specifying operational actions. 
+ Context-dependent references. ElderBench also contains 12.85% Referential Ambiguity cases, where users rely on expressions anchored in the current interface context, such as “Add this number to the blacklist” or “Screenshot this page.” Such instructions cannot be reliably interpreted from text alone, highlighting the importance of visual grounding for GUI agents. GUI agents must be capable of associating ambiguous pronouns such as this and that with specific spatial UI components or text blocks rendered in real time on the active screen. 
+ 3.2.3 Pragmatic Dimension 
+ From a pragmatic perspective, we analyze the application scenarios and functional demands reflected in elderly instructions. Elderly users’ requests are mainly concentrated in Life Services (e.g., e-commerce, digital payment, and transportation), Social Communication, and System Settings. These scenarios correspond to essential daily activities and accessibility needs, such as font adjustment, storage management, and ringtone customization. (Complete scenario distributions appear in supplements.) 
+ 4 Benchmark 
+ To systematically evaluate GUI agents in elderly-oriented smartphone scenarios, we construct ElderBench , a benchmark consisting of 249 naturally collected tasks across 20 Android applications. ElderBench adopts a dual-mode evaluation framework (Figure  1 ) to balance real-world interaction fidelity and evaluation controllability. 
+ 4.1 Operating Environment 
+ ElderBench focuses on single-turn GUI task execution, where each instance contains one user instruction from an initial device state. This design is motivated by three factors: first, as the first elderly-oriented GUI benchmark, we aim to establish a fundamental evaluation setting for naturally occurring older-adult instructions; second, our interviews show that older adults frequently express digital needs as independent task requests, reflecting difficulties in maintaining complex interaction contexts under limited ICT literacy; Third, from a technical perspective, most current mobile GUI agents still operate primarily on single-turn user instructions; therefore, single-turn evaluation best reflects the present state of the technology. 
+ Following previous GUI agent studies Liu et al. (2024) , we define the action space as human-like operations, including Tap, Long Press, Swipe, Type, Home, and Back. All coordinates are normalized into the range [0,1000] and automatically mapped to device-specific pixel coordinates. 
+ ElderBench provides two complementary evaluation modes: Online evaluation and Offline evaluation. The online setting measures closed-loop interaction in live environments, while the offline setting provides a reproducible evaluation protocol based on human-demonstrated task graphs. Together, they cover 249 tasks across 20 applications from elderly daily usage scenarios. 
+ 4.2 Evaluation Protocol 
+ ElderBench adopts two complementary evaluation protocols: online and offline evaluation. The protocol assignment is determined at the task level based on execution reproducibility, privacy constraints, and environment stability.
+The online subset contains 130 tasks across 15 applications. These tasks are executed in a closed-loop environment, where agents directly interact with live applications and receive updated GUI states after each action. The offline subset contains 119 tasks across five applications, including payment, communication, ride-hailing, shopping, and travel scenarios. These tasks are evaluated against preconstructed task graphs derived from human demonstrations, avoiding privacy-sensitive operations and unstable external factors. 
+ 4.2.1 Online Evaluation 
+ The online evaluation mode evaluates agents through direct interaction with Android environments. Agents perceive screenshots and contextual information, generate structured actions, and execute them through Android Debug Bridge (ADB), forming a closed-loop perception-action cycle. 
+ A task is considered successful only when both agent termination and task verification are satisfied:
+ Success = Agent_Finished ∩ Judge_Passed \text{Success}=\text{Agent\_Finished}\cap\text{Judge\_Passed} . 
+ For automated verification, we adopt a VLM-as-a-Judge paradigm inspired by Shih et al. (2026) . Specifically, Qwen3-VL-Flash is used as a zero-shot evaluator based on three inputs: (1) the final screenshot, (2) sampled intermediate frames, and (3) the active Android Activity. To validate the reliability of automated evaluation, we manually verified AutoGLM results and obtained 93.08% agreement between human judgment and the VLM judge. 
+ 4.2.2 Offline Evaluation 
+ To improve reproducibility and avoid uncontrolled factors in partially real-world applications (e.g., account states, dynamic content, and authentication restrictions), we construct an offline evaluation set based on human demonstrations, following previous offline GUI benchmarks Xu et al. (2025a) ; Rawles et al. (2023) ; Chai et al. (2025) . 
+ For each offline task, human annotators execute the target instruction on physical devices and record the interaction trajectory: ( O t , V t , A t ) (O_{t},V_{t},A_{t}) , where O t O_{t} represents the screenshot, V t V_{t} represents the UI hierarchy (XML), and A t A_{t} represents the executed action (e.g., Tap, Swipe, Type). Multiple valid trajectories are collected for the same task to avoid dependence on a single golden path. 
+ The collected trajectories are merged into task graphs. Specifically, we extract UI signatures, anchor texts, package information, and component-level features to identify equivalent states. Matched states are merged as graph nodes, while human-executed actions are represented as directed edges. During evaluation, an agent succeeds if its predicted action sequence reaches the terminal node of the task graph. Click actions allow a 50-pixel tolerance, and text inputs support fuzzy matching. The task is only considered complete when the agent explicitly outputs finish(…) and reaches the predefined DONE state. 
+ 4.2.3 Evaluation metrics 
+ To provide a multi-dimensional assessment of mobile GUI agents under elderly-oriented scenarios, we establish an evaluation suite: Task Success Rate, Average Inference Latency and Monetary Cost Metric: 
+ (1) Task Success Rate (SR): 
+ The ratio of successfully completed tasks to total tasks: 
+ SR = 1 N ​ ∑ i = 1 N 𝕀 ⁡ ( Success i ) \text{SR}=\frac{1}{N}\sum_{i=1}^{N}\mathbb{I}(\text{Success}_{i}) 
+ (1) 
+ where N N is the total task count, and indicator 𝕀 ⁡ ( ⋅ ) = 1 \mathbb{I}(\cdot)=1 if task i i satisfies the online/offline completion criteria, and 0 0 otherwise. 
+ (2) Average Inference Latency (AIL): 
+ Measures the wall-clock duration per operational turn to capture temporal burden.
+For an evaluation subset 𝒟 m \mathcal{D}_{m} , where m ∈ { online , offline , overall } m\in\{\mathrm{online},\mathrm{offline},\mathrm{overall}\} , it is defined as: 
+ AIL m = ∑ i ∈ 𝒟 m ∑ t = 1 T i ( Δ ​ τ reasoning ( i , t ) + Δ ​ τ parsing ( i , t ) ) ∑ i ∈ 𝒟 m T i , \mathrm{AIL}_{m}=\frac{\sum_{i\in\mathcal{D}_{m}}\sum_{t=1}^{T_{i}}\left(\Delta\tau_{\mathrm{reasoning}}^{(i,t)}+\Delta\tau_{\mathrm{parsing}}^{(i,t)}\right)}{\sum_{i\in\mathcal{D}_{m}}T_{i}}, 
+ (2) 
+ where T i T_{i} denotes the total operation steps for task i i . Δ ​ τ reasoning ( i , t ) \Delta\tau_{\mathrm{reasoning}}^{(i,t)} and Δ ​ τ parsing ( i , t ) \Delta\tau_{\mathrm{parsing}}^{(i,t)} denote the model inference time and structured action-parsing overhead at step t t , respectively. 
+ (3) Monetary Cost Metric (MCM): 
+ Quantifies deployment cost by tracking average token consumption per task: 
+ MCM = 1 N ​ ∑ i = 1 N ( 𝒦 prompt ( i ) + 𝒦 gen ( i ) ) \text{MCM}=\frac{1}{N}\sum_{i=1}^{N}\left(\mathcal{K}_{\text{prompt}}^{(i)}+\mathcal{K}_{\text{gen}}^{(i)}\right) 
+ (3) 
+ where 𝒦 prompt \mathcal{K}_{\text{prompt}} and 𝒦 gen \mathcal{K}_{\text{gen}} are the quantities of consumed input and output tokens for task i i . 
+ Table 2: 
+Performance on ElderBench under the overall, online, and offline evaluation protocols. Online evaluation contains 130 tasks across 15 applications, while offline evaluation contains 119 tasks across 5 applications. SR denotes Task Success Rate (%), AIL denotes Average Inference Latency per operational turn (seconds), and MCM denotes average token consumption per task. The best result within each model category and evaluation mode is highlighted in bold.
+ Architecture 
+ Model 
+ Overall (249) 
+ Online (130) 
+ Offline (119) 
+ SR ↑ \uparrow 
+ AIL ↓ \downarrow 
+ MCM ↓ \downarrow 
+ SR ↑ \uparrow 
+ AIL ↓ \downarrow 
+ MCM ↓ \downarrow 
+ SR ↑ \uparrow 
+ AIL ↓ \downarrow 
+ MCM ↓ \downarrow 
+ VLMs 
+ Qwen3-VL-Flash 
+ 22.89 
+ 3.57 
+ 66,657 
+ 40.00 
+ 3.74 
+ 118,347 
+ 4.20 
+ 1.99 
+ 10,189 
+ GLM-4.6V 
+ 23.29 
+ 13.08 
+ 25,768 
+ 33.85 
+ 13.11 
+ 30,465 
+ 11.76 
+ 13.04 
+ 20,638 
+ Kimi K2.5 
+ 29.72 
+ 7.40 
+ 52,900 
+ 43.85 
+ 6.82 
+ 87,732 
+ 14.29 
+ 10.45 
+ 14,849 
+ Qwen3-VL-Plus 
+ 47.39 
+ 6.66 
+ 35,260 
+ 76.15 
+ 7.57 
+ 57,336 
+ 15.97 
+ 3.59 
+ 11,144 
+ Gemini-3-Flash 
+ 49.80 
+ 8.00 
+ 21,660 
+ 70.00 
+ 8.87 
+ 30,572 
+ 27.73 
+ 5.67 
+ 11,925 
+ GUI 
+ Agents 
+ Doubao-1.5-UI-TARS (7B) 
+ 32.53 
+ 7.24 
+ 29,741 
+ 53.08 
+ 6.78 
+ 48,239 
+ 10.08 
+ 9.68 
+ 9,534 
+ GUI-Owl-1.5 (8B-Think) 
+ 45.38 
+ 8.00 
+ 66,293 
+ 68.46 
+ 9.77 
+ 107,507 
+ 20.17 
+ 2.64 
+ 21,271 
+ UI-Venus-1.5 (8B) 
+ 41.37 
+ 6.44 
+ 35,847 
+ 50.77 
+ 7.55 
+ 45,764 
+ 31.09 
+ 3.14 
+ 25,015 
+ AutoGLM (Phone-9B) 
+ 36.55 
+ 6.97 
+ 43,680 
+ 51.54 
+ 7.05 
+ 65,150 
+ 20.17 
+ 6.70 
+ 20,224 
+ Table 3: 
+Successful tasks before and after normalization on a stratified 100-task subset. “Orig.” and “Rewr.” denote the original and rewritten instructions, and Δ \Delta their difference.
+ Category 
+ Share (%) 
+ #Tasks 
+ AutoGLM (Phone-9B) 
+ Qwen3-VL-Flash 
+ Orig. 
+ Rewr. 
+ 𝚫 \boldsymbol{\Delta} 
+ Orig. 
+ Rewr. 
+ 𝚫 \boldsymbol{\Delta} 
+ Clear and Explicit 
+ 17.67 
+ 18 
+ 5 
+ 9 
+ +4 
+ 3 
+ 7 
+ +4 
+ Disfluency/Correction 
+ 12.05 
+ 12 
+ 5 
+ 7 
+ +2 
+ 0 
+ 5 
+ +5 
+ Indirect Speech 
+ 19.28 
+ 19 
+ 6 
+ 12 
+ +6 
+ 5 
+ 9 
+ +4 
+ Referential Ambiguity 
+ 12.85 
+ 13 
+ 5 
+ 10 
+ +5 
+ 5 
+ 7 
+ +2 
+ Under-specification 
+ 38.15 
+ 38 
+ 16 
+ 23 
+ +7 
+ 10 
+ 18 
+ +8 
+ Overall 
+ 100.00 
+ 100 
+ 37 
+ 61 
+ +24 
+ 23 
+ 46 
+ +23 
+ 5 Experiments 
+ We conduct experiments to answer two questions: (1) how well current GUI agents and VLMs execute naturally elicited older-adult instructions, and (2) which linguistic and execution-level factors contribute to their failures. We first evaluate the performance of mainstream GUI agents and VLMs under ElderBench’s online and offline protocols.
+We then conduct controlled instruction normalization, trajectory-level failure analysis, and linguistic feature analysis to examine the sources of performance degradation. 
+ 5.1 Evaluated Models and Settings 
+ To fully evaluate the performance of autonomous systems applied in elderly-oriented scenarios, we select a range of mainstream GUI agents and VLMs as evaluation subjects. The selected GUI agents cover AutoGLM Liu et al. (2024) , Doubao-1.5-UI-TARS Seed (2025) , GUI-Owl-1.5 Xu et al. (2026) and UI-Venus-1.5 Team et al. (2026b) . Furthermore, we also evaluate VLMs for GUI navigation tasks, namely Qwen3-VL-Flash Bai et al. (2025) , GLM-4.6V Hong et al. (2025) , Qwen3-VL-Plus Bai et al. (2025) , Gemini-3-Flash Comanici et al. (2025) and Kimi K2.5  Team et al. (2026a) . 
+ For the specialized frameworks (AutoGLM, Doubao-1.5-UI-TARS, GUI-Owl-1.5, and UI-Venus-1.5), we strictly adhere to their official open-source repositories and native implementation configurations to ensure an uncorrupted evaluation. Aligning with the dynamics execution of real-world smartphone operating systems and following the experimental setup by prior literature  Xu et al. (2025b) , we impose a strict execution budget for every task: the maximum trajectory length is bounded at 25 25 operational steps, coupled with a hard wall-clock timeout threshold of 120 120 seconds.
+Full device configurations, app versions, account statuses and permission settings are in supplementary materials. 
+ 5.2 Results and Analysis 
+ Table  2 reports the overall, online, and offline performance of the evaluated VLMs and GUI agents. The online subset contains 130 tasks across 15 applications, while the offline subset contains 119 tasks across five applications. Since the two subsets cover different tasks and applications, their results should be viewed as complementary rather than as a controlled comparison of evaluation protocols. 
+ Overall Performance. 
+ElderBench remains challenging across both model categories. Among VLMs, Gemini-3-Flash achieves the highest overall SR of 49.80%, followed by Qwen3-VL-Plus at 47.39%. Among GUI agents, GUI-Owl-1.5 performs best with 45.38% SR, followed by UI-Venus-1.5 at 41.37%. No model exceeds 50% overall SR, revealing substantial room for improvement on naturally elicited older-adult instructions. 
+ Online and Offline Evaluation. 
+Models generally obtain higher SR online. Qwen3-VL-Plus and GUI-Owl-1.5 achieve the best online SRs among VLMs and GUI agents,
+reaching 76.15% and 68.46%, respectively. In contrast, Gemini-3-Flash and UI-Venus-1.5 perform best offline, with SRs of
+27.73% and 31.09%. The lower offline scores may partly result from the task-graph protocol, which requires each predicted action to match
+a valid graph edge, whereas online agents can observe updated states and recover through alternative paths. However, the gap may also reflect
+differences in task and application composition. 
+ Efficiency Trade-offs. 
+No model simultaneously optimizes success, latency, and token cost. Qwen3-VL-Flash has the lowest overall AIL of 3.57 seconds but only
+22.89% SR and high token consumption. Gemini-3-Flash achieves the highest overall VLM SR with the lowest VLM token cost, while
+UI-Venus-1.5 provides the best latency–accuracy balance among GUI agents. Offline MCM is consistently lower, whereas AIL varies across
+models, suggesting that per-step latency is strongly model-dependent. 
+ 5.3 Controlled Instruction Normalization 
+ Overall performance gaps cannot isolate agent failures caused by senior-specific language from inherent GUI task difficulty. To disentangle the two factors, we run controlled instruction normalization with fixed tasks, device states, app environments and evaluation protocols. 
+ We sample 100 stratified instructions following ElderBench’s five semantic categories: Clear and Explicit, Disfluency/Correction, Indirect Speech, Referential Ambiguity, Under-specification. All original instructions are rewritten into concise, action-focused variants while retaining task intent. The rewritten instructions were manually verified, with 90% accepted directly and 10% revised by the authors to ensure semantic consistency. 
+ We evaluate Qwen3-VL-Flash Bai et al. (2025) and AutoGLM Liu et al. (2024) on both original and rewritten instructions. As each rewritten instruction pairs with identical tasks and environments, performance differences quantifies the link between linguistic formulation and task completion. 
+ Effect of Instruction Normalization. 
+As shown in Table  3 , normalization increases successful tasks from 37 to 61 for AutoGLM and from 23 to 46 for Qwen3-VL-Flash. Both gains are significant under exact McNemar’s test ( p &lt; 0.001 p&lt;0.001 ), with paired-bootstrap 95% CIs of [ 14 , 34 ] [14,34] and [ 12 , 34 ] [12,34] percentage points. Gains appear across all categories, indicating that linguistic mismatch is a substantial failure source, alongside persistent planning, state-tracking, and environment-understanding challenges. 
+ 5.4 Failure Analysis 
+ To identify the execution-stage bottlenecks behind task failures, we manually examined all 63 failed trajectories produced by AutoGLM on the 130-task online subset, where it achieved an SR of 51.54%. AutoGLM was selected because it provides a complete closed-loop execution trace and represents a competitive GUI agent. 
+ As shown in Table  10 , failures are dominated by intent understanding and capability-boundary errors (57.1%). These cases include interpreting indirect requests as knowledge questions, resolving vague references without sufficient evidence, and repeatedly searching for functions unavailable under the current application, permission, or action space. 
+ Long-horizon planning and state-tracking errors account for another 33.3%. Typical behaviors include omitting prerequisite steps, repeating completed operations, continuing after reaching the goal, and following the original plan after the observed interface has
+diverged from the expected state. By comparison, device-environment awareness (6.4%) and visual/action execution errors (3.2%) occur less frequently. The former mainly involves assuming unavailable applications, accounts, or permissions, whereas the latter includes
+mislocalized taps and incorrect structured actions. 
+ Together, the first two categories account for 90.4% of all analyzed failures, indicating that AutoGLM’s primary bottlenecks in this subset lie in interpreting underspecified user goals and maintaining coherent multi-step execution, rather than in low-level visual grounding alone. 
+ Table 4: Primary causes of AutoGLM failures on the online subset
+( n = 63 n=63 ). 
+ Failure Category 
+ Count 
+ Percentage (%) 
+ Intent/Capability Boundary 
+ 36 
+ 57.1 
+ Planning/State Tracking 
+ 21 
+ 33.3 
+ Environment Awareness 
+ 4 
+ 6.4 
+ Visual/Action Execution 
+ 2 
+ 3.2 
+ Total 
+ 63 
+ 100.0 
+ 5.5 Linguistic Feature Analysis 
+ To explore execution bottlenecks of GUI agents in elderly-oriented scenarios, we perform fine-grained attribution analysis. We correlate elderly GUI instruction features with overall execution outcomes, separating single feature effects and cross feature influence.
+We provide additional implementation details in the supplementary material. 
+ 5.5.1 Single Feature Association 
+ Our analysis reveals several linguistic characteristics associated with agent performance. 
+ (1) Challenges of Implicit and Incomplete Expressions. Elliptical and Indirect Speech instructions are associated with lower success rates. These expressions often omit explicit operational predicates or describe desired states rather than concrete actions, requiring agents to infer missing action sequences. For example, agents are prone to failure on instructions such as “I can’t see it, make it bigger” and “The sound is too low, I cannot hear it,” where they need to translate abstract user states into operations such as changing display or volume settings.
+ (2) Scenario-dependent Performance Variation. The impact of linguistic characteristics also varies across task scenarios. Information inquiry tasks generally achieve higher success rates due to relatively simple execution flows, whereas interaction-intensive scenarios such as System Settings and Tool Assistance present greater challenges. 
+ 5.5.2 Cross Feature Interaction 
+ Agent failures are rarely associated with a single linguistic property; instead, they emerge from interactions among syntactic, semantic, and pragmatic factors. We identify three representative interaction patterns. 
+ (1) Scenario-Specific Tolerance for Verbosity: While excessive text length generally impairs execution, detailed descriptive expressions in “Information inquiry”-oriented tasks actually deliver effective restrictive keywords, improving the success rate of agent operations ( + 0.70 ) (+0.70) .
+ (2) Complexity antagonism : Long text paired with "System setting" tasks yields notable negative interaction ( − 0.42 ) (-0.42) .
+ (3) Linguistic attribute conflict : "Canonical" and "Indirect Speech" show strong negative correlation ( − 0.34 ) (-0.34) , and their combination triggers conflicting effects. 
+ 6 Design Insights 
+ Based on ElderBench results and linguistic analysis, we derive three design implications for elderly-oriented GUI agents.
+ (1) State-Aware Intent Understanding. 
+Since older adults often express needs through implicit states rather than explicit actions, agents should infer user situations and translate them into executable operations.
+ (2) Proactive Clarification. 
+The difficulty of Elliptical and Disfluency/Correction instructions suggests that agents should detect insufficient specifications and seek clarification before uncertain execution.
+ (3) Context-Aware Parsing. 
+Because linguistic complexity has different effects across scenarios, agents should adapt instruction interpretation according to both language patterns and task contexts. 
+ 7 Conclusion 
+ We introduce ElderBench, the first mobile GUI-agent benchmark built from naturally elicited older-adult instructions. Linguistic analysis reveals substantial differences from conventional benchmark language, while evaluations of mainstream GUI agents and VLMs expose persistent performance limitations. Controlled normalization, failure analysis, and feature-level attribution further identify linguistic mismatch and execution bottlenecks, informing the design of more adaptive and age-inclusive GUI agents. 
+ References 
+ Anthropic (2023) 
+ P. Anthropic 
+ Introducing claude .
+ March 14 , pp. 2023 .
+ Cited by: §1 .
+ Bai et al. (2025) 
+ S. Bai, Y. Cai, R. Chen, K. Chen, X. Chen, Z. Cheng, L. Deng, W. Ding, C. Gao, C. Ge, et al. 
+ Qwen3-vl technical report .
+ arXiv preprint arXiv:2511.21631 .
+ Cited by: Appendix J ,
+ §5.1 ,
+ §5.3 .
+ Barnard et al. (2013) 
+ Y. Barnard, M. D. Bradley, F. Hodgson, and A. D. Lloyd 
+ Learning to use new technologies by older adults: perceived difficulties, experimentation behaviour and usability .
+ Computers in human behavior 29 ( 4 ), pp. 1715–1724 .
+ Cited by: §2.3 .
+ Chai et al. (2025) 
+ Y. Chai, S. Huang, Y. Niu, H. Xiao, L. Liu, G. Wang, D. Zhang, S. Ren, and H. Li 
+ Amex: android multi-annotation expo dataset for mobile gui agents .
+ In Findings of the Association for Computational Linguistics: ACL 2025 ,
+ pp. 2138–2156 .
+ Cited by: §2.2 ,
+ §4.2.2 .
+ Chai et al. (2026) 
+ Y. Chai, S. Tang, H. Xiao, W. Lin, H. Li, J. Zhang, L. Liu, P. Zhao, G. Liu, G. Wang, et al. 
+ A3: android agent arena for mobile gui agents with essential-state procedural evaluation .
+ In Findings of the Association for Computational Linguistics: ACL 2026 ,
+ pp. 3774–3789 .
+ Cited by: Table 1 .
+ Chen et al. (2026) 
+ T. Chen, Z. Lu, Z. Xu, G. Shao, S. Zhao, F. Tang, Y. Du, K. Song, Y. Liu, Y. Yan, et al. 
+ Knowu-bench: towards interactive, proactive, and personalized mobile agent evaluation .
+ arXiv preprint arXiv:2604.08455 .
+ Cited by: Table 1 .
+ Chen et al. (2024) 
+ X. Chen, J. TANG, X. CHEN, and Y. LIN 
+ A survey on large language model based autonomous agents .
+ In CCL 2024–23rd Chinese natl conf comput linguist ,
+ Vol. 2 , pp. 141–150 .
+ Cited by: §2.1 .
+ Cheng et al. (2024) 
+ Y. Cheng, C. Zhang, Z. Zhang, X. Meng, S. Hong, W. Li, Z. Wang, Z. Wang, F. Yin, J. Zhao, et al. 
+ Exploring large language model based intelligent agents: definitions, methods, and prospects .
+ arXiv preprint arXiv:2401.03428 .
+ Cited by: §2.1 .
+ Cho et al. (2021) 
+ S. Cho, N. Nevler, S. Shellikeri, N. Parjane, D. J. Irwin, N. Ryant, S. Ash, C. Cieri, M. Liberman, and M. Grossman 
+ Lexical and acoustic characteristics of young and older healthy adults .
+ Journal of Speech, Language, and Hearing Research 64 ( 2 ), pp. 302–314 .
+ Cited by: §2.3 .
+ Clarke and Braun (2017) 
+ V. Clarke and V. Braun 
+ Thematic analysis .
+ The journal of positive psychology 12 ( 3 ), pp. 297–298 .
+ Cited by: §D.2 ,
+ §3.2.2 .
+ Comanici et al. (2025) 
+ G. Comanici, E. Bieber, M. Schaekermann, I. Pasupat, N. Sachdeva, I. Dhillon, M. Blistein, O. Ram, D. Zhang, E. Rosen, et al. 
+ Gemini 2.5: pushing the frontier with advanced reasoning, multimodality, long context, and next generation agentic capabilities .
+ arXiv preprint arXiv:2507.06261 .
+ Cited by: §5.1 .
+ Gelderblom et al. (2010) 
+ H. Gelderblom, T. Van Dyk, and J. Van Biljon 
+ Mobile phone adoption: do existing models adequately capture the actual usage of older adults? .
+ In Proceedings of the 2010 annual research conference of the south african institute of computer scientists and information technologists ,
+ pp. 67–74 .
+ Cited by: §2.3 .
+ Glm et al. (2024) 
+ T. Glm, A. Zeng, B. Xu, B. Wang, C. Zhang, D. Yin, D. Zhang, D. Rojas, G. Feng, H. Zhao, et al. 
+ Chatglm: a family of large language models from glm-130b to glm-4 all tools .
+ arXiv preprint arXiv:2406.12793 .
+ Cited by: §1 .
+ Hong et al. (2024) 
+ W. Hong, W. Wang, Q. Lv, J. Xu, W. Yu, J. Ji, Y. Wang, Z. Wang, Y. Dong, M. Ding, et al. 
+ Cogagent: a visual language model for gui agents .
+ In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,
+ pp. 14281–14290 .
+ Cited by: §1 ,
+ §2.1 .
+ Hong et al. (2025) 
+ W. Hong, W. Yu, X. Gu, G. Wang, G. Gan, H. Tang, J. Cheng, J. Qi, J. Ji, L. Pan, et al. 
+ Glm-4.5 v and glm-4.1 v-thinking: towards versatile multimodal reasoning with scalable reinforcement learning .
+ arXiv preprint arXiv:2507.01006 .
+ Cited by: §5.1 .
+ Iong et al. (2024) 
+ I. L. Iong, X. Liu, Y. Chen, H. Lai, S. Yao, P. Shen, H. Yu, Y. Dong, and J. Tang 
+ Openwebagent: an open toolkit to enable web agents on large language models .
+ In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 3: System Demonstrations) ,
+ pp. 72–81 .
+ Cited by: §2.1 .
+ Kasirzadeh and Gabriel (2023) 
+ A. Kasirzadeh and I. Gabriel 
+ In conversation with artificial intelligence: aligning language models with human values .
+ Philosophy &amp; Technology 36 ( 2 ), pp. 27 .
+ Cited by: §C.1 ,
+ §3.2.1 ,
+ §3.2 .
+ Kim and Choudhury (2020) 
+ S. Kim and A. Choudhury 
+ Comparison of older and younger adults’ attitudes toward the adoption and use of activity trackers .
+ JMIR mHealth and uHealth 8 ( 10 ), pp. e18312 .
+ Cited by: §2.3 .
+ Kong et al. (2026) 
+ Q. Kong, X. Zhang, Z. Yang, N. Gao, C. Liu, P. Tong, C. Cai, H. Zhou, J. Zhang, L. Chen, et al. 
+ Mobileworld: benchmarking autonomous mobile agents in agent-user interactive and mcp-augmented environments .
+ In Proceedings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,
+ pp. 6142–6167 .
+ Cited by: §C.1 ,
+ Table 1 ,
+ §1 ,
+ §2.2 ,
+ §3.2 .
+ Korpela et al. (2023) 
+ V. Korpela, L. Pajula, and R. Hänninen 
+ Older adults learning digital skills together: peer tutors’ perspectives on non-formal digital support .
+ Media and Communication 11 ( 3 ), pp. 53–62 .
+ Cited by: §1 .
+ Leung et al. (2012) 
+ R. Leung, C. Tang, S. Haddad, J. Mcgrenere, P. Graf, and V. Ingriany 
+ How older adults learn to use mobile devices: survey and field investigations .
+ ACM Transactions on Accessible Computing (TACCESS) 4 ( 3 ), pp. 1–33 .
+ Cited by: §1 .
+ Li et al. (2018) 
+ Q. Li Y. Luximon et al. 
+ Understanding older adults’ post-adoption usage behavior and perceptions of mobile technology .
+ International Journal of Design 12 ( 3 ), pp. 93–110 .
+ Cited by: §2.3 .
+ Li and Luximon (2016) 
+ Q. Li and Y. Luximon 
+ Older adults and digital technology: a study of user perception and usage behavior .
+ In Advances in Physical Ergonomics and Human Factors: Proceedings of the AHFE 2016 International Conference on Physical Ergonomics and Human Factors, July 27-31, 2016, Walt Disney World®, Florida, USA ,
+ pp. 155–163 .
+ Cited by: §2.3 .
+ Liu et al. (2025a) 
+ J. Liu, S. Gu, D. Li, G. Zhang, M. Han, H. Gu, P. Zhang, T. Lu, L. Shang, and N. Gu 
+ AgentCF++: memory-enhanced llm-based agents for popularity-aware cross-domain recommendations .
+ In Proceedings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval ,
+ pp. 2566–2571 .
+ Cited by: §1 .
+ Liu et al. (2026) 
+ J. Liu, M. Han, G. Liu, W. Wang, D. Li, H. Gu, P. Zhang, T. Lu, and N. Gu 
+ From hidden profiles to governable personalization: recommender systems in the age of llm agents .
+ arXiv preprint arXiv:2604.20065 .
+ Cited by: §1 .
+ Liu et al. (2025b) 
+ J. Liu, Y. Shao, P. Zhang, D. Li, H. Gu, C. Chen, L. Du, T. Lu, and N. Gu 
+ Filtering discomforting recommendations with large language models .
+ In Proceedings of the ACM on Web Conference 2025 ,
+ pp. 3639–3650 .
+ Cited by: §1 .
+ Liu et al. (2024) 
+ X. Liu, B. Qin, D. Liang, G. Dong, H. Lai, H. Zhang, H. Zhao, I. L. Iong, J. Sun, J. Wang, et al. 
+ Autoglm: autonomous foundation agents for guis .
+ arXiv preprint arXiv:2411.00820 .
+ Cited by: Appendix J ,
+ §2.1 ,
+ §4.1 ,
+ §5.1 ,
+ §5.3 .
+ Liu et al. (2025c) 
+ Z. Liu, J. Dai, C. Conati, and J. McGrenere 
+ Envisioning ai support during semi-structured interviews across the expertise spectrum .
+ Proceedings of the ACM on Human-Computer Interaction 9 ( 2 ), pp. 1–29 .
+ Cited by: §B.1 ,
+ §3.1 .
+ Lu et al. (2024) 
+ Y. Lu, J. Yang, Y. Shen, and A. Awadallah 
+ Omniparser for pure vision based gui agent .
+ arXiv preprint arXiv:2408.00203 .
+ Cited by: §2.1 ,
+ §2.1 .
+ Nguyen et al. (2025) 
+ D. Nguyen, J. Chen, Y. Wang, G. Wu, N. Park, Z. Hu, H. Lyu, J. Wu, R. Aponte, Y. Xia, et al. 
+ Gui agents: a survey .
+ In Findings of the Association for Computational Linguistics: ACL 2025 ,
+ pp. 22522–22538 .
+ Cited by: §2.1 .
+ Olphert et al. (2005) 
+ C. W. Olphert, L. Damodaran, and A. May 
+ Towards digital inclusion–engaging older people in the ‘digital world’ .
+ In Accessible Design in the Digital World Conference 2005 ,
+ Cited by: §2.3 .
+ OpenAI (2023) 
+ R. OpenAI 
+ Gpt-4 technical report. arxiv 2303.08774 .
+ View in Article 2 ( 5 ), pp. 1 .
+ Cited by: §1 .
+ Pang et al. (2021) 
+ C. Pang, Z. Collin Wang, J. McGrenere, R. Leung, J. Dai, and K. Moffatt 
+ Technology adoption and learning preferences for older adults: evolving perceptions, ongoing challenges, and emerging design opportunities .
+ In Proceedings of the 2021 CHI conference on human factors in computing systems ,
+ pp. 1–13 .
+ Cited by: §2.3 .
+ Pang et al. (2015) 
+ N. Pang, S. Vu, X. Zhang, and S. Foo 
+ Older adults and the appropriation and disappropriation of smartphones .
+ In International Conference on Human Aspects of IT for the Aged Population ,
+ pp. 484–495 .
+ Cited by: §1 .
+ Pierrès et al. (2025) 
+ O. Pierrès, A. Darvishy, and M. Christen 
+ Exploring the role of generative ai in higher education: semi-structured interviews with students with disabilities .
+ Education and Information Technologies 30 ( 7 ), pp. 8923–8952 .
+ Cited by: §B.1 ,
+ §3.1 .
+ Rawles et al. (2025) 
+ C. Rawles, S. Clinckemaillie, Y. Chang, J. Waltz, G. Lau, M. Fair, A. Li, W. Bishop, W. Li, F. Campbell-Ajala, et al. 
+ Androidworld: a dynamic benchmarking environment for autonomous agents .
+ In International Conference on Learning Representations ,
+ Vol. 2025 , pp. 406–441 .
+ Cited by: Table 1 ,
+ §1 ,
+ §2.2 .
+ Rawles et al. (2023) 
+ C. Rawles, A. Li, D. Rodriguez, O. Riva, and T. Lillicrap 
+ Androidinthewild: a large-scale dataset for android device control .
+ Advances in Neural Information Processing Systems 36 , pp. 59708–59728 .
+ Cited by: §1 ,
+ §2.2 ,
+ §4.2.2 .
+ Rendle (2010) 
+ S. Rendle 
+ Factorization machines .
+ In 2010 IEEE International conference on data mining ,
+ pp. 995–1000 .
+ Cited by: §E.2 .
+ Seed (2025) 
+ B. Seed 
+ UI-tars-1.5 .
+ Note: https://seed-tars.com/1.5 
+ Cited by: §5.1 .
+ Sharifi et al. (2025) 
+ H. Sharifi, H. H. Shomee, S. Medya, and D. Chattopadhyay 
+ How older adults communicate their technology problems: challenges and design opportunities .
+ In Proceedings of the extended abstracts of the CHI conference on human factors in computing systems ,
+ pp. 1–13 .
+ Cited by: §1 ,
+ §2.3 .
+ Shih et al. (2026) 
+ M. Shih, Y. Wu, and Y. Chen 
+ Judge model for large-scale multimodality benchmarks .
+ arXiv preprint arXiv:2601.06106 .
+ Cited by: §4.2.1 .
+ Shu et al. (2024) 
+ Y. Shu, H. Zhang, H. Gu, P. Zhang, T. Lu, D. Li, and N. Gu 
+ Rah! recsys–assistant–human: a human-centered recommendation framework with llm agents .
+ IEEE Transactions on Computational Social Systems 11 ( 5 ), pp. 6759–6770 .
+ Cited by: §1 .
+ Silverstein (1972) 
+ M. Silverstein 
+ Linguistic theory: syntax, semantics, pragmatics .
+ Annual review of Anthropology , pp. 349–382 .
+ Cited by: §C.1 ,
+ §3.2.1 ,
+ §3.2 .
+ Team et al. (2026a) 
+ K. Team, T. Bai, Y. Bai, Y. Bao, S. Cai, Y. Cao, Y. Charles, H. Che, C. Chen, G. Chen, et al. 
+ Kimi k2. 5: visual agentic intelligence .
+ arXiv preprint arXiv:2602.02276 .
+ Cited by: §5.1 .
+ Team et al. (2026b) 
+ V. Team, C. Gao, Z. Gu, Y. Liu, X. Qiu, S. Shen, Y. Wen, T. Xia, Z. Xu, Z. Zeng, et al. 
+ Ui-venus-1.5 technical report .
+ arXiv preprint arXiv:2602.09082 .
+ Cited by: §5.1 .
+ Wang et al. (2023) 
+ B. Wang, G. Li, and Y. Li 
+ Enabling conversational interaction with mobile ui using large language models .
+ In Proceedings of the 2023 CHI conference on human factors in computing systems ,
+ pp. 1–17 .
+ Cited by: §1 .
+ Wang et al. (2025) 
+ H. Wang, H. Zou, H. Song, J. Feng, J. Fang, J. Lu, L. Liu, Q. Luo, S. Liang, S. Huang, et al. 
+ Ui-tars-2 technical report: advancing gui agent with multi-turn reinforcement learning .
+ arXiv preprint arXiv:2509.02544 .
+ Cited by: §2.1 .
+ Xu et al. (2026) 
+ H. Xu, X. Zhang, H. Liu, J. Wang, Z. Zhu, S. Zhou, X. Hu, F. Gao, J. Cao, Z. Wang, et al. 
+ Mobile-agent-v3. 5: multi-platform fundamental gui agents .
+ arXiv preprint arXiv:2602.16855 .
+ Cited by: §5.1 .
+ Xu et al. (2025a) 
+ W. Xu, Z. Jiang, Y. Liu, P. Gao, W. Liu, J. Luan, Y. Li, Y. Liu, B. Wang, and B. An 
+ Mobile-bench-v2: a more realistic and comprehensive benchmark for vlm-based mobile agents .
+ arXiv preprint arXiv:2505.11891 .
+ Cited by: §2.2 ,
+ §4.2.2 .
+ Xu et al. (2025b) 
+ Y. Xu, X. Liu, X. Sun, S. Cheng, H. Yu, H. Lai, S. Zhang, D. Zhang, J. Tang, and Y. Dong 
+ Androidlab: training and systematic benchmarking of android autonomous agents .
+ In Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,
+ pp. 2144–2166 .
+ Cited by: Table 1 ,
+ §1 ,
+ §2.2 ,
+ §5.1 .
+ Yang et al. (2026) 
+ L. Yang, Z. Wang, X. Tang, S. Zhou, D. Chen, W. Jiang, and Y. Li 
+ Probench: benchmarking gui agents with accurate process information .
+ In Proceedings of the AAAI Conference on Artificial Intelligence ,
+ Vol. 40 , pp. 27547–27555 .
+ Cited by: Table 1 .
+ Yao et al. (2022) 
+ S. Yao, J. Zhao, D. Yu, N. Du, I. Shafran, K. Narasimhan, and Y. Cao 
+ React: synergizing reasoning and acting in language models .
+ arXiv preprint arXiv:2210.03629 .
+ Cited by: §1 ,
+ §2.1 .
+ Zhang et al. (2025a) 
+ C. Zhang, Z. Yang, J. Liu, Y. Li, Y. Han, X. Chen, Z. Huang, B. Fu, and G. Yu 
+ Appagent: multimodal agents as smartphone users .
+ In Proceedings of the 2025 CHI Conference on Human Factors in Computing Systems ,
+ pp. 1–20 .
+ Cited by: §1 .
+ Zhang et al. (2025b) 
+ H. Zhang, P. Zhang, Y. Chen, M. Guo, H. Gu, T. Lu, and N. Gu 
+ WePilot: integrating younger family members and chatbot to support older adults learning smartphone usage .
+ Proceedings of the ACM on Human-Computer Interaction 9 ( 7 ), pp. 1–34 .
+ Cited by: §2.1 ,
+ §2.1 .
+ Zhao et al. (2023) 
+ P. Zhao, Z. Jin, and N. Cheng 
+ An in-depth survey of large language model-based artificial intelligence agents .
+ arXiv preprint arXiv:2309.14365 .
+ Cited by: §2.1 .
+ Appendix A Participant Demographics 
+ We recruited 28 older adults to collect naturally elicited smartphone instructions for ElderBench. Participants were between 59 and 84 years old, including 8 males (28.57%) and 20 females (71.43%). To capture diverse smartphone experiences, participants varied substantially in usage duration and daily engagement. 
+ Participants were recruited from multiple regions in China, including Shanghai, Anhui, Jiangsu, and Hebei. Although the current benchmark focuses on Chinese-speaking older adults due to practical collection constraints, the collected instructions cover heterogeneous daily usage scenarios rather than a single demographic profile. 
+ Regarding smartphone experience, some participants had more than ten years of smartphone usage experience, whereas others had only 1–8 years of experience. Daily smartphone usage ranged from approximately 1–2 hours for light users to more than 5–6 hours for highly engaged users. 
+ Before data collection, we explained the research objectives, data anonymization policy, and interview procedure. All participants provided verbal informed consent before participating. 
+ Appendix B Data Collection Details 
+ B.1 Interview Protocol 
+ To obtain naturally occurring elderly GUI instructions, we conducted semi-structured interviews Pierrès et al. (2025) ; Liu et al. (2025c) rather than providing predefined benchmark tasks. The goal was to minimize the influence of benchmark-style language and preserve older adults’ spontaneous expressions. 
+ The interview consisted of two stages. 
+ Stage 1: Existing smartphone usage. 
+Participants were asked to describe smartphone activities they commonly performed in daily life. We introduced the concept of GUI agents and asked participants how such assistants could support their current mobile interactions. 
+ Stage 2: Desired assistance scenarios. 
+Participants further described smartphone operations that they wished an agent could help accomplish, especially tasks that were difficult, confusing, or inconvenient. 
+ During the entire elicitation process, no predefined task list, instruction templates, or linguistic examples were provided. This procedure avoids bias toward explicit benchmark-style commands and allows elderly-oriented linguistic patterns to naturally emerge. 
+ B.2 Instruction Filtering 
+ The interview process initially collected 251 candidate instructions. Three authors independently reviewed all collected instructions. Instructions that were impossible to execute because of missing goals or unrecoverable ambiguity were removed after discussion. 
+ After filtering two invalid samples, ElderBench contains 249 executable GUI instructions. 
+ Appendix C LLM-based Linguistic Annotation 
+ C.1 Annotation Overview 
+ To characterize linguistic differences between ElderBench instructions and existing GUI benchmark instructions, we analyze instructions from three perspectives: syntax, semantics, and pragmatics. (Grounded in linguistic theory Silverstein (1972) ; Kasirzadeh and Gabriel (2023) ) . 
+ We use MobileWorld Kong et al. (2026) instructions as the baseline instruction set. All baseline instructions are translated into the same language as ElderBench instructions before analysis to avoid language-related bias. 
+ The annotation pipeline combines LLM-assisted extraction and human verification. DeepSeek-V4-Pro is used for preliminary linguistic analysis, including verb extraction, syntactic classification, semantic categorization, and under-specification detection. 
+ The average agreement between LLM annotation results and manual verification reaches 93.10%. 
+ C.2 Prompt Template 
+ The following prompt is used for extracting core operational verbs. 
+ Prompt for Core Verb Extraction 
+ You are a linguistics expert. Analyze the following GUI operation instruction and extract all core operational verbs.
+ Rules:
+ 1. Only retain verbs representing actual interaction actions (e.g., open, send, search, connect).
+ 2. Exclude auxiliary expressions or polite words.
+ 3. Exclude application names and nouns.
+ 4. If multiple verbs exist, separate them with commas. If no operational verb exists, output ‘‘None’’.
+ Instruction:
+{text}
+ Output:
+ Appendix D Extended Linguistic Analysis 
+ This section provides additional statistics and implementation details for the linguistic analysis presented in the main paper. 
+ D.1 Syntactic Dimension 
+ Following linguistic theory, we classify GUI instructions into four syntactic categories: 
+ • 
+ Canonical: Standard imperative instructions with explicit operational intentions. 
+ • 
+ Narrative: Declarative expressions describing user needs or situations rather than directly requesting an action. 
+ • 
+ Elliptical: Incomplete expressions that omit necessary execution information. 
+ • 
+ Compound: Instructions containing multiple intents or sequential/parallel operations. 
+ Compared with baseline GUI instructions, ElderBench instructions show substantial structural differences. 
+ Existing GUI benchmarks mainly contain explicit, action-oriented commands designed for evaluating complex workflows. In contrast, elderly-oriented instructions are shorter and more diverse in structure. 
+ The detailed statistics are shown in Table  5 . 
+ Table 5: Syntactic statistics of ElderBench and baseline instructions. 
+ Dataset 
+ #Instr. 
+ Avg. Length 
+ Avg. Verbs 
+ ElderBench 
+ 249 
+ 15.89 
+ 1.26 
+ MobileWorld 
+ 201 
+ 88.09 
+ 2.82 
+ Figure  2 presents the distribution of four syntactic structures. 
+ Figure 2: 
+Distribution of syntactic structures. ElderBench instructions exhibit substantially higher proportions of Elliptical and Narrative expressions compared with baseline instructions.
+ Figure  3 further compares instruction length
+and verb distributions. 
+ Figure 3: 
+Comparison of instruction length and verb quantity distributions. Baseline instructions are generally longer and contain more explicit operational verbs, whereas ElderBench instructions are shorter and contain more implicit expressions.
+ D.2 Semantic Dimension 
+ We perform thematic analysis Clarke and Braun (2017) to identify semantic patterns beyond surface-level syntax. 
+ Five semantic categories are considered: 
+ • 
+ Clear and Explicit: 
+The instruction directly specifies the intended action. 
+ • 
+ Under-specification: 
+The instruction expresses a clear goal but lacks required execution parameters. 
+ • 
+ Disfluency/Correction: 
+The instruction contains repetition, hesitation, or self-correction. 
+ • 
+ Referential Ambiguity: 
+The instruction relies on context-dependent references such as “this” or “that”. 
+ • 
+ Indirect Speech: 
+The user describes a state or difficulty instead of explicitly stating the desired operation. 
+ The semantic distribution is shown in Figure  4 . 
+ Figure 4: 
+Semantic comparison between ElderBench and baseline instructions. Older adults frequently use indirect expressions and contextual references, while baseline instructions mainly contain explicit goals.
+ Additional analysis shows that indirect speech frequently lacks explicit operational verbs. Figure  5 reports verb distribution across semantic categories. 
+ Figure 5: 
+Verb distribution across semantic categories. Indirect Speech instructions contain a considerable proportion of zero-verb expressions.
+ D.3 Pragmatic Dimension 
+ We analyze the application scenarios associated with elderly GUI instructions. 
+ The collected instructions mainly concentrate on daily-life scenarios, including: 
+ • 
+ Life services: shopping, transportation, payment, and information retrieval. 
+ • 
+ Social communication: messaging, calling, and contact management. 
+ • 
+ System settings:
+font adjustment, volume control, storage management, and accessibility configuration. 
+ The scenario distribution is presented in Figure  6 . 
+ Appendix E Extended Feature Attribution Analysis 
+ To further investigate how linguistic characteristics influence GUI agent performance, we conduct feature attribution analysis using AutoGLM as the representative GUI agent. 
+ E.1 Single Feature Influence 
+ We calculate Pearson correlation coefficients between individual instruction features and task success. 
+ The resulting correlation matrix is shown in Figure  7 . 
+ The analysis reveals several important trends: 
+ Instruction length. 
+Longer instructions generally correlate negatively with task success ( − 0.16 -0.16 ), suggesting that excessive descriptions may increase planning difficulty. 
+ Syntactic patterns. 
+Elliptical structures produce the strongest negative correlation ( − 0.15 -0.15 ), followed by Indirect Speech ( − 0.12 -0.12 ). 
+ Scenario differences. 
+Information inquiry tasks show positive correlation ( + 0.26 +0.26 ), whereas System Settings ( − 0.11 -0.11 ) and Tool Assistance ( − 0.07 -0.07 ) introduce additional challenges. 
+ E.2 Cross Feature Influence 
+ To capture nonlinear feature interactions, we employ a Factorization Machine (FM) model Rendle (2010) . 
+ Categorical features, including semantic categories, syntactic structures, and scenarios, are encoded using one-hot representation. Continuous variables, including instruction length and verb number, are standardized. 
+ The latent dimension is set to k = 5 k=5 . We train the model using Adam optimization with L2 regularization ( w ​ e ​ i ​ g ​ h ​ t ​ d ​ e ​ c ​ a ​ y = 0.001 weight\ decay=0.001 ). 
+ The learned interaction matrix is calculated as: 
+ M = V ​ V T M=VV^{T} 
+ where each element represents the second-order interaction between two features. 
+ Three representative interactions are: 
+ Scenario-specific tolerance for verbosity (+0.70). 
+ Although instruction length alone negatively affects performance, longer descriptions provide useful constraints in information inquiry tasks. 
+ Complexity clash (-0.42). 
+ Long descriptions combined with System Settings tasks introduce additional planning difficulty. 
+ Linguistic contradiction (-0.34). 
+ Canonical syntactic forms combined with Indirect Speech semantics create conflicting interpretation signals. 
+ Appendix F Benchmark Implementation Details 
+ F.1 Overall Benchmark Statistics 
+ ElderBench contains 249 executable smartphone GUI tasks collected from older adults across 20 Android applications. The benchmark adopts complementary online and offline evaluation protocols. The online subset contains 130 tasks across 15 applications, as listed in Table  6 , while the offline subset contains 119 tasks across five applications: Alipay, WeChat, Gaode Map, Taobao, and Ctrip. 
+ Table 6: Applications included in the online evaluation subset. 
+ Online Applications 
+ System Settings 
+ Toutiao 
+ Dianping 
+ Weather 
+ App Store 
+ Douyin 
+ Tencent News 
+ Browser 
+ Phone 
+ Gallery 
+ SMS 
+ Meituan 
+ Doubao 
+ Alarm Clock 
+ QQ Music 
+ The division is determined at the task level based on three criteria: 
+ (1) reproducibility of execution environment; 
+ (2) privacy and account-related constraints; 
+ (3) stability of external application states. 
+ Applications involving sensitive personal information, payment operations, or highly dynamic content are evaluated offline through human-demonstrated task graphs. Applications with relatively stable interaction flows are evaluated online through live interaction. 
+ Appendix G Online Evaluation Environment 
+ G.1 Device Configuration 
+ The online evaluation is conducted on an Android emulator configured as shown in Table  8 , with additional support for deployment on physical devices. 
+ G.2 Application Configuration 
+ Before each evaluation: 
+ • 
+ Search history was cleared; 
+ • 
+ Location permission was enabled when required; 
+ • 
+ Application states were reset; 
+ • 
+ No personalized historical content was retained. 
+ Representative online application versions are listed in Table  7 . 
+ Table 7: 
+Representative online application versions.
+ Application 
+ Version 
+ Meituan 
+ 12.57.203 
+ Gaode Map 
+ 16.17.0.2003 
+ Doubao 
+ 13.4.0 
+ QQ Music 
+ 20.4.1.8 
+ Douyin 
+ 38.8.0 
+ Toutiao 
+ 16.8.0 
+ Dianping 
+ 11.63.3 
+ Appendix H Offline Task Graph Construction 
+ H.1 Human Demonstration Collection 
+ The offline evaluation follows a human-demonstration-based trajectory construction process. 
+ For each offline task, human annotators execute the intended operation on physical devices while recording interaction trajectories. 
+ At each timestep t t , we collect: 
+ ( O t , V t , A t ) (O_{t},V_{t},A_{t}) 
+ where: 
+ • 
+ O t O_{t} denotes the screenshot observation; 
+ • 
+ V t V_{t} denotes the UI hierarchy extracted through UIAutomator; 
+ • 
+ A t A_{t} denotes the executed action, including action type,
+coordinates, and text input. 
+ The initial trajectory is designed according to official application functions to ensure that the operation path is valid and executable. 
+ Figure 6: 
+Distribution of pragmatic scenarios in ElderBench.
+ Figure 7: 
+Single-feature correlation between linguistic attributes and task success.
+ Table 8: 
+Online evaluation environment configuration.
+ Component 
+ Configuration 
+ Device model 
+ Google Pixel 6a 
+ Operating System 
+ Android 17 
+ CPU 
+ 4 cores 
+ Memory 
+ 6GB RAM 
+ Storage 
+ 16GB 
+ Resolution 
+ 1080 × \times 2400 
+ H.2 Multi-path Task Graph Generation 
+ To avoid evaluating agents against a single “golden trajectory”, we collect multiple valid demonstrations for each task. 
+ The collected trajectories are merged into a task graph through the following procedure: 
+ 1. 
+ Extract UI states from all demonstration trajectories. 
+ 2. 
+ Match equivalent states using page signatures, anchor texts,
+package names, and UI component information. 
+ 3. 
+ Merge equivalent states into graph nodes. 
+ 4. 
+ Convert human actions between states into directed edges. 
+ 5. 
+ Mark successful terminal states as DONE nodes. 
+ The final graph represents multiple valid execution paths. 
+ During evaluation, an agent action is considered valid only when it matches an available outgoing edge from the current graph node. 
+ For click actions, a spatial tolerance of 50 pixels is allowed. Text inputs are evaluated using fuzzy matching. 
+ A task is successful only when:
+ A ​ g ​ e ​ n ​ t ​ _ ​ F ​ i ​ n ​ i ​ s ​ h ∩ G ​ r ​ a ​ p ​ h ​ _ ​ D ​ O ​ N ​ E Agent\_Finish\cap Graph\_DONE 
+is satisfied. 
+ Appendix I Evaluation Setting Details 
+ I.1 Single-turn Evaluation 
+ ElderBench focuses on single-turn GUI task execution. 
+ This setting is motivated by three observations: 
+ First, as the first benchmark specifically targeting elderly-oriented GUI interaction, ElderBench establishes a fundamental evaluation scenario based on naturally collected instructions.
+Second, our interviews show that older adults frequently express digital needs as standalone requests. Third, most current mobile GUI agents operate primarily on single-turn user instructions; therefore, single-turn evaluation best reflects the present state of the technology. 
+ Appendix J Controlled Instruction Normalization 
+ To examine whether elderly-specific linguistic expressions contribute to agent failures, we conduct a controlled instruction normalization study. 
+ We sample 100 instructions according to the semantic distribution of ElderBench. Each original instruction is rewritten into a concise, explicit, action-oriented form while preserving the original task goal. 
+ The rewritten instructions are manually verified to ensure semantic equivalence. 
+ Table 9: 
+Semantic distribution of the normalization subset.
+ Category 
+ ElderBench(%) 
+ Sample Size 
+ Clear and Explicit 
+ 17.67 
+ 18 
+ Disfluency/Correction 
+ 12.05 
+ 12 
+ Indirect Speech 
+ 19.28 
+ 19 
+ Referential Ambiguity 
+ 12.85 
+ 13 
+ Under-specification 
+ 38.15 
+ 38 
+ Total 
+ 100 
+ 100 
+ We evaluate Qwen3-VL-Flash Bai et al. (2025) and AutoGLM (Phone-9B) Liu et al. (2024) on both original and normalized instructions. 
+ Because each pair corresponds to the same task and environment, the performance difference estimates the effect of linguistic formulation rather than task difficulty. 
+ Appendix K Failure Analysis 
+ To understand why GUI agents fail on elderly-oriented instructions, we manually inspect failed trajectories of AutoGLM on the online subset. 
+ Among 63 failed tasks, we categorize failures into four major types. 
+ Figure 8: 
+Second-order feature interactions learned by the Factorization Machine.
+ Table 10: Failure categories of AutoGLM on online evaluation ( n = 63 n=63 ). 
+ Failure Category 
+ Count 
+ Percentage (%) 
+ Intent/Capability Boundary 
+ 36 
+ 57.1 
+ Planning/State Tracking 
+ 21 
+ 33.3 
+ Environment Awareness 
+ 4 
+ 6.4 
+ Visual/Action Execution 
+ 2 
+ 3.2 
+ Total 
+ 63 
+ 100.0 
+ K.1 Intent Understanding and Capability Boundary 
+ This category represents failures caused by incorrect interpretation of elderly expressions or inability to determine whether a requested operation is feasible. 
+ Typical examples include: 
+ • 
+ interpreting “the sound is too small” as a question rather than a volume adjustment request; 
+ • 
+ failing to resolve references such as “turn this off”; 
+ • 
+ attempting unavailable operations requiring system-level permissions. 
+ K.2 Planning and State Tracking 
+ These failures occur when agents cannot maintain task progress during multi-step interaction. 
+ Common patterns include: 
+ • 
+ repeating completed operations; 
+ • 
+ missing intermediate steps; 
+ • 
+ continuing execution after reaching the goal. 
+ K.3 Environment Awareness 
+ Some agents rely excessively on pretrained application knowledge and fail to verify the actual device environment. 
+ Examples include selecting unavailable applications or ignoring required permissions. 
+ K.4 Visual Localization and Action Execution 
+ These failures occur when the agent correctly understands the goal but cannot accurately locate UI elements or generate correct interaction coordinates. 
+ Appendix L Additional Implementation Details 
+ The maximum execution trajectory length is limited to 25 operational steps. Each task has a 120-second timeout threshold. 
+ All evaluated GUI agents interact with Android environments through ADB commands. The supported action space includes: 
+ • 
+ Tap 
+ • 
+ Long Press 
+ • 
+ Swipe 
+ • 
+ Type 
+ • 
+ Home / Back 
+ The coordinate system is normalized to [ 0 , 1000 ] [0,1000] and automatically converted into device-specific pixel coordinates. 
+ Experimental support, please
+ view the build logs 
+ for errors. Generated by
+ L
+ A 
+ T
+ E 
+ xml 
+ .
+ Instructions for reporting errors 
+ We are continuing to improve HTML versions of papers, and your feedback helps enhance accessibility and mobile
+ support. To report errors in the HTML that will help us improve conversion and rendering, choose any of the
+ methods listed below: 
+ Click the "Report Issue" ( 
+ ) button, located in the page header. 
+ Tip: You can select the relevant text first, to include it in your report. 
+ Our team has already identified the following issues . We appreciate your time reviewing and reporting rendering errors we
+ may not have found yet. Your efforts will help us improve the HTML versions for all readers, because disability
+ should not be a barrier to accessing research. Thank you for your continued support in championing open access for
+ all. 
+ Have a free development cycle? Help support accessibility at arXiv! Our collaborators at LaTeXML maintain a list of packages that need conversion , and welcome developer contributions . 
+ We gratefully acknowledge support from
+ our major funders ,
+ member institutions , ,
+ and all contributors.
+ About 
+ &middot; 
+ Help 
+ &middot; 
+ Contact 
+ &middot; 
+ Subscribe 
+ &middot; 
+ Copyright 
+ &middot; 
+ Privacy 
+ &middot; 
+ Accessibility 
+ &middot; 
+ Operational Status (opens in new tab) 
+ Major funding support from 

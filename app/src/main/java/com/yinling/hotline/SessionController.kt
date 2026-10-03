@@ -691,6 +691,40 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 }
             }
         }
+
+        /**
+         * 目标一致性：打开一个这件事还没碰过的应用，是循环无法自行判断的导航——页面里的注入内容
+         * 也可能要求它这么做。因此每个新应用只问一次，正好问在"要不要去这个 App"这个决策点上；
+         * 同一个应用再次打开不再重复打扰。此前 open_app 属于"低风险直接执行"，等于目标劫持无人把关。
+         */
+        override suspend fun confirmNewApp(app: String, invocation: ToolInvocation): Boolean {
+            if (autoConfirm) {
+                LoopLog.event("[dev] 自动确认打开新应用 $app")
+                return true
+            }
+            val answer = CompletableDeferred<Boolean>()
+            confirmation = answer
+            mutableState.value = state.value.copy(
+                message = "这件事还没用到「$app」。要打开它吗？",
+                phase = TaskPhase.CONFIRMING,
+                hasPendingApproval = true,
+            )
+            return try {
+                val approved = answer.await()
+                if (approved) {
+                    mutableState.value = state.value.copy(
+                        phase = TaskPhase.WORKING,
+                        hasPendingApproval = false,
+                    )
+                }
+                approved
+            } finally {
+                if (confirmation === answer) {
+                    confirmation = null
+                    pendingApprovalPrompt = null
+                }
+            }
+        }
     }
 
     private fun hook() = object : AgentHook {

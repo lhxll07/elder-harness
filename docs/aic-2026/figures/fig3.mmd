@@ -1,0 +1,14 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TD
+  A["准备以“完成”收尾"] --> B{"R0 声明含<br/>改变外部世界的说法?"}
+  B -->|否| P["通过：泛指完成不核验"]
+  B -->|是| C{"依次核验三条规则<br/>R1 文字来源 · R2 时间锚点 · R3 动作存在性"}
+  C -->|全部通过| S["通过：告知结果"]
+  C -->|任一条不通过| U["驳回并附原因"]
+  U --> U2["改说“我没法确认办成了”<br/>并回灌一次重做机会"]
+  classDef ok fill:#0f7b6c,color:#fff,stroke:#0b5a4f
+  classDef bad fill:#c0392b,color:#fff,stroke:#96281b
+  classDef ask fill:#fdf3e3,stroke:#c9a227
+  class P,S ok
+  class U bad
+  class U2 ask

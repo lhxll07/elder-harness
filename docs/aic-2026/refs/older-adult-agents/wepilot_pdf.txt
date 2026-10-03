@@ -1,0 +1,2530 @@
+WePilot: Integrating Younger Family Members and Chatbot
+to Support Older Adults Learning Smartphone Usage
+HAONAN ZHANG∗ , Fudan University, China
+PENG ZHANG∗ , Fudan University, China
+YAN CHEN, Virginia Tech, USA
+MEITONG GUO, Fudan University, China
+HANSU GU, Independent, USA
+TUN LU† , Fudan University, China
+NING GU, Fudan University, China
+Older adults (OAs) usually face various challenges when using smartphones due to their limited knowledge and
+the declines in memory and information processing capabilities. Many studies in HCI and CSCW communities
+have focused on supporting OAs to independently use smartphones. However, compared to independent
+exploration, support from younger family members (YFMs) has specific advantages in problem understanding,
+solution personalization, and security protection. However, OAs and YFMs generally have gaps in time,
+knowledge, and experience, affecting the efficiency of support and their experience. For this problem, we
+conduct a formative study to gather insights into OAs and YFMs’ perspectives and expectations in the
+supporting procedure. Then we introduce chatbot to mediate the gaps between OAs and YFMs and build a
+system named WePilot to assist them to collaboratively solve smartphone usage problems. Evaluations with 12
+pairs of participants (OA and corresponding YFM) suggest WePilot’s strengths in improving problem solving
+efficiency and OAs and YFMs’ experience. Based on these findings, we propose several insights into the future
+design of intergenerational technical support systems.
+CCS Concepts: • Human-centered computing → Collaborative and social computing.
+Additional Key Words and Phrases: intergenerational technical support, chatbot-mediated collaboration,
+smartphone usage, older adults, younger family members
+ACM Reference Format:
+Haonan Zhang, Peng Zhang, Yan Chen, Meitong Guo, Hansu Gu, Tun Lu, and Ning Gu. 2025. WePilot:
+Integrating Younger Family Members and Chatbot to Support Older Adults Learning Smartphone Usage. Proc.
+ACM Hum.-Comput. Interact. 9, 7, Article CSCW522 (November 2025), 34 pages. https://doi.org/10.1145/3757703
+∗ Both authors contributed equally to this research.
+† Corresponding author.
+
+Authors’ Contact Information: Haonan Zhang, hnzhang23@m.fudan.edu.cn, Fudan University, Shanghai, China; Peng
+Zhang, zhangpeng_@fudan.edu.cn, Fudan University, Shanghai, China; Yan Chen, ych@vt.edu, Virginia Tech, Virginia,
+USA; Meitong Guo, 23210240016@m.fudan.edu.cn, Fudan University, Shanghai, China; Hansu Gu, guhansu@gmail.com,
+Independent, Seattle, USA; Tun Lu, lutun@fudan.edu.cn, Fudan University, Shanghai, China; Ning Gu, ninggu@fudan.edu.cn,
+Fudan University, Shanghai, China.
+Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee
+provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the
+full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored.
+Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires
+prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+© 2025 Copyright held by the owner/author(s). Publication rights licensed to ACM.
+ACM 2573-0142/2025/11-ARTCSCW522
+https://doi.org/10.1145/3757703
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:2
+
+1
+
+Haonan Zhang et al.
+
+Introduction
+
+Nowadays, a growing number of older adults (OAs) have started to use smartphones for communication and entertainment[4, 48, 54, 62]. However, due to their limited knowledge and experience
+in Information and Communication Technology (ICT) use, and the declines in memory and information processing, OAs usually face various challenges when using smartphones[45, 48, 63].
+Smartphone tasks such as online shopping, booking transportation, and paying bills, which are
+common practices for young adults, are generally difficult for OAs, prompting them to seek different
+external help. Existing research demonstrates that OAs tend to rely on informal sources of support
+such as family members, children, and community volunteers rather than formal online or offline
+courses. This tendency persists even when there are temporal or spatial mismatches between the
+OAs and the supporters[4, 36, 62]. For instance, in situations where OAs and their children live
+separately, the OAs frequently ask their children to provide support via phone or video call to
+address issues related to smartphone usage.
+In recent years, many studies in HCI and CSCW communities have focused on supporting OAs to
+independently use smartphones[52, 102]. However, compared to independent exploration, support
+from younger family members (YFMs) has several advantages in enhancing the technological
+adaptability and improving the efficiency of problem solving[2, 32, 99]. Firstly, YFMs’ familiarity
+with OAs’ life habits and digital literacy enables them to quickly identify and address challenges
+that OAs face, leading to a more personalized and efficient support process[5, 37, 49]. Secondly, in
+online environment, OAs are exposed to various digital risks such as privacy breaches and financial
+scams. YFMs’ support and guidance can improve the safety and security of OAs during smartphone
+usage[56, 68, 86]. Finally, YFMs’ involvement and support for problem solving is also a scenario for
+intergenerational communication, helping strengthen emotional bonds between OAs and YFMs,
+especially when they live in different cities[13, 21, 41, 57].
+Despite these advantages, YFM-supported smartphone usage faces several prominent challenges
+in reality[2, 36, 39]. Firstly, there is generally misalignment of schedules between OAs and YFMs,
+as YFMs need to engage in their own daily activities, making their support often belated for OAs.
+Secondly, OAs typically seek detailed and step-by-step guidance to ensure comprehension and
+following, while YFMs usually just give simple instructions due to time constraint or the belief
+that OAs do not need to master details, weakening the quality of support. Thirdly, although YFMs
+generally have higher digital literacy, they may still encounter knowledge gaps. For instance, some
+applications or functionalities that OAs prefer to use may be unfamiliar to YFMs, hindering YFMs’
+ability to respond to OAs’ requests. Over time, these challenges could not only aggravate the
+psychological burden of OAs when seeking help but also reduce YFMs’ motivation to continue
+offering support.
+For these challenges, it is emergent to investigate how to promote the quality and effectiveness
+of YFM-supported smartphone usage for OAs. Drawing inspiration from various relevant studies
+in HCI and CSCW fields, such as research on improving parent-child relationships through joint
+learning[31, 105], family-assisted models in telemedicine[6, 18, 24], and collaboration on technology
+use[12, 76], we propose incorporating chatbots into the help-seeking interactions between OAs and
+YFMs. Chatbots are characterized with several specific features to address the above challenges.
+Firstly, chatbots are always available, allowing them to fast respond to OAs’ issues and lessen the
+burden on YFMs. Secondly, chatbots can interact with OAs through natural languages, offering
+fine-grained guidance according to user preferences. Furthermore, trained on large-scale corpus,
+chatbots can respond to a broader range of problems, compensating for YFMs’ knowledge about
+smartphone usage and enhancing the overall efficiency and effectiveness of the help-seeking
+process.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:3
+
+Building on this foundation, we aim to explore how to introduce chatbots into the procedure of
+YFM-supported smartphone usage to bridge the mentioned gaps between OAs and YFMs. Initially,
+we conduct a formative study to gather insights into OAs and YFMs’ perspectives and expectations
+in the supporting procedure, especially their gaps that chatbots are expected to mediate. Then
+we propose four goals to guide our system design, including enhancing support for OAs while
+reducing the workload of YFMs, enhancing OAs’ experience through flexible guidance and feedback,
+expanding YFMs’ problem-solving capabilities but reducing workload, and maintaining participation
+of OAs and YFMs. Second, we present a chatbot-mediated system named WePilot to facilitate YFMsupported smartphone usage for OAs. It is essentially a chatbot-based tool with modules of Solution
+Finding, Operation Guiding, and Feedback. The Solution Finding module collaborates with YFMs to
+find solutions through two flexible modes, YFM-lead and Agent-lead, addressing YFMs’ knowledge
+limitations while reducing their time and efforts spent in solution finding. In addition, the reuse
+mechanism is also considered in this module to respond to OAs’ repeated problems effectively.
+Once a solution is obtained, the Operation Guiding module provides OAs with two forms of
+operation guidance to accommodate different problem types, step-by-step and one-click-go, meeting
+OAs’ expectations for intuitive and highly interactive support. The Feedback module tracks OAs’
+progress in problem-solving and presents it to YFMs, maintaining YFMs’ proper perception and
+sense of control. Third, we implement WePilot as a prototype and recruit 12 pairs of participants
+(OA and corresponding YFM) for evaluation. The evaluation results suggest WePilot’s significant
+improvements, e.g., reducing YFMs’ time cost by 42% and providing more intuitive, natural, and
+efficient support experiences for OAs. Based on these findings, we propose several insights into
+the future design of intergenerational technical support systems or tools, such as preventing
+security risks, balancing automation and learning, and enhancing expression consistency and
+personalization. To conclude, our contributions can be summarized as:
+• To the best of our knowledge, this is the first work on investigating chatbot-mediated systems
+to promote YFM-supported smartphone usage for OAs.
+• We conduct a formative study to analyze OAs and YFMs’ perspectives and expectations in
+the supporting procedure, based on which we propose four strategies to guide our system
+design.
+• We propose a chatbot-mediated system to assist OAs and YFMs to collaboratively solve
+smartphone usage problems. Extensive evaluations are also conducted in real scenarios to
+reveal WePilot’s strengths and weakness.
+• Several insights are proposed for the further research and design of remote intergenerational
+technical support systems.
+The rest of this paper is organized as follows. In Section 2, we review related research. Section 3
+introduces the procedure and results of our formative study. In Section 4, the framework of WePilot
+and its implementation are given. Section 5 exhibits our evaluation results. Section 6 discusses our
+findings, the limitations, and future work. Finally, conclusions are given in Section 7.
+2
+2.1
+
+Related Work
+Challenges and Preferences of Older Adults in Learning Smartphone Usage
+
+In recent years, a growing number of OAs have started to use smartphones in their daily lives to
+improve social participation [4, 48, 54, 62]. Although they are generally willing to engage with
+new technologies, they often encounter cognitive, physical, and motivational challenges when
+using smartphones[54, 63]. From the perspective of cognition, declines in memory and information
+processing abilities make it difficult for them to recall operation steps[48, 55]. In addition, physical
+limitations such as reduced vision, hearing, and dexterity further complicate their interactions with
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:4
+
+Haonan Zhang et al.
+
+small screens and touch devices [21, 60, 63]. Moreover, some OAs struggle to maintain motivation
+to learn new technologies, particularly after experiencing repeated failures [21]. These challenges
+often lead to feelings of frustration and anxiety during smartphone learning and usage, which in
+turn reduces their willingness to adopt new technologies [40].
+In light of these challenges, OAs exhibit varying preferences in learning smartphone usage.
+Studies indicate that they typically adopt two primary learning methods: self-exploration and
+social learning [73]. Self-exploration involves independently exploring applications, using online
+websites or video tutorials, consulting instruction manuals, or referring to help menus [48]. In
+contrast, social learning occurs through interactions with others, such as family members, friends,
+or colleagues[21, 57, 86]. Research has found that many OAs prefer to learn independently, in
+part because they hesitate to disturb others or worry about making embarrassing mistakes [39,
+52]. Although they seek help through manuals or video tutorials during independent learning,
+this approach often makes them confused, primarily because they often struggle to map tutorial
+instructions to actual operations[2, 53].
+However, if the concern of disturbing others is alleviated, OAs tend to rely less on traditional
+instruction manuals and instead favor human support and flexible learning methods[4, 36, 62]. When
+encountering issues, they typically turn to family and friends for social support. Studies, such as [57,
+68], have shown that social support not only provides more immediate feedback and personalized
+solutions, but also increases their confidence through interactions with others. Nevertheless, such
+support is not always available, as the availability of supporters is often constrained by factors such
+as time and distance [2, 39, 55]. Therefore, while OAs are eager to receive social support, improving
+the availability of such support continues to be a significant challenge.
+2.2
+
+Current Approaches to Supporting Older Adults’ Smartphone Usage
+
+Previous research has made significant efforts to support software newcomers, including OAs. As
+mentioned earlier, the existing support methods correspond to the two primary learning approaches
+commonly adopted by OAs[73]: supporting OAs independently learning instructional materials
+and facilitating OAs’ access to social support.
+First, research on supporting OAs in learning smartphone usage through tutorials has become a
+focus in HCI and CSCW fields in recent years. Many studies aim to enhance OAs’ self-learning by
+improving the interactive experience or presentation of tutorials. For example, Pongnumkul et al.
+developed a tool that automatically pauses and plays video tutorials when OAs watch them[67];
+the tool named HelpViz automatically integrates text instructions with screenshots to generate
+multimedia tutorials[106]; the system named MixT automatically combines text instructions with
+demonstration videos to produce step-by-step guidelines [16]. These tutorials, which combine text,
+images, and videos, provide users with step-by-step instructions to help them understand complex
+tasks. However, despite simplifying operations, this “step-by-step guiding” procedure can still be
+difficult for OAs to follow and process [53]. As a result, recent research has begun exploring the
+use of interactive tutorials that provide visual[2, 39, 90] and/or audio prompts[55, 98] within the
+target application to guide users more directly. For example, [39] developed the first interactive
+tutorial system for OAs, allowing them to learn tasks through a trial-and-error approach. Following
+this, studies[102, 103] have further explored ways to help OAs locate relevant icons in the current
+interface, while [23] proposed a technique to help OAs in better formulating queries. However, these
+methods of supporting independent smartphone usage among OAs face some inherent problems.
+For example, it is challenging for these automated systems/tools to comprehend OAs’ intent due
+to OAs’ lack of ICT experience and nonstandard expressions. OAs’ independent exploration with
+trial-and-error can also lead to incorrect operations, aggravating privacy and security risks.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:5
+
+In contrast, research on assisting OAs in accessing social support has gained increasing attention.
+Previous studies have found that remote support often causes communication issues due to the lack
+of a shared visual environment (i.e., supporters cannot see the seekers’ screen)[2]. Consequently,
+researchers have sought to reduce communication barriers by improving existing remote communication methods. For instance, Tanprasert proposed the HelpCall system, enabling children to help
+OAs with ICT issues via video calls[87]. Similarly, [39] presented a method to allow the supporter
+to perform a demonstration on their own phone, which is then replicated as a tutorial on the OAs’
+device. However, these approaches primarily focus on OAs’ experiences and expectations, often
+neglecting supporters’ feelings and gaps, such as their knowledge limitations and time constraints.
+Our research aims to bridge this gap by designing a system that supports OAs’ learning while
+reducing the burden on YFMs. The system will combine the advantages of automated tutorials and
+social support, providing interactive guidance and assistance to ensure OAs can complete tasks
+smoothly. At the same time, automated tutorials will take part of the YFMs’ responsibilities, thereby
+improving the effectiveness and efficiency of support and reducing their burdens in the meanwhile.
+2.3
+
+Chatbot-mediated Interaction/Collaboration
+
+Recent research has demonstrated the potential of chatbots in facilitating communication and
+collaboration among individuals[76, 77, 91]. In human conversations[78], chatbots can be utilized to
+collect deeper and higher-quality information to enhance user engagement [44]. For instance, Rhim
+et al.’s study employed human-centered design to leverage chatbots to effectively improve both user
+interaction and data collection quality [69]. In the context of complex task collaboration, chatbots
+are widely used to support co-design and online discussions [30, 64]. By intelligently managing
+conversation flow, synchronizing perspectives, and providing real-time feedback, chatbots can
+effectively promote team communication and decision-making [43]. In particular in remote and
+asynchronous collaboration scenarios, chatbots demonstrate prominent advantages in helping users
+overcome temporal and spatial limitations to coordinate complex tasks [46]. These studies suggest
+that chatbots are not merely simple conversational tools but can serve as intelligent mediators that
+facilitate complex collaboration.
+Chatbots also show significant potential and unique value in enhancing family interactions.
+Research indicates that by introducing chatbots as interactive mediators, communication efficiency
+and emotional bonds among family members are significantly strengthened [101]. For example, the
+StoryBuddy system demonstrated how chatbots can enhance intergenerational interaction through
+shared reading experiences, providing insights into strengthening parent-child relationships during
+storytelling [105]. In broader social connection scenarios, research by Lee et al. illustrates how
+chatbots can effectively promote interactions among residents in shared living spaces by facilitating
+intelligent information sharing, thereby enhancing a sense of connection and belonging among
+community members[64]. These studies reveal that chatbots can provide support beyond technical
+functions, serving as effective tools for interpersonal connection. Through flexible scheduling and
+personalized interaction support, chatbots can reduce communication burdens and create richer
+and more meaningful social interaction experiences.
+However, chatbot systems specifically designed for remote intergenerational technical support
+between OAs and YFMs remain scarce. Existing research mainly focuses on general communication
+[51, 64, 91], with limited exploration of how chatbots can be used to optimize intergenerational
+collaborative ICT learning and remote support. To address this gap, our research explores the
+design of a chatbot-mediated system to promote the effectiveness and efficiency of YFM-supported
+smartphone usage, providing a novel solution to bridge the gaps between OAs and YFMs in
+addressing smartphone usage problems.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:6
+
+3
+3.1
+
+Haonan Zhang et al.
+
+Formative Study
+Process
+
+We conducted a formative study to explore remote intergenerational technical support between
+OAs and YFMs in scenarios involving smartphone usage issues.
+3.1.1 Participants. We recruited participants through offline communities and online platforms,
+followed by a screening survey. The inclusion criteria for OAs were as follows: (1) 55 years or
+older; (2) having a smartphone with at least daily usage; (3) having not known and experienced
+complex features of the smartphone or APPs, such as clearing cache or paying bills online; (4)
+having the ability to participate in our study; and (5) having the experience of seeking help from
+YFMs to solve smartphone usage issues. For YFMs, the selection criteria included: (1) having
+experience in supporting an older adult (aged 55 or older) with smartphone usage issues; and (2)
+having availability to join in our study. Since our formative study does not involve collaboration
+tasks between OAs and YFMs, we didn’t recruit coupled participants, i.e., the pair of OA and the
+corresponding YFM. We received responses from 14 OAs and 10 YFMs, and after screening, 11 OA
+and 10 YFM participants were obtained. Detailed demographic information of the participants is
+shown in Tables 1 and 2. From Table 2, we could see that YFMs reported being asked for help at
+different times per month. We did not consider the frequency of requested help as a screening
+criterion since it can help observe YFMs’ experiences and requirements (e.g., perceived burden)
+under different scenarios.
+Table 1. Demographics and smartphone usage information in Formative Study of OAs. “F” represents “Female”,
+and “M” represents “Male”.
+ID
+
+Age
+
+Gender
+
+Level of Education
+
+Years of Smartphone Usage
+
+OA1
+OA2
+OA3
+OA4
+OA5
+OA6
+OA7
+OA8
+OA9
+OA10
+OA11
+
+68
+63
+70
+77
+78
+75
+78
+70
+62
+66
+62
+
+F
+F
+F
+M
+M
+M
+F
+F
+M
+F
+F
+
+Senior High School
+Primary School or Below
+Bachelor’s Degree
+Bachelor’s Degree
+Bachelor’s Degree
+Junior High School
+Associate Degree
+Senior High School
+Senior High School
+Senior High School
+Primary School or Below
+
+14
+7
+8
+16
+14
+3
+10
+7
+5
+11
+10
+
+3.1.2 Procedure and Data Analysis. Each session of our formative study involved a one-on-one
+offline interview lasting 40 minutes. Drawing on [25, 35, 61, 97], participants first reviewed a
+sketch-based prototype, which prioritized the interactions between users and the chatbot rather
+than interface details [3, 27, 105]. This approach was inspired by Carroll’s scenario-based design
+principles [14], emphasizing user interactions and feedback to refine the system. The prototype
+focused on two key aspects: interaction features between YFMs and the assistant (e.g., the roles
+they play, the content exchanged and presentation) and the interaction features between OAs and
+the assistant (e.g., the degree of guidance, the modality in communication).
+All sessions were audio-recorded with participants’ consent, transcribed using automated tools
+and then verified by the first author. We also noted participants’ emotional expressions (e.g., “tired”,
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:7
+
+Table 2. Demographics and requested help information in Formative Study of Younger Adults(YAs). “F”
+represents “Female”, and “M” represents “Male”.
+ID
+
+Age
+
+Gender
+
+Status
+
+Recipient of Help
+
+Frequency of Requested Help
+
+YA1
+YA2
+YA3
+YA4
+YA5
+YA6
+YA7
+YA8
+YA9
+YA10
+
+26
+26
+29
+33
+39
+24
+42
+23
+22
+34
+
+M
+M
+F
+M
+M
+F
+M
+F
+F
+F
+
+Student
+Student
+Employee
+Employee
+Employee
+Student
+Employee
+Student
+Student
+Employee
+
+Grandparents
+Grandparents
+Parents and Grandparents
+Parents
+Parents
+Grandparents
+Parents
+Grandparents
+Grandparents
+Grandparents
+
+3-5/month
+<3/month
+3-5/month
+3-5/month
+6-8/month
+3-5/month
+<3/month
+<3/month
+3-5/month
+3-5/month
+
+“exhausted”) and signals (e.g., sighs, hesitation pauses) during transcription[15, 58]. We used Braun
+and Clarke’s thematic analysis method to code the interview transcripts [9], following the six steps
+described in codebook-based thematic analysis [10, 11]. First, three authors independently read all
+the transcripts several times to familiarize themselves with the content and identify key concepts,
+themes, and patterns. Then, they conducted open coding and created an initial list of codes that
+identified relevant themes emerging from the data. These early codes were then grouped into
+larger themes that matched the research goals. Next, the authors reviewed and refined the themes
+together, removing weak or repeated themes and adding subthemes when needed. Each theme
+was clearly described, supported by data examples, and named to summarize its essence. Once the
+themes were finalized, the authors reviewed the data again to apply the codes fully and chose strong
+examples to support the findings. Although the six phases are presented in a logical sequence, they
+are not strictly one-directional. Instead, the above procedure is recursive and iterative, requiring
+the authors to move back and forth between phases as necessary. Regular communications and
+collaborative reviews were kept throughout the process to ensure transparency, accuracy, and
+reliability. The coding process ended when all authors reached a consensus on the final themes.
+We aimed to uncover: (1) decision model for solving smartphone usage problem with YFM
+support; (2) specific issues within the model; and (3) the expectations of both YFMs and OAs
+for addressing these issues. During the interview, participants were encouraged to share their
+experiences, the challenges they encountered, and their feedback and expectations for a support
+tool.
+3.2
+
+Findings
+
+3.2.1 F1: Factors influencing the provision of support. To systematically uncover this decisionmaking process, we synthesized interview data with the ethnographic decision model proposed
+by [68], obtaining a decision model tailored to describe how YFMs support OAs with smartphone
+usage. We present the decision-making process in Figure 1.
+Problem Complexity. YFMs are motivated by a sense of familial responsibility and filial piety,
+which stimulates them to provide solutions. They first assess the complexity of the issue. If the
+problem lies beyond their knowledge, they opt not to offer support. For example, YA3 stated, “Their
+(OAs) proficiency level is lower than mine, ... I’d assume it’s probably not a reliable app.”
+Problem Type. Once YFMs decide to provide support, the type of issue determines the form
+of support. We categorized issues as either configuration-related problems or operation-related
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:8
+
+Haonan Zhang et al.
+
+Help requests
+from Older Adults
+
+Do I know how to
+solve the problem?
+
+YES
+
+NO
+
+Can I find a
+solution online?
+
+What is the type
+of the problem?
+
+Operation
+
+Do I have enough time
+to provide detailed
+guidance?
+
+NO
+
+Can my parents
+understand online
+tutorials?
+
+NO
+
+Are there step-bystep tutorial
+resources online?
+
+YES
+
+NO
+
+Not Help
+
+Teach with
+Explanation
+
+NO
+
+Configuration
+
+YES
+
+YES
+
+Provide
+Simplified
+Instructions
+
+YES
+
+Share Link
+
+Fig. 1. Decision flowchart for YFMs processing smartphone help requests from OAs.
+
+problems. Configuration-related problems are solution-oriented and involve one-time setups, such
+as creating accounts or setting language input methods. In contrast, operation-related problems
+are learning-oriented and occur more frequently in OAs’ daily smartphone usage, such as posting
+on social media or shopping on an e-commerce platform. YA1 mentioned, “I think my parents don’t
+need to learn some operations, like enabling the voice announcement switch. It only needs to be turned
+on once.” For configuration-related problems, YFMs tend to guide OAs through simplified operation
+instructions (e.g., “Tap the plus sign in the top right corner”) to help them solve the problems. In
+contrast, for operation-related problems, YFMs teach OAs through detailed explanations (e.g., “The
+plus icon is like a drawer where some features are stored”) to help them understand and remember
+the process, reducing repeated requests for help.
+Time Consumption. Providing detailed explanations requires more free time than giving
+simplified operation instructions. YFMs shared experiences of receiving support requests from
+their parents during busy periods. For instance, YA5 said “Sometimes when I am in a meeting, my
+phone buzzes with a WeChat message from my mom, asking ‘How do I ...?’ Moments like this can be
+distracting.”
+Consequently, when confronted with operation-related problems, YFMs first consider the time
+needed to solve the problems against their current availability. If YFMs are short on time, a step-bystep teaching approach will not be considered. In such cases, online tutorials (e.g., text or video
+guides) are a more time-efficient alternative. However, due to the varying levels of digital literacy
+among OAs and the lack of comprehensive online tutorials, YFMs resort to simplified instructions
+instead. As YA10 explained, “When I don’t have enough time, I just let them follow my step-by-step
+instructions to solve it first.” When YFMs have sufficient time, they prioritize providing detailed
+explanations to help their parents.
+Beside the time needed for solving a request, the frequency of being asked for help can also affect
+YFMs’ perceived burden and willingness to provide support. For instance, our analysis of interview
+transcripts revealed that when sharing experiences of receiving support requests from parents, the
+YFMs asked for help 6-8/month used 2.7 times more negative emotion words (e.g., “frustrating”,
+“exhausted”) than YFMs asked for <3/month, indicating frequency qualifies as burdensome for
+YFMs.
+3.2.2 F2: Problems with Current Model. The difficulties in smartphone assistance stem from both
+gaps between OAs and YFMs as well as their specific limitations.
+Gaps between OAs and YFMs:
+• Digital Literacy Misalignment. A significant barrier is the disparity in digital literacy
+between OAs and YFMs. When YFMs attempt to explain ICT-related concepts, OAs struggle
+to grasp terms such as “cache” or “cloud storage.” This challenge is amplified when YFMs have
+a technical background, as they prefer to use technical jargon in communication, while OAs
+face difficulties in understanding these terms. So, YFMs need to provide detailed explanations
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:9
+
+and adjust their teaching strategies based on OAs’ knowledge level. This involves simplifying
+their language during explanations and considering the most effective ways to express
+concepts to enhance memorization. As YA7 expressed: “The problem is they often forget. I
+teach them once, and they don’t get it; then I teach them again, and still, they don’t get it.”
+• Belated Response and Feedback. OAs are usually unable to receive timely support when
+YFMs cannot respond immediately due to time or distance constraints. OAs may feel that
+they “still haven’t known how to do it” (OA5), negatively impacting their confidence and
+willingness to use new technologies in the future. Even responding to OAs’ requests, YFMs
+are generally unable to monitor OAs’ operations in real-time. OAs may unknowingly make
+wrong operations or navigate to the wrong screen and realize their mistakes after several
+steps. The lack of YFMs’ feedback results in time-wasting and frustration for both parties.
+• Difference in Device Interfaces. Due to differences in operating systems used by OAs and
+YFMs, YFMs struggle to describe the steps OAs need to take accurately. These interface
+discrepancies hinder the synchronization of their actions. In the meanwhile, they must infer
+potential issues and offer corresponding instructions.
+Role-Specific Challenges:
+• OAs’ Instruction Following and Operating Limitations. We found it is generally challenging for OAs to map YFMs’ voice descriptions of screen elements onto their own devices, such
+as “tap the plus sign.” This leads to errors, particularly in feature-rich interfaces. We thought
+this challenge mainly stems from their limited adaptability to new technologies and declines
+in physical and cognitive abilities, such as reduced cognitive flexibility, visual impairments,
+and diminished motor coordination.
+• YFMs’ Knowledge and Resource Limitations. For YFMs, even if they understand the OAs’
+issue, they struggle to find an immediate solution if the issue exceeds their knowledge. YFMs
+may need to search for external resources or seek help from others. YA4 shared an experience
+where his mother requested help with a health insurance payment issue, “I wasn’t familiar
+with [that platform]. So, I had to look it up online myself before explaining it to her.” This not
+only increased the time cost but also added extra workload.
+3.2.3 F3: Expectations and Conflicts of Different Stakeholders. We further investigated OAs and
+YFMs’ expectations for an ideal remote technical support system. We synthesized insights from
+both perspectives and compared the potential conflicts in their expectations.
+Expectations of OAs. The expectations of OAs focus on improving support experience and
+reducing cognitive load, including improving the accessibility of support, providing intuitive
+instructions and guidance, enhancing interactions, and offering flexible options. For the accessibility
+of support, OAs desire immediate support. While this type of instant response is difficult to achieve
+in reality. Secondly, providing intuitive instructions and guidance is needed. OAs expect the system
+to provide guidance that is easy to understand and follow, with steps and instructions clearly
+transformed into operations and highlighted on the interface, e.g., red square. Moreover, enhancing
+interactions. OAs expect a more interactive experience, including real-time feedback (e.g., “Let
+me know if I clicked the right button.”) and Q&A (e.g., “It can respond immediately when I have a
+question.”). Besides, offering flexible options. For configuration-related tasks, OAs prefer to complete
+tasks with minimal effort. For operation-related problems, they hope to receive detailed instructions.
+Expectations of YFMs. Similar to OAs, YFMs’ expectations are grounded in the challenges they
+encounter during the support process, but they also reflect some other needs, including reducing
+time and efforts, providing feedback, and maintaining participation and connection. Firstly, YFMs
+prioritize efficiency in the support process, expecting that their time on solving a problem can
+be reduced. The second is providing feedback. YFMs expect to track OAs’ progress on learning
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:10
+
+Haonan Zhang et al.
+
+configuration-related tasks, like “I want to know whether the problem has been solved.” This helps
+YFMs ensure that OAs get the correct outcomes. For maintaining participation and connection,
+YFMs hope themselves to be involved into the support process. YFMs perceive this procedure as
+not only problem-solving but also opportunities to strengthen the emotional connection.
+Expectation Gaps between OAs and YFMs. There are several gaps of expectations between
+OAs and YFMs, which gives chatbots scenarios to play roles.
+• Conflict in Granularity: Detailed Guidance vs. Quick Resolution. OAs and YFMs
+exhibit different preferences in the guidance level. OAs typically favor detailed guidance
+and step-by-step explanations, aiming not just to solve the problems but to gain a deeper
+understanding. Many OA participants shared similar experiences, with OA7 saying, “He just
+told me where to click, but I didn’t understand the underlying logic.” In contrast, YFMs expect to
+solve the problems efficiently and quickly. They often prefer to simplify the support process
+to direct steps, avoiding lengthy explanations. YA5 mentioned, “I just tell her where to click,
+and that’s it. I don’t want to spend too much time explaining.”
+• Temporal and Spatial Conflicts: Immediate Needs vs. Belated Support. OAs generally
+expect immediate support when they encounter issues. They hope get prompt guidance like
+“request and respond” (OA11). However, some OAs like OA7 have become hesitant to seek
+help from their children due to unsuccessful experience: “When I used to ask him for help, I
+often had to wait until he finished work... I try not to bother him anymore.” On the other hand,
+due to daily working and studying, YFMs struggle to respond to OAs’ needs immediately,
+resulting in a mismatch between OAs’ needs and YFMs’ support.
+• Misalignment between Guiding and Following: Complex Instructions vs. Weak
+Comprehension. Another conflict is the misalignment between YFMs’ instructions and
+OAs’ understanding and following. YFMs often expect OAs to execute instructions accurately.However, due to OAs’ difficulties in understanding ICT concepts and conducting
+operations, their executions deviate from the expected. For example, YA7 shared, “I told her
+to find the ’three-dot menu’, but she kept clicking on the settings, confused by similar-looking
+icons with three dots.” Furthermore, OAs’ struggle with technical terms, further exacerbates
+this misalignment. OA5 described, “He’s teaching at a high school level, but I understand at
+an elementary level.” OAs expect each action to yield clear and visible feedback, while YFMs
+tend to rely on concise and directive instructions. This gap leads to discrepancies between
+understanding and execution.
+3.3
+
+Design Strategies
+
+Based on the above expectations of OAs and YFMs, especially the expectation gaps, we propose
+the following strategies to guide the design of systems to enhance OAs and YFMs’ experiences in
+addressing smartphone usage problems.
+• DS1: Enhancing support for OAs while reducing the workload of YFMs. In the design of a
+system to facilitate YFM-supported smartphone usage problem-solving for OAs, both OAs
+and YFMs perspectives should be considered. The crucial design consideration is how to
+bridge the gaps between these two groups of stakeholders, ensuring that OAs can obtain
+overall high-quality support while YFMs do not need to cope with high workload.
+• DS2: Enhancing OAs’ experience through flexible guidance and feedback. From the perspective of OAs, the system should be characterized with: (1) flexible guiding modes such
+as step-by-step and one-click-go proxy actions (F1); (2) real-time feedback indicating the
+correctness of each operation (F2, F3); and (3) explanations of ICT terms and UI elements (F2).
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:11
+
+• DS3: Expanding YFMs’ problem-solving capabilities but reducing workload. From the perspective of YFMs, the system should be characterized with: (1) multiple solution-finding
+methods tailored to different knowledge levels, such as letting the system to find solutions
+when YFMs do not know OAs’ problems very well (F2); (2) supporting solution reusing to
+cope with OAs’ repeated asks about the same problem (F2, F3); and (3) a feedback mechanism
+allowing YFMs to know OA’s progress in problem solving (F3).
+• DS4: Maintaining Participation of OAs and YFMs. The aim of the system is not to replace OAs
+or YFMs but to assist them. For example, the system does not replace OAs to directly complete
+tasks but instead guides them to take operations step-by-step; and the system should inform
+YFMs about OA’s progress in problem solving to ensure YFMs’ timely perception and control.
+4
+
+WePilot
+
+Problem Description
+
+1
+
+Agent
+Agent-lead
+Query
+Initial Solution
+
+Solution
+searching
+
+Confirmed Solution
+
+Collaborative
+2 YFM-Agent
+Solution Finding
+Function library
+management
+
+YFM-lead
+Initial Solution
+Refined Solution
+Confirmed Solution
+
+One-click-go
+
+Older Adults
+
+Younger Family
+Members
+
+Operation
+
+Operation Guiding
+Step-by-step
+
+3
+
+UI locating,
+explanation, and
+validation
+
+Demonstration
+Question
+Explanation
+
+State
+feedback
+
+4
+
+Feedback
+
+Fig. 2. System architecture overview, where orange numbers indicate the interaction process between
+OAs/YFMs and the system, blue arrows represent WePilot-processed information, and purple arrows indicate
+user-initiated interactions.
+
+The above four design strategies, especially the expectation gaps between OAs and YFMs,
+motivates us to build a chatbot-mediated system WePilot to assist OAs and YFMs to collaboratively
+solving smartphone usage problems. As mentioned above, chatbots are more accessible, flexible,
+and knowledgeable, showing great potential to mediate OAs and YFMs’ gaps in supporting time,
+guidance granularity, and knowledge level. As shown in Figure 2, WePilot serves as an intelligent
+mediator, facilitating the engagement of OAs in the support process in an intuitive, interactive,
+and cognitively lightweight manner, while also allowing YFMs to engage flexibly with minimal
+cognitive and time demands. WePilot is structured into three components corresponding to the
+overall support workflow: 1) Solution Finding Module: collaborates with YFMs through two flexible
+approaches to determine solutions and manages a Function Library; 2) Operation Guiding Module:
+provides OAs with two forms of operation guidance to accommodate different problem types; 3)
+Feedback Module: Tracks OAs’ progress in problem-solving and presents it to YFMs.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:12
+
+4.1
+
+Haonan Zhang et al.
+
+Solution Finding Module
+
+Based on the design strategies DS1 and DS3 from our Formative Study, we developed two distinct
+Solution Finding modes (Figure 2-2). These modes are designed to accommodate different scenarios,
+i.e., YFMs know the solution well or do not.
+4.1.1 YFMs know the solution well. The YFM-lead mode is designed primarily for situations where
+YFMs possess knowledge of the solution. Based on our Formative Study, YFMs in traditional support
+contexts need to consider their own availability and OAs’ ability to understand online tutorials.
+WePilot simplifies this process by converting brief descriptions or online tutorial resources into
+structured solutions (DS3). In this mode, YFMs can provide initial solutions via: 1) natural language
+descriptions when time permits or suitable online tutorials are unavailable (Figure 3(a)), or 2) direct
+tutorial links when time-constrained but online resources exist (Figure 3(b)). Either method is
+followed by a refine-confirm process, after which the confirmed solutions are stored in the Function
+Library (Section 4.1.3) for OAs to access (Section 4.2).
+The YFM-lead mode maintains YFMs’ awareness and control over the solution (DS4) while reducing cognitive load (DS1). Although primary interactions are simplified, YFMs retain the option to
+provide detailed guidance, including step-by-step instructions, explanations, and recommendations,
+all of which WePilot preserves for OAs’ reference.
+(a) YFM-lead
+Natural Language
+
+(b) YFM-lead
+Link
+
+(c) Agent-lead
+
+Feedback
+
+(d) Feedback
+Feedback of
+Repetitive Task
+
+Query
+How to pay for phone bills?
+18 answers in total
+
+Let’s Ask
+
+Initial
+Solution
+
+Refined
+Solution
+
+Confirmation
+
+Initial
+Solution
+
+Initial
+Solution
+
+Refined
+Solution
+
+Confirmation
+
+Confirmation
+
+Fig. 3. Interaction interface between YFMs and WePilot, displaying three modes of solution provision and
+state feedback.
+
+4.1.2 YFMs do not know the solution well. The Agent-lead mode is designed primarily for situations
+where YFMs encounter problems beyond their knowledge scope. As identified in our Formative
+Study, YFMs traditionally give up providing support when they lack solution knowledge, leading
+to missed support opportunities. WePilot streamlines this process by expanding YFMs’ knowledge
+and automating solution discovery, enabling them to make informed decisions and provide support
+with knowledge enhancement (DS1, DS3). In this Agent-lead mode, YFMs can formulate queries
+based on their understanding of OAs’ issues. WePilot then uses these queries to generate initial
+solutions by leveraging web search results with Function Library queries. YFMs can subsequently
+review these initial solutions, verify their accuracy, assess their safety, and make any necessary
+adjustments to create a confirmed solution, which is then used to support OAs (Figure 3(c)).
+It is important to clarify that our goal is to alleviate the discomfort YFMs may feel when unable
+to address OAs’ issues and reduce their reluctance to provide support in unfamiliar areas, rather
+than compelling YFMs to offer support. YFMs retain control over the solutions and the decisions to
+provide support. They also can opt not to provide support if they deem the feature risky for OAs
+(DS4).
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:13
+
+4.1.3 Function Library and Reuse Mechanism. Reducing time cost for YFMs, as outlined in our
+Formative Study’s Design Strategy (DS3), is a crucial approach to mitigating time conflicts between
+OAs and YFMs (C2). WePilot implements this through the Agent-lead mode in the Solution Finding
+phase, minimizing YFMs’ need to search independently and preventing repeated inquiries from
+OAs on the same issues. To achieve this, we developed the Function Library and a reuse mechanism.
+
+History Help Item
+
+Question-Format Titles
+
+Function Description
+
+Inactive Tutorial
+
+Tutorial Node
+
+Activated Tutorial (selected)
+
+Fig. 4. Function Library Structure Diagram.
+Nodes represent smartphone interfaces and
+edges indicate navigation paths between interfaces.
+
+Fig. 5. History Help Panel.
+
+The Function Library is structured as a graph (Figure 4). It stores confirmed solutions as internalized data and enables retrieval of these solutions in the Agent-lead mode to generate appropriate
+operation pathways. As support interactions between YFMs and OAs accumulate, the Function
+Library expands, enabling WePilot to provide increasingly appropriate suggestions. Since the Function Library is composed of previously operational pathways, YFMs can spend less time reviewing
+and confirming each solution.
+The reuse mechanism is designed as a panel containing multiple historical support interaction
+records (Figure 5). It logs support instances and displays them as question-format titles, making it
+easier for OAs to locate relevant solutions. OAs can choose to revisit solutions previously provided
+by YFMs, sparing YFMs from repeated instructions for the same problems. Notably, since the
+support provided has been verified and confirmed by YFMs, they can be considered to participate
+asynchronously in supporting with repeated questions. This aligns with our emphasis on YFMs’
+control over the support process (DS4).
+4.2
+
+Operation Guiding Module
+
+WePilot provides OAs with an intuitive and cognitively lightweight format for receiving support.
+As shown in Figure 2-3 and line with DS2, we designed this module to offer OAs two forms of
+operation guidance: step-by-step guidance and one-click-go operation. Through this module, we
+attempt to mitigate OAs and YFMs’ conflict between detailed guidance and quick resolution (C1),
+as well as the knowledge gap (C3).
+4.2.1 Step-by-step Mode. For issues identified by YFMs as Operation-type, our Formative Study
+established two core objectives in this mode: to provide intuitive guidance enabling OAs to follow step-by-step operations (DS1), and to offer immediate feedback to confirm or correct OAs’
+clicking behaviors, ensuring they feel confident in the accuracy of each interaction (DS2). Figure 6
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:14
+
+Haonan Zhang et al.
+
+Correct
+Operation
+
+Correct
+Operation
+F1
+
+F7
+
+You can click the red square
+in the middle now to enter
+the general settings interface.
+
+Correct
+Operation
+
+What's this?
+
+Correct
+Operation
+
+Wrong
+Operation
+F2
+
+F3
+
+F4
+
+It's like in your little room,
+there are joysticks for
+controlling different things.
+This is one of them, used to
+control common components.
+
+You can click on the red
+square in the lower - right
+corner of the screen to
+enter the "Me" interface.
+
+Okay. But what does the
+"Me" interface mean?
+
+It's actually like your own
+little room. Inside, there
+are your photos, business
+cards, and other settings. If
+you want to change the font
+size on WeChat, you need
+to operate the joystick for
+font size within this "room".
+
+Now you can click the red
+square near the middle bottom part to enter the font
+size settings interface and
+make the adjustments!
+
+You can click the red square
+in the middle now to enter
+your settings interface, and
+then operate the joystick.
+
+F5
+
+All right!
+
+…
+
+Now you need to click
+"OK" in the middle to
+make the new font settings
+take effect. And then this
+tutorial will be over!
+
+Okay!
+
+Got it! I'll give it a try!
+
+Reoperation
+
+Oh, I see!
+
+F6
+
+Oops, it seems you've
+clicked in the wrong
+place. Do you want to
+continue learning?
+Really? I clicked wrong.
+Let's continue.
+
+Okay!
+
+Fig. 6. Interaction process between OAs and WePilot. Green arrows indicate the correct operation paths,
+while red arrows show incorrect operations and subsequent recovery steps.
+
+demonstrates the step-by-step interaction flow between OAs and WePilot. In this mode, OAs follow
+visual highlights (F1) and voice prompts (F2) to interact with marked UI elements. When a correct
+action is taken, the interface updates accordingly, providing visual and audio feedback to confirm
+accuracy. If an incorrect action occurs, WePilot immediately provides feedback through vibration
+(F5) and a voice notification (F6).
+OAs can press and hold the voice button (F7) to ask questions about interface elements, ICT
+terms, or operational steps (F3). WePilot generates comprehensible explanations (F4) based on
+the current operations and context, specifically designed for users with low digital literacy. The
+system uses metaphors to translate technical concepts, converting abstract ICT terms (e.g., cache,
+background running) into familiar analogies (e.g., “temporary drafts,” “TV running while doing
+other things”). These features fulfill our design goals of providing intuitive, cognitively lightweight
+instruction (DS2). Additionally, since OAs control each interaction, they can choose to stop at any
+time, maintaining control over their learning process (DS4).
+4.2.2 One-click-go Mode. Beyond operation-type issues, we designed the flexible guiding modes
+such as step-by-step and one-click-go mode to address configuration-type issues. Given the low
+frequency and typically one-time nature of these tasks, the goal of this mode is not to teach OAs
+or ensure they remember the steps, but rather to be solution-oriented (DS2). In the one-clickgo mode, the interface OAs interact with remains largely the same as in the step-by-step mode.
+However, OAs do not need to execute most actions themselves; the system performs these actions
+automatically, except for privacy-related steps, which require OAs’ input. This mode aligns well
+with OAs’ expectations for simplified, automated operations.
+Although this mode minimizes the need for OAs to perform actions, OAs still retain control
+over the process (DS4). WePilot displays the elements it intends to select, allowing OAs to see
+each action beforehand. If OAs prefer, they can also choose to perform the highlighted actions
+themselves after WePilot indicates the relevant elements.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+4.3
+
+CSCW522:15
+
+Feedback Module
+
+Providing feedback mechanisms to YFMs based on OA’s guided interactions with WePilot(Figure
+2-4) is a crucial design element for ensuring control (DS4). As shown in Figure 3(d), YFMs can access
+interaction records with OAs through WePilot at any time, including quantitative metrics such
+as task completion time, click accuracy, and the number of attempts required. These data points
+are presented through intuitive visualizations, enabling YFMs to quickly identify OAs’ interaction
+patterns and potential difficulties. For repetitive tasks, the system tracks and displays changes in
+these metrics over time, allowing YFMs to monitor OAs’ progress.
+This feedback mechanism enhances YFMs’ engagement in the support process while maintaining
+their autonomy (DS4). By providing clear visibility into OAs’ interaction patterns, WePilot enables
+YFMs to make informed decisions on when and how to offer additional support.
+4.4
+
+Example Process
+
+In this section, we demonstrate a specific case illustrating how OAs and YFMs use WePilot for
+remote smartphone technical support.
+An OA encounters difficulties with overwhelming irrelevant posts from an unfamiliar user on
+their social media feed. OA first searches the support history provided by WePilot but finds no
+prior support from YFM on this issue. OA then sends a help request to YFM, describing the problem.
+Upon receiving OA’s request, YFM, based on personal experience, identifies that OA wishes to
+mute the user’s posts. Although YFM is familiar with the process, time constraints lead her/him to
+provide a brief description of the muting steps to WePilot. It then generates and presents a refined,
+step-by-step solution for YFM’s review and confirmation. After the confirmation, the solution is
+recorded and sent to OA. Following YFM’s confirmation, WePilot initiates step-by-step guidance
+mode. The system highlights key UI elements on OA’s screen and provides audio prompts to guide
+them through the process. During the process, OA poses questions about the difference between
+“unfollow” and “unfriend” to WePilot. WePilot uses the metaphor of “muting a TV channel” and
+“canceling the TV subscription” to clearly explain the difference between them. When OA attempts
+to click a small icon in the upper right corner, he makes an incorrect click accidentally. But with
+a reminder from WePilot, she/he quickly realizes the mistake and returns to the correct action
+path. Finally, when OA successfully mutes the user’s posts, WePilot compiles the operation details
+(objective metrics) into a summary chart for YFM. Upon review, YFM sees that OA has completed
+the process smoothly and solved his problem effectively.
+4.5
+
+Implementation
+
+4.5.1 Android Application. In this study, we developed and tested the functionality of the WePilot
+application on standard Android devices. For the OAs side, the application was built using Kotlin,
+requiring only accessibility service permissions and no root access. WePilot operates as a background
+application. Additionally, following the approach outlined in [102], we implemented the method
+shown in Figure 6 to optimize the highlighting of UI elements, enhancing both visual clarity
+and usability. For YFMs, WePilot was implemented as a Chatbot within the WeChat platform.
+The selection of WeChat as the platform was based on several considerations: first, WeChat has
+a large user base in our study region, with widespread adoption among both older adults and
+younger family members. Second, WeChat’s instant messaging capabilities enable YFMs to respond
+immediately to OAs’ requests and interact with WePilot in real time, increasing the efficiency of
+support. Furthermore, WeChat supports multiple interaction modes, including text and images,
+providing WePilot with rich interaction methods to meet diverse user needs. Through this design,
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:16
+
+Haonan Zhang et al.
+
+we aim to enhance communication between OAs and YFMs, improving the effectiveness of support
+and user experience.
+4.5.2 Backend Components. WePilot’s backend components are primarily developed in native
+Python and deployed on a development server using the Flask framework. The system’s sentence
+generation module utilizes OpenAI’s GPT-4o model1 , chosen for its superior performance in
+response speed and processing efficiency compared to other closed-source models, particularly
+excelling in multi-turn conversations. For the MLLM component, we selected the gpt-4-visionpreview model2 , which builds upon [100], and includes additional text extraction capabilities. This
+integration combines XML tree and screen capture information to enhance the accuracy of UI
+element recognition. The Function Library module employs the highly-ranked bge-large-zh-v1.5
+model from MTEB3 and the FAISS library to optimize functionality recall efficiency and accuracy.
+4.5.3 TTS & STT. We adopted the iFLYTEK’s4 speech recognition SDK to enhance recognition
+accuracy for older users’ speech, as this SDK demonstrates significant advantages in recognizing
+both Mandarin and common dialects. To accommodate the unique speech patterns of older adults
+[88, 108], we adjusted the recognition interval and maximum recognition duration to 9 seconds
+and 60 seconds respectively. For text-to-speech (TTS) conversion, we utilized Android’s native TTS
+interface to ensure system stability and compatibility.
+5
+
+Evaluation
+
+We conducted an evaluation to evaluate WePilot system. This evaluation explored the following
+evaluation questions:
+• Q1: How do YFMs and OAs use WePilot?
+• Q2: Can WePilot alleviate the burden of remote technical support for both YFMs and OAs?
+• Q3: Do YFMs and OAs find WePilot usable, effective, and satisfactory?
+5.1
+
+Evaluation Details
+
+5.1.1 Procedure. In this evaluation, we recruited 12 pairs of participants (P1-P12) through local
+community centers. Each pair consisted of one YFM aged 22-32 and one OA aged 66-80. All
+participants had experience providing/seeking help with smartphone usage issues in the past
+month. Their detailed information is displayed in Table 3.
+All sessions were conducted in community activity room and took approximately 90 minutes.
+At the start of the session, participants were required to sign informed consent and completed
+demographic questionnaires. Then each pair was asked to complete six APP-related tasks jointly
+with our experimental devices, by providing/processing help with or without assistance of WePilot.
+To better simulate real-life scenarios in the experiment, we: (1) contextualized the 35 features within
+realistic daily scenarios rather than presenting them directly. OAs selected six scenarios of greatest
+interest to them and learned to use them by using different support method until self-reported task
+completion; (2) physically separated YFMs and OAs during the experiment to prevent interference.
+To mitigate potential cognitive overload from completing six tasks, we improved the design of
+our experiment from the following two aspects: 1) OAs could flexibly select six scenarios based
+on personal interest, which can ensure task engagement aligned with their preferences, thereby
+reducing cognitive load caused by task assignment [58]; 2) Participants were allowed to pause and
+1 https://platform.openai.com/docs/models/gpt-4o
+2 https://openai.com/index/gpt-4v-system-card/
+
+3 https://huggingface.co/spaces/mteb/leaderboard
+
+4 https://www.xfyun.cn/
+
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:17
+
+Table 3. Demographic information of OA and YFM pairs in Evaluation. “F” represents “Female”, and “M”
+represents “Male”.
+Pair ID
+
+OA Age & Gen- YFM Age &
+der
+Gender
+
+Intergenerational Relations
+
+Frequency of Requested
+Help
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+
+70, F
+68, M
+74, F
+72, M
+66, F
+80, M
+75, F
+78, M
+69, F
+67, M
+73, F
+71, M
+
+Parent-Child
+Parent-Child
+Parent-Child
+Parent-Child
+Grandparent-Grandchild
+Grandparent-Grandchild
+Grandparent-Grandchild
+Grandparent-Grandchild
+Parent-Child
+Parent-Child
+Grandparent-Grandchild
+Parent-Child
+
+3-5/month
+3-5/month
+<3/month
+6-8/month
+3-5/month
+<3/month
+3-5/month
+6-8/month
+3-5/month
+<3/month
+6-8/month
+3-5/month
+
+30, F
+32, M
+26, M
+25, F
+22, F
+24, M
+28, M
+23, F
+31, F
+29, F
+27, M
+30, F
+
+quit the experiment at any time, avoiding potential cognitive fatigue. Before the experiment, we
+explicitly explained these instructions to the participants. During experiments, we observed that
+no participant chose to pause or quit, suggesting no apparent cognitive load.
+In each experiment, we firstly demonstrated the usage of WePilot for YFMs and OAs separately.
+Then participants completed three APP-related tasks with each support method, phone call and
+WePilot. The reason to choose phone call as the baseline is the most common method for YFMs and
+OAs to provide/seek remote technical help. In each task, OAs were asked to select one feature from
+35 WeChat features options (identified as commonly used but not fully mastered by OA through
+formative study), then seek help from YFM to use this feature. These features were categorized
+according to complexity levels based on criteria proposed by [17]. When using WePilot, OAs had
+the permission to select the guiding modes (step-by-step and one-click-go).
+After the experiment, we designed a two-stage evaluation framework to comprehensively assess
+WePilot’s performance: intrinsic performance evaluation and user evaluation. In the former stage,
+we focused on investigating the quality of the content generated by WePilot, as shown in Table 4.
+For the subjective metrics (the accuracy of explanation and the reasonability of explanation), two
+authors independently rated the results, and then we evaluated the consistency and utilized the
+mean value for evaluation to enhance the reliability. For user evaluation, participants responded to a
+set of Technology Acceptance Model (TAM) questionnaires [38, 107], then we conducted 20-minute
+semi-structured interviews with each pair of participants to gather qualitative feedback on their
+experiences with WePilot. All interviews were recorded and transcribed after the participant’s
+informed consent. At the end of the interview, participants were compensated with $15 for their
+time.
+5.1.2 Data Analysis. We employed both qualitative and quantitative methods to delve into the
+evaluation questions. For Q1, Q2, and Q3, qualitative methods were adopted to analyze semistructured interviews and audio recordings from experimental sessions. The coding method for the
+transcript data followed a procedure similar to that described in Section 3.1.2. For Q2 and Q3, we
+also employed quantitative methods to analyze the interaction logs and TAM scales. For interaction
+logs, we automatically extracted the timestamps from system logs and computed time efficiency
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:18
+
+Haonan Zhang et al.
+
+Table 4. The framework for intrinsic performance evaluation.
+Dimension
+
+WePilot’s generated
+content for OA
+
+Subdimension
+
+Metric
+
+Measurement
+
+Operation
+
+Accuracy
+
+The proportion of highlighted UI elements
+that matched the correct ones.
+
+Accuracy
+
+The mean value of accuracy of explanation.
+Each explanation’s accuracy is rated on a
+5-point Likert scale (1=Poor, 5=Excellent).
+
+Reasonability
+
+The mean value of reasonability of explanation. Each explanation’s reasonability
+(metaphors and other expressions used for
+explanation) is rated on a 5-point Likert
+scale (1=Poor, 5=Excellent).
+
+Reliability
+
+The proportion of solutions that all steps
+align with the optimal operation path.
+
+Explanation
+
+Solution
+
+WePilot’s generated
+content for YFM
+
+for WePilot, while the baseline’s (phone call) time efficiency was evaluated by manually analyzing
+screen recordings. Paired t-test was then used to validate the efficiency difference between WePilot
+and baseline. In terms of TAM scales, given the small participant size and non-normal distribution of
+a dimension’s responses, we performed Wilcoxon signed-rank test to assess the difference between
+WePilot and baseline. Cohen’s d was also calculated to validate effect size.
+5.2
+
+Evaluation Results
+
+5.2.1
+
+Q1: How do YFMs and OAs use WePilot?
+
+Help requests
+from Older Adults
+
+Do I know how to
+solve the problem?
+
+YES
+
+[YFM-lead]
+YES
+Ask Agent for step-bystep tutorial with
+simplified instruction
+
+NO
+
+Can I find a
+solution online?
+NO
+[Agent-lead]
+Ask Agent for step-by-step
+tutorial with query
+
+What is the type
+of the problem?
+
+Operation
+
+Do I have enough time
+to provide detailed
+guidance?
+
+NO
+
+Configuration
+YES
+
+[YFM-lead]
+Ask Agent for step-bystep tutorial with link
+
+Do I have enough
+time to provide
+guidance?
+
+YES
+
+YES
+
+NO
+Proxy
+Operation by
+Agent
+
+Provide
+Simplified
+Instructions
+
+Detailed Teach
+by Agent
+
+Teach with
+Explanation
+
+Fig. 7. Updated decision flowchart for YFMs processing smartphone help requests from OAs assisted by
+WePilot.
+
+During the entire experiment, all of our participant pairs completed a total of 36 trajectories
+consisting of 385 operations. From the perspective of content generated for OA, the operation
+accuracy reached 93.8% (361/385) during the experiment. For both explanation accuracy and
+reasonability, the ratings from two independent authors showed a high level of agreement (Cohen’s
+kappa > 0.8). The average explanation accuracy reached 4.9 out of 5, which shows the richness
+of internal knowledge in MLLMs and their potential to help older adults understand technical
+terms. The average reasonability score was 4.06 out of 5, and 82.5% of the ratings were good (4)
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:19
+
+or excellent (5), suggesting the explanations were mostly reasonable. After analyzing the system
+errors, we found that operation-level mistakes mainly resulted from MLLMs’ limitation in locating
+complex UI elements, especially icon-based controls without text labels (e.g., the hamburger menu
+.
+“≡” and the vertical ellipsis “..”). Additionally, we found that in different sessions, the system’s
+
+metaphorical explanations for the same concept (e.g., “cloud storage”) were sometimes inappropriate
+(e.g., “a virtual hard drive on the internet”) or inconsistent (e.g., “a safe deposit box”). With the
+advancement of pre-training and reinforcement learning techniques, LLMs’ capability of multimodal
+comprehension increases continually [83, 89, 104], which provides the potential for alleviating
+these operation-level problems in the future.
+From the perspective of the content generated for YFMs, the initial solutions in the Agent-lead
+mode were 100% accurate (25/25), while the final solutions in the YFM-lead mode achieved 90.9%
+accuracy (10/11). We thought this high accuracy primarily stems from the Function Library, which
+improves solution formation by organizing operation pathways into directed graphs. In total, 91.7%
+(33/36) of trajectories were successfully completed. For the unsuccessful cases, we found the failures
+mainly originated from users’ mistakes, i.e., YFMs provided incorrect solutions (1/3) or OAs made
+erroneous clicks (2/3).
+Above all, we can see that WePilot’s intrinsic performance (operation accuracy, solution reliability,
+etc.) is overall acceptable, laying the foundation for user evaluation.
+To understand the decision model of remote technical support between OAs and YFMs with
+assistance of WePilot, we analyzed participants’ behaviors observed during experiment and their
+statements from interviews. The results are illustrated as follows and shown in Figure 7.
+• Problem Initiation Phase. While most OAs prefer to directly express their need for help
+to YFMs, 2 of OAs attempted to interact with WePilot. The latter expressed a preference for
+self-reliance, stating they “didn’t want to ask [their children]” (P6-OA) and believed that “it’s
+better to solve problems independently” (P2-OA, P7-OA). They were attracted to WePilot’s
+“neutral” (P1-OA) nature and its “polite and patient” (P9-OA) characteristics.
+• Solution Acquisition. Overall, 9 of YFMs showed a preference for Agent-lead mode, they
+often relay OAs’ questions directly to WePilot, reducing the process of discussing the problem
+with the OAs. Specifically, four YFMs who encountered unsolvable problems selected the
+Agent-lead mode. Surprisingly, five out of the remaining eight YFMs continued using Agentlead mode even when they knew the solution. They explaining that “[Agent-lead] is much
+more convenient than explaining it myself (YFM-lead).” (P4-YFM).
+• Support Decision Making. Regarding time investment, only 3 of YFMs considered their
+availability as a factor in deciding whether to provide support personally. As P10-YFM noted,
+“I would definitely use this when I’m busy, but I prefer explaining personally when I have time.”
+Survey results indicated a significant increase in YFMs’ willingness to provide support under
+time constraints (from Mean = 2.92 to Mean = 3.75, p < 0.01). P2-YFM noted, “Previously, I
+might have avoided helping due to time concerns, but now with WePilot, it takes just a few
+minutes, I feels much easier.”
+• Solution Presentation Negotiation. YFMs and OAs actively negotiated between “learning”
+and “solving” objectives. For instance, P3-OA preferred alternative operations, “It’s great
+that it helps me click through without having to think,” while P3-YFM “would rather they
+learn it themselves instead of relying on [WePilot] every time.” This divergence encouraged
+communication, “I first ask if they want to learn before deciding which method to use.” (P5-YFM).
+Furthermore, we noted P4-OA’s concern about the reduced intergenerational interaction,
+“Although the system is helpful, I miss the detailed explanations my daughter used to give.
+WePilot is efficient, but sometimes I feel we’re losing those teaching moments we used to have.”
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:20
+
+Haonan Zhang et al.
+
+• Post-Support Interaction. 6 of participants engaged in extended discussions after problem
+resolution. For example, after adjusting WeChat font size, P1-OA discussed eye health with
+their children, “My eyes get very tired when using the phone; I didn’t know I could adjust it
+like this.” Similarly, after learning to set message notifications, P4-OA shared his frustration
+about “missing your calls because I couldn’t hear the phone,” leading to YFM suggesting setting
+personalized ringtones for specific contacts. Another type of interaction focused on solution
+process feedback. As P7-YFM described, “Mom tells me whether she understood using WePilot
+and which parts weren’t clear,” such feedback helped YFMs better understand OAs’ learning
+experiences.
+Overall, the introduction of WePilot transformed the remote technical support model from traditional direct support model to an agent-mediated support model. This new model exhibits three key
+characteristics: (1) YFMs’ support decisions become more flexible, with time no longer being the
+primary consideration; (2) OAs demonstrate increased initiative in seeking help with smartphone
+usage; (3) interaction forms become more diverse, expanding from pure technical guidance to solution presentation negotiation and extended discussions. The paradigm shift in intergenerational
+technical support and its implications will be discussed in detail in Section 6.1.
+5.2.2 Q2: Can WePilot alleviate the burden of remote technical support for both YFMs and OAs?
+We evaluated our system effectiveness in reducing the burden for both YFMs and OAs from both
+subjective and objective dimensions. The subjective dimension is measured through questionnaires
+and interviews, for assessing perceived mental effort reported by YFMs as well as perceived cognitive
+and psychological burden reported by OAs. The objective dimension is measured by calculating
+time cost metrics, which is used to reflect the efficiency. For task 𝜏𝑖 , the time cost (s5 ) of YFM or OA
+is defined as 𝐶𝑖YFM or 𝐶𝑖OA respectively:
+(𝑡𝑒𝑛𝑑,𝑖 − 𝑡𝑟,𝑖 ) + (𝑡𝑐𝑜𝑛𝑓 ,𝑖 − 𝑡𝑐𝑜𝑚𝑝,𝑖 )
+,
+𝑆𝑖
+𝑡𝑐𝑜𝑚𝑝,𝑖 − 𝑡𝑟,𝑖
+𝐶𝑖OA =
+,
+𝑆𝑖
+where 𝑆𝑖 indicates the minimum number of steps required to complete the task (the complete
+process from OAs’ initial question to YFMs’ confirmation of problem resolution), 𝑡𝑟,𝑖 indicates the
+time when OA initiates the request, 𝑡𝑒𝑛𝑑,𝑖 indicates the time when YFM ends explicit interaction,
+𝑡𝑐𝑜𝑚𝑝,𝑖 indicates the time when OA completes the task, and 𝑡𝑐𝑜𝑛𝑓 ,𝑖 indicates the time when YFM
+confirms task completion.
+Regarding objective measurement, Figure 8 shows the time cost comparison of YFMs and OAs
+under different support methods (baseline and WePilot). For YFMs, the average time cost decrease
+approximately 42% after use WePilot, from 34.34 (SD = 10.87) with baseline method to 20.00 (SD
+= 6.57) with WePilot. Paired t-test on time cost also revealed that WePilot significantly improved
+YFMs’ efficiency (t = 7.73, p < 0.001, Cohen’s d = 1.82). Additionally, the decrease in interquartile
+range (from 16.16 to 5.46) indicates that support processes with WePilot have less efficiency
+variation and are more stable. For OAs, although the efficiency with assistance of WePilot is not
+significantly improved compared with baseline at the 0.05 significance level (time cost decrease
+from 34.34 to 28.54, p > 0.05), it shows that time cost is more stable (SD decrease from 10.87 to 6.76).
+This improvement indicates that WePilot provides a more consistent learning experience across
+different tasks. Moreover, the influence of WePilot on interaction patterns is particularly significant.
+Traditional remote support shows a perfect correlation between YFMs and OAs time cost metrics (r
+= 1.00, p < 0.001), reflecting synchronous interaction where both parties needed to communicate in
+𝐶𝑖YFM =
+
+5 s indicates second
+
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:21
+
+60
+
+Time Cost (s)
+
+50
+
+40
+
+30
+
+20
+
+10
+COA-Baseline
+
+COA-WePilot
+
+CYFM-Baseline
+
+CYFM-WePilot
+
+Metrics
+
+Fig. 8. Efficiency comparison of YFMs and OAs under different methods.
+
+real-time. However, the introduction of WePilot significantly reduced this correlation (|r| = 0.22, p
+= 0.20). This decrease suggests a degree of decoupling between YFMs’ support provision and OAs’
+support reception, enabling asynchronous support.
+Regarding subjective report, YFMs indicated that they had lower mental effort when using
+WePilot (from Mean = 3.50 to Mean = 4.33, p < 0.05). Specifically, 10 of YFMs mentioned that
+WePilot’s proactive solution provision helped reduce mental effort. As P3-YFM noted, “Having
+ready-made solutions eliminates the need to devise explanations,” while P7-YFM emphasized, “I just
+need to verify and approve, it’s very simple.” For OAs, they indicated that: (1) The multimodal
+guidance is easier to follow (Mean = 4.75), as P2-OA noted that, “With this tool, you think less...
+it highlights where to click in red, making it immediately clear,” almost all participants expressed
+the similar feelings. This aligned with our observations of improved efficiency from objective
+quantitative measurement; (2) They perceived lower psychological pressure (Mean = 3.92), with 10
+of OAs reporting reduced stress. As P8-OA noted that, “I can take my time without worrying about
+taking up too much of my children’s time.” This reduction in stress may stem from the asynchronous
+interaction pattern (r = 0.21).
+However, we also received some negative feedback. For example, outliers of CYFM -WePilot shown
+by the purple bar in Figure 8 (range from 32 to 40). By reviewing interview records and examining
+the data, we found that these may be caused by incorrect initial solutions provided by YFMs (1/3)
+and inaccurate UI element localization performed by OAs (2/3). The former required YFMs to
+carefully verify and re-provide support, while the latter indicated trying again. Nevertheless, even
+with these cases, WePilot maintained efficiency comparable to baseline. Regarding COA -WePilot
+outliers shown by the red bar in Figure 8 (range from 42 to 45), we found these occurred when OAs
+had doubts about WePilot’s instructions, leading to increased dialogue rounds and completion time.
+Overall, WePilot demonstrates prominent effectiveness in reducing remote technical support
+burden for both YFMs and OAs. It decouples the support process, reducing YFMs’ mental effort to
+provide support while providing OAs with intuitive and low-pressure processing support experiences. Despite technical challenges in UI element localization and explanation provision, WePilot
+maintained efficiency levels comparable to baseline.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:22
+
+Haonan Zhang et al.
+
+5.2.3 Q3: Do YFMs and OAs perceive WePilot as usable, effective, and satisfactory?
+To explore OAs’ and YFMs’ perceptions of WePilot’s usability, effectiveness, and satisfaction,
+participants completed the TAM scale [38, 107] after experimenting with each method (baseline
+and WePilot). This scale is designed items based on seven core dimensions, including perceived
+usefulness, perceived ease of use, attitude, behavioral intention, self-efficacy, technology anxiety,
+and social support. For example, for perceived usefulness, items include “This method enables me
+to solve smartphone use issues more effectively.”And for perceived ease of use, items include “Using
+this method to solve smartphone use issues is very easy for me.” Additionally, we gathered qualitative
+feedback through semi-structured interviews. The results of the Wilcoxon signed-rank test indicate
+that OAs’ overall acceptance of the WePilot is significantly higher than that of traditional remote
+support methods (Median = 35.0 vs. 28.0, p < 0.01), demonstrating that WePilot is acceptable overall.
+Notably, WePilot received significant improvements on six dimensions, with p < 0.01 on perceived
+usefulness and attitude and p < 0.05 on perceived ease of use, behavioral intention, self-efficacy,
+and technology anxiety.
+From the perspective of OAs, participants expressed high satisfaction with WePilot’s OA-oriented
+features (Mean = 4.42, SD = 0.64), with 11 of OAs showing preference for step-by-step guiding
+mode. Specifically, visual highlighting and voice prompts (12/12), concept explanation generation
+(10/12), and one-click-go mode functionality (10/12) emerged as the most popular features. As P1-OA
+explained, “With this (visual highlighting and voice prompts), I can immediately identify where to click,
+unlike before when I struggled to locate things despite lengthy explanations from my children.” However,
+we observed that OAs with higher digital literacy showed varying needs for certain features,
+particularly regarding concept explanations. P6-OA, a middle school teacher, felt “underestimated”
+by WePilot’s concept explanations. Additionally, P9-OA also identified inconsistencies in concept
+explanations, she noted that, “It was described as a drawer last time but as a menu this time, which
+confused me.” For YFMs, they particularly valued WePilot’s support history reuse (12/12) and Agentlead mode (9/12). They generally regard WePilot as “easy to use,” “time-saving” and “labor-saving.”
+As P3-YFM stated, “Now I don’t need to repeatedly explain the same issues, ... which saves significant
+time.” However, some YFMs expressed security concerns, with P7-YFM noting, “I worry about
+potential hacking or theft compromising my parents’ phones.” The most controversial design was the
+choice between one-click-go mode and step-by-step mode for OAs. While 8 of OAs explicitly preferred
+the one-click-go mode, “I prefer direct completion over step-by-step learning with doing nothing. It’s
+very convenient.” (P2-OA), over 9 of YFMs expressed concerns about this mode potentially “affecting
+learning effectiveness” (7/12), leading to “being controlled” (7/12), and “complete tool dependency”
+(5/12).
+Overall, despite specific feature controversies (to be discussed in detail in Section 6.2), both YFMs
+and OAs found WePilot to be a usable, effective, and satisfactory system. The system’s advantages in
+improving learning efficiency and reducing communication costs received widespread recognition
+from both parties.
+
+6
+
+Discussion
+
+The evaluation results revealed WePilot’s several superiorities in addressing the expectations of
+OAs and YFMs, while some features still need further improvements. We summarize WePilot’s
+strengths and weaknesses in Table 5 in Appendix B. Based on that, the following sections will
+discuss the pros and cons of introducing chatbot into intergenerational technical support and the
+implications for designing remote intergenerational technical support tools.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+6.1
+
+CSCW522:23
+
+Balancing Chatbot and Intergenerational Interaction in Intergenerational Technical
+Support
+
+Previous research has primarily focused on supporting OAs independently learning or accessing
+social support when facing smartphone usage issues. Through our formative study, we found that
+YFMs, which serve as important social support sources for OAs, often have challenges to teach OAs’
+smartphone usage, resulting in several gaps between OAs’ expected support and YFMs’ guidance.
+Based on these findings, we introduced chatbot into the support procedure to mediate the gaps
+and built WePilot, a system to integrating YFMs and chatbot to support OAs’ smartphone usage,
+aiming to improve the effectiveness and efficiency of OAs’ learning and reducing YFMs’ efforts.
+WePilot transforms the traditional remote technical support mode by changing the synchronous
+participation requirement, enabling a more flexible support mode of asynchronous engagement. Our
+experimental evaluation demonstrated WePilot’s advantages in reducing burden for both parties by
+taking advantage of chatbot’s autonomy and intelligence, increasing YFMs’ willingness to support
+and OAs’ learning experience. However, the introduction of chatbot also brings some drawbacks
+and even risks into intergenerational interactions. This section discusses these innovative findings
+to shed light on the future research of asynchronous intergenerational technical support tools.
+6.1.1
+
+Strengths.
+
+• Enhanced Flexibility: The shift to asynchronous participation has transformed the temporal
+requirement for social support from mutual presence to individual independence [22]. It promotes flexibility for both parties. Specifically, the asynchronous nature creates a “distributed
+learning space”[42, 85, 94], wherein YFMs “no longer need to wait for OAs’ operations” after
+providing solutions, and OAs can also “proceed at their own pace,” gaining more flexibility to
+control over their supporting and learning process. This design helps avoid the mismatch
+between YFMs’ teaching and OAs’ learning pace [75], improving efficiency and also reducing
+the occur of conflicts.
+• Increased Willingness to Seek and Provide Help: After introducing chatbot into the
+loop, the relationship between YFMs and OAs shows a tendency to evolve from request and
+response (OAs ask for help, and the YFMs respond) to proactive support (YFMs actively give
+helps)[86]. Under the traditional mode, limitations in time, efforts, and knowledge often lead
+YFMs to give up supporting. With WePilot’s assistance, YFMs demonstrated significantly
+increased willingness to provide support (Section 5.2.1). Such enhanced willingness indicates
+that YFMs have shifted from viewing technical support as a “burden” to perceiving it as
+a relaxed and enjoyable “casual activity.” In other words, the formality and completeness
+requirements of technical support process have been dissolved [68], reducing YFMs’ workload
+and stress. Consequently, OAs show greater willingness to seek and accept help [81], and
+YFMs demonstrate increased motivation to provide help [81].
+• Strengthened Negotiation: With our system, the supporting process begins to shift from
+unidirectional guidance to mutual negotiation. Our evaluation reveals that YFMs and OAs
+actively interact regarding the dual goals of “learning” and “problem-solving” (Section 5.2.1).
+In traditional technical support model, YFMs predominantly serve as knowledge providers,
+while OAs remain passive recipients. Their interactions are limited to YFMs’ instructions and
+OAs’ following, which often leads to conflicts due to the lack of mutual understanding and
+communication [68, 86]. In contrast, with WePilot’s assistance, such unidirectional knowledge
+transfer is expected to transform into a more dynamic negotiation process: OAs can express
+their learning preferences and needs, and YFMs adjust their support strategies accordingly.
+WePilot takes over YFMs’ initial instructions, enabling OAs to receive guidance through a
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:24
+
+Haonan Zhang et al.
+
+neutral and natural interface rather than direct instructions, which demonstrates potential
+for reducing interpersonal conflicts persisting in the traditional process [36, 55].
+• Expanded Interaction Scope: After adopting our system, the interaction scope between OAs
+and YFMs has broadened from technical instruction to broader casual discussions. For instance,
+conversations about font size adjustments naturally evolved into discussions about eye health,
+and setting up message notifications changed into broader dialogues about communication
+preferences (Section 5.2.1). These technical support sessions served as catalysts for more
+comprehensive intergenerational exchanges [50]. Such changes demonstrate that technical
+support extends beyond problem-solving to strengthening intergenerational bonds [66]. By
+connecting technical issues with daily life scenarios, WePilot shows the potential to create
+opportunities for intergenerational communication between YFMs and OAs [50].
+6.1.2 Weakness. While the introduction of chatbot offers several benefits for both YFMs and OAs,
+it brings some challenges to intergenerational interaction. For instance, there is a reduction in direct
+communication opportunities between YFMs and OAs. It can weaken the established functions of
+emotional support and relationship maintenance in intergenerational interaction, as highlighted in
+previous research [21, 55, 96]. Although WePilot attempts to compensate this issue by encouraging
+communication after problem solving (Section 5.2.2), such “designed interaction opportunities”
+cannot always achieve the intended effects. It will bring adaptation difficulties for OAs and YFMs in
+fully autonomous settings, potentially leading to feelings of disconnection [21, 48]. Mitigating this
+drawback presents complex challenges. The essential is to determine the task boundary between
+chatbot and OAs/YFMs, i.e., letting chatbot take over some guidance and interaction tasks while
+ensuring the necessary interactions between OAs and YFMs. The appropriateness is difficult to
+control since chatbot’s excessive involvement can reduce YFMs and OAs’ communication, while
+insufficient involvement fails to effectively reduce either party’s burden. This challenge echoes
+the current research topic of human-AI collaboration in HCI and CSCW fields, with the aim to
+coordinate tasks between humans and chatbots in different scenarios [7, 91, 92].
+According to the intergenerational communication theory [95], the transition from synchronous
+interaction to asynchronous interaction potentially weakens emotional connections and diminishes
+interaction quality. Social presence theory further suggests that in technology-mediated remote
+interactions, the perceived presence of interaction partners significantly influences communication
+experiences and outcomes [29]. Based on these theoretical insights, we propose several directions
+for future research:
+• Task Allocation Strategy: Further classify the tasks in OAs’ smartphone usage problemsolving into problem-oriented sub-tasks (chatbot undertakes) and communication-oriented
+sub-tasks (YFMs undertake). This approach could appropriately employ chatbot’s strengths
+in knowledge and accessibility while preserving opportunities for emotional connection
+between YFMs and OAs.
+• Perception and Presence Enhancement: Introduce more appropriate presence indicators to
+improve mutual awareness between YFMs and OAs, such as highlighted indicators of YFM’s
+identity.
+• Additional Emotional Interaction Mechanism: Add asynchronous emotional engagement
+features as options. For instance, suggesting YFMs and OAs to conduct a discussion around
+related topics after problem solving.
+Overall, the support mode represented by WePilot presents both opportunities and challenges.
+On one hand, the increased asynchrony and flexibility make technical support more accessible; on
+the other hand, it brings potential negative impacts on intergenerational interaction. To address
+this issue, we suggest that future designs should be grounded in theories of intergenerational
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:25
+
+communication and social presence, developing tools that maintain the efficiency of asynchronous
+support while preserving intergenerational relationships. This research not only extends CSCW
+field’s understanding of intergenerational technical support but also provides new insights for
+building more balanced human-AI collaborative support systems.
+6.2
+
+Design Considerations and Design Implications
+
+Our research also reveals YFMs and OAs’ several concerns regarding intergenerational technical
+support tools, including technical risks, devolution of learning, inconsistent expressions, and
+insufficient personalization.
+Technical Risks. Although WePilot demonstrated promising efficiency improvements (Section
+5.2.2), security issues emerged as a primary consideration, particularly from YFMs (Section 5.2.3).
+Under traditional remote technical support between YFMs and OAs, identity verification is straightforward and reliable. But when a chatbot is introduced, the identity verification becomes indirect,
+carrying some indirect risks. Both YFMs and OAs worry about “How to ensure solutions come from
+YFMs rather than others.” This concern aligns with the worries of previous research emphasizing
+OAs’ vulnerability to digital security risks [19, 59, 80, 82], especially in automated operations.
+Based on this, we suggest that future research to consider some security verification strategies like
+identity verification, ensuring the authenticity of supporters and credibility of operations.
+Devolution of Learning. Another consideration is the trade-off between automation convenience and learning efficiency. Our findings indicate that OAs and YFMs cannot reach consensus on
+the one-click-go mode usage (Section 5.2.3). YFMs expressed concerns regarding two critical issues:
+diminished learning engagement and excessive tool dependency. The former means automated
+operations will reduce OAs’ learning opportunities, and the latter means the increasing reliance on
+automated tools can lead to digital literacy reduction and “lazy mindsets”[71, 72]. This contradiction
+reflects a fundamental challenge in the design of teaching systems: balancing task completion
+and skill development [1, 65, 70]. Recent research in scaffolded learning [84] demonstrates that
+progressive support reduction can effectively maintain both operation efficiency and learning
+outcomes. Based on these insights, we recommend: 1) adjusting automated levels according to
+OAs’ progress and task complexity; 2) introducing features that encourage OAs’ reflection and
+understanding in automated operations.
+Inconsistent Expressions.: Our evaluation reveals challenges in maintaining consistent interactions, particularly in concept explanation (Section 5.2.3). Inconsistent metaphor usage (e.g.,
+describing plus icon as a drawer last time but as a menu this time) creates cognitive confusion for
+OAs, resulting in additional cognitive burden during learning. To address this challenge, we suggest:
+1) emphasizing the role of historical conversations to create user-specific metaphor libraries; 2)
+utilizing techniques like Chain of Thought[93] to stimulate LLMs to infer the most proper metaphor
+relationships and keep consistent. Through these approaches, the system can adaptively maintain
+conceptual coherence across multiple support sessions.
+Insufficient Personalization: Our evaluation indicates limitations in the current personalization
+approaches, particularly in concept explanation (Section 5.2.3). Although we attempted to customize
+explanations based on age groups, this demographic-based approach proved insufficient. Users
+with high digital literacy feel “underestimated” by standardized explanations, while others found
+metaphors disconnected from their life experiences. These findings confirm the recent doubt
+about age-based personalized design [8, 28], suggesting the need for more sophisticated user
+modeling approaches [34, 47, 79]. So future research can consider some personalization strategies
+like generating explanations according to user’s digital literacy and life experience, dynamically
+adjusting explanations based on user feedback and progress, etc.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:26
+
+6.3
+
+Haonan Zhang et al.
+
+Limitations and Future Work
+
+Although this research provides valuable insights into intelligent smartphone usage support between generations, it has several limitations.
+First, our participants came from a single cultural background, limiting our understanding of
+how cultural differences might influence intergenerational technical support patterns and system
+performance. In the meanwhile, the short evaluation period restricted our chances to observe users’
+long-term learning behaviors, adaptation strategies, and sustained engagement. So, in the future,
+it is meaningful to conduct longitudinal studies across different cultural backgrounds with more
+diverse participant groups, which would help deepen our understanding of how various cultural
+and social factors influence intergenerational technical support and enable better understanding of
+OAs’ learning trajectories and long-term engagement patterns.
+Second, as mentioned above, our system still has some drawbacks to be addressed, such as
+inaccurate locating and inconsistent explanations. So future work should focus on developing
+more robust GUI navigation models to enhance element recognition and interaction guidance
+accuracy. This may involve exploring alternative visual processing approaches or combining
+multiple models to improve reliability. Meanwhile, constructing a temporally consistent explanation
+framework to enhance intergenerational technical support. Specifically, mechanisms should be
+developed to track and maintain the conceptual relationships across interface elements, thereby
+ensuring explanatory consistency over time while preserving the semantic connections between
+interrelated concepts. These improvements will contribute to building more robust and reliable
+intergenerational technology learning support systems, ultimately promoting understanding and
+collaboration between younger family members and older users in technology adoption processes.
+Third, as a lab-based study, our current findings may not fully capture the complex dynamics in
+real-world scenarios. For instance, whether the tool promotes OA’s willingness to seek assistance[20]
+when facing technical problems, whether WePilot genuinely alleviates OA’s burden[33, 74] in helpseeking and problem-solving, and how its long-time usage affects intergenerational communication[20,
+26]. Future work can conduct real-world deployment and then employ longitudinal studies to investigate these questions, which helps obtain more reliable insights and make WePilot’s improvements
+more practical.
+7
+
+Conclusion
+
+This paper introduces WePilot, a chatbot-mediated system designed to help OAs and YFMs to
+collaboratively solve smartphone usage problems. Through a formative study with 21 participants,
+we identified OAs and YFMs’ current experiences and expectations in remote intergenerational
+technical support, especially three major conflicts between them. After that, we introduced chatbot
+to mediate the gaps by allowing: (1) YFMs to provide support more flexibly through multiple solution
+provision methods; (2) OAs to solve problems through detailed learning or quick completion; and (3)
+OAs to better understand technical concepts through metaphor-based explanations. An evaluation
+with 12 pairs of OA and YFM showed that WePilot could reduce YFMs’ time cost and provide OAs
+with an intuitive, low-pressure, and efficient support experience. In the future, we will continue to
+improve this system by introducing more personalization strategies and validate its performance
+in broader context (e.g., different groups of OAs and YFMs and long-term observation).
+8
+
+Acknowledgments
+
+This work is supported by National Natural Science Foundation of China (NSFC) under the Grant
+No.62172106. Tun Lu is also a faculty of Shanghai Key Laboratory of Data Science, Fudan Institute
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:27
+
+on Aging, MOE Laboratory for National Development and Intelligent Governance, and Shanghai
+Institute of Intelligent Electronics Systems, Fudan University.
+References
+[1] Paul S Adler. 1987. Automation and skill: new directions. International Journal of Technology Management 2, 5-6
+(1987), 761–772.
+[2] Amber Aftab, Ruipu Hu, and Sang Won Lee. 2020. Remo: Generating Interactive Tutorials by Demonstration for
+Online Tasks. In Adjunct Proceedings of the 33rd Annual ACM Symposium on User Interface Software and Technology.
+87–89.
+[3] Diogenis Alexandrakis, Konstantinos Chorianopoulos, and Nikolaos Tselios. 2019. Insights on older adults’ attitudes
+and behavior through the participatory design of an online storytelling platform. In Human-Computer Interaction–
+INTERACT 2019: 17th IFIP TC 13 International Conference, Paphos, Cyprus, September 2–6, 2019, Proceedings, Part I 17.
+Springer, 465–474.
+[4] Monica Anderson and Andrew Perrin. 2017. Tech adoption climbs among older adults. (2017).
+[5] Afsane Baghestani, Celine Latulipe, and Andrea Bunt. 2024. Older Adults’ Collaborative Learning Dynamics When
+Exploring Feature-Rich Software. Proceedings of the ACM on Human-Computer Interaction 8, CSCW1 (2024), 1–27.
+[6] Jomara Binda, Elitza Georgieva, Yujing Yang, Fanlu Gui, Jordan Beck, and John M Carroll. 2018. PhamilyHealth: a
+photo sharing system for intergenerational family collaboration on health. In Companion of the 2018 acm conference
+on computer supported cooperative work and social computing. 337–340.
+[7] Nattapat Boonprakong, Gaole He, Ujwal Gadiraju, Niels Van Berkel, Danding Wang, Si Chen, Jiqun Liu, Benjamin
+Tag, Jorge Goncalves, and Tilman Dingler. 2023. Workshop on Understanding and Mitigating Cognitive Biases in
+Human-AI Collaboration. In Companion Publication of the 2023 Conference on Computer Supported Cooperative Work
+and Social Computing. 512–517.
+[8] Petter Bae Brandtzaeg, Marita Skjuve, and Asbjørn Følstad. 2022. My AI friend: How users of a social chatbot
+understand their human–AI friendship. Human Communication Research 48, 3 (2022), 404–429.
+[9] Virginia Braun and Victoria Clarke. 2006. Using thematic analysis in psychology. Qualitative research in psychology 3,
+2 (2006), 77–101.
+[10] Virginia Braun and Victoria Clarke. 2013. Successful qualitative research: A practical guide for beginners. (2013).
+[11] Virginia Braun and Victoria Clarke. 2021. One size fits all? What counts as quality practice in (reflexive) thematic
+analysis? Qualitative research in psychology 18, 3 (2021), 328–352.
+[12] Zhenyao Cai, Seehee Park, Nia Nixon, and Shayan Doroudi. 2024. Advancing Knowledge Together: Integrating Large
+Language Model-based Conversational AI in Small Group Collaborative Learning. In Extended Abstracts of the CHI
+Conference on Human Factors in Computing Systems. 1–9.
+[13] Simone Carlo and Francesco Bonifacio. 2020. “You Don’t Need Instagram, It’s for Young People”: Intergenerational
+Relationships and ICTs Learning Among Older Adults. In Human Aspects of IT for the Aged Population. Technology
+and Society, Qin Gao and Jia Zhou (Eds.). Springer International Publishing, Cham, 29–41.
+[14] John M Carroll. 2003. Making use: scenario-based design of human-computer interactions. MIT press.
+[15] Neena L Chappell and R Colin Reid. 2002. Burden and well-being among caregivers: examining the distinction. The
+Gerontologist 42, 6 (2002), 772–780.
+[16] Pei-Yu Chi, Sally Ahn, Amanda Ren, Mira Dontcheva, Wilmot Li, and Björn Hartmann. 2012. MixT: automatic
+generation of step-by-step mixed media tutorials. In Proceedings of the 25th Annual ACM Symposium on User Interface
+Software and Technology. 93–102.
+[17] Jyoti Choudrie, Sutee Pheeraphuttranghkoon, and Soheil Davari. 2020. The digital divide and older adult population
+adoption, use and diffusion of mobile phones: A quantitative study. Information Systems Frontiers 22 (2020), 673–695.
+[18] Smit Desai, Morgan Lundy, and Jessie Chin. 2023. “A Painless Way to Learn:” Designing an Interactive Storytelling
+Voice User Interface to Engage Older Adults in Informal Health Information Learning. In Proceedings of the 5th
+International Conference on Conversational User Interfaces. 1–16.
+[19] Xiaotong Du, Willow Yao, and Sunyoung Kim. 2021. Lessons Learned from Supporting Low-Income Older Adults to
+Use a Tablet PC in the Age of Digital Divide. In Adjunct Publication of the 23rd International Conference on Mobile
+Human-Computer Interaction. 1–5.
+[20] Vegard Engen, J Brian Pickering, and Paul Walland. 2016. Machine agency in human-machine networks; impacts
+and trust implications. In Human-Computer Interaction. Novel User Experiences: 18th International Conference, HCI
+International 2016, Toronto, ON, Canada, July 17-22, 2016. Proceedings, Part III 18. Springer, 96–106.
+[21] Jessica Francis, Travis Kadylak, Taj W Makki, RV Rikard, and Shelia R Cotten. 2018. Catalyst to connection: When
+technical difficulties lead to social support for older adults. American Behavioral Scientist 62, 9 (2018), 1167–1185.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:28
+
+Haonan Zhang et al.
+
+[22] May Hongmei Gao. 2023. From the Traditionalists to GenZ: conceptualizing intergenerational communication and
+media preferences in the USA. Online Media and Global Communication 2, 3 (2023), 422–445.
+[23] Weiwei Gao, Kexin Du, Yujia Luo, Weinan Shi, Chun Yu, and Yuanchun Shi. 2024. EasyAsk: An In-App Contextual
+Tutorial Search Assistant for Older Adults with Voice and Touch Inputs. Proceedings of the ACM on Interactive, Mobile,
+Wearable and Ubiquitous Technologies 8, 3 (2024), 1–27.
+[24] Radhika Garg, Martin Porcheron, Leigh Clark, Benjamin R Cowan, Asbjørn Følstad, Bo Zhang, Jeni Paay, and Ewa
+Luger. 2021. CUI@ CSCW: Inclusive and collaborative child-facing voice technologies. In Companion Publication of
+the 2021 Conference on Computer Supported Cooperative Work and Social Computing. 327–330.
+[25] Narayan Ghiotti, David Clulow, Serene Cheon, Kevin Cui, and Hyo Kang. 2023. Prototyping Kodi: Defining Design
+Requirements to Develop a Virtual Chat-bot for Autistic Children and Their Caregivers. In Companion Publication of
+the 2023 Conference on Computer Supported Cooperative Work and Social Computing. 126–131.
+[26] Anthony Giddens. 1984. The constitution of society: Outline of the theory of structuration. Univ of California Press.
+[27] Jonathan Grudin and John Pruitt. 2002. Personas, participatory design and product development: An infrastructure
+for engagement. In PDC. 144–152.
+[28] Rose E Guingrich and Michael SA Graziano. 2023. Chatbots as social companions: How people perceive consciousness,
+human likeness, and social health benefits in machines. arXiv preprint arXiv:2311.10599 (2023).
+[29] Charlotte N Gunawardena. 1995. Social presence theory and implications for interaction and collaborative learning
+in computer conferences. International journal of educational telecommunications 1, 2 (1995), 147–166.
+[30] Rafik Hadfi, Jawad Haqbeen, Sofia Sahab, and Takayuki Ito. 2021. Argumentative conversational agents for online
+discussions. Journal of Systems Science and Systems Engineering 30 (2021), 450–464.
+[31] Ariel Han, Xiaofei Zhou, Zhenyao Cai, Shenshen Han, Richard Ko, Seth Corrigan, and Kylie A Peppler. 2024. Teachers,
+Parents, and Students’ perspectives on Integrating Generative AI into Elementary Literacy Education. In Proceedings
+of the CHI Conference on Human Factors in Computing Systems. 1–17.
+[32] Riitta Hänninen, Sakari Taipale, and Raija Luostari. 2021. Exploring heterogeneous ICT use among older adults: The
+warm experts’ perspective. New media & society 23, 6 (2021), 1584–1601.
+[33] M D Romael Haque and Sabirat Rubya. 2023. An Overview of Chatbot-Based Mobile Mental Health Apps: Insights
+From App Description and User Reviews. JMIR mHealth and uHealth 11 (2023). https://doi.org/10.2196/44838
+[34] Jiaxiong Hu, Jingya Guo, Ningjing Tang, Xiaojuan Ma, Yuan Yao, Changyuan Yang, and Yingqing Xu. 2024. Designing
+the Conversational Agent: Asking Follow-up Questions for Information Elicitation. Proceedings of the ACM on
+Human-Computer Interaction 8, CSCW1 (2024), 1–30.
+[35] Jun Huang, Qianwen Tan, and Qi Fang. 2024. VitalStep: Revitalizing Elderly Health and Connectivity with E-SquareDance. In Extended Abstracts of the CHI Conference on Human Factors in Computing Systems. 1–7.
+[36] Amanda Hunsaker, Minh Hao Nguyen, Jaelle Fuchs, Teodora Djukaric, Larissa Hugentobler, and Eszter Hargittai.
+2019. “He explained it to me and I also did it myself”: How older adults get support with their technology uses. Socius
+5 (2019), 2378023119887866.
+[37] Tatsuya Ishihara, Masatomo Kobayashi, Hironobu Takagi, and Chieko Asakawa. 2013. How unfamiliar words in
+smartphone manuals affect senior citizens. In Universal Access in Human-Computer Interaction. Applications and
+Services for Quality of Life: 7th International Conference, UAHCI 2013, Held as Part of HCI International 2013, Las Vegas,
+NV, USA, July 21-26, 2013, Proceedings, Part III 7. Springer, 636–642.
+[38] Bora Jin, Junghwan Kim, and Lisa M Baumgartner. 2019. Informal learning of older adults in using mobile devices: A
+review of the literature. Adult Education Quarterly 69, 2 (2019), 120–141.
+[39] Xiaofu Jin, Xiaozhu Hu, Xiaoying Wei, and Mingming Fan. 2022. Synapse: interactive guidance by demonstration
+with trial-and-error support for older adults to use smartphone apps. Proceedings of the ACM on Interactive, Mobile,
+Wearable and Ubiquitous Technologies 6, 3 (2022), 1–24.
+[40] Stuart A Karabenick and John R Knapp. 1988. Help seeking and the need for academic assistance. Journal of
+educational psychology 80, 3 (1988), 406.
+[41] Ryan M Kelly, Yushan Xing, Steven Baker, and Jenny Waycott. 2023. Video calls as a replacement for family visits
+during lockdowns in aged care: Interview study with family members. JMIR aging 6 (2023), e40953.
+[42] Mike Keppell and Matthew Riddle. 2012. Distributed learning spaces: Physical, blended and virtual learning spaces
+in higher education. In Physical and virtual learning spaces in higher education: Concepts for the modern learning
+environment. IGI Global, 1–20.
+[43] Soomin Kim, Jinsu Eun, Changhoon Oh, Bongwon Suh, and Joonhwan Lee. 2020. Bot in the bunch: Facilitating group
+chat discussion by improving efficiency and participation with a chatbot. In Proceedings of the 2020 CHI Conference on
+Human Factors in Computing Systems. 1–13.
+[44] Soomin Kim, Joonhwan Lee, and Gahgene Gweon. 2019. Comparing data from chatbot and web surveys: Effects of
+platform and conversational style on survey response quality. In Proceedings of the 2019 CHI Conference on Human
+Factors in Computing Systems. 1–12.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:29
+
+[45] Viivi Korpela, Laura Pajula, and Riitta Hänninen. 2023. Older Adults Learning Digital Skills Together: Peer Tutors’
+Perspectives on Non-Formal Digital Support. Media and Communication 11, 3 (2023), 53–62.
+[46] Sung-Chul Lee, Jaeyoon Song, Eun-Young Ko, Seongho Park, Jihee Kim, and Juho Kim. 2020. Solutionchat: Real-time
+moderator support for chat-based structured discussion. In Proceedings of the 2020 CHI Conference on Human Factors
+in Computing Systems. 1–12.
+[47] Joanne Leong, Pat Pataranutaporn, Valdemar Danry, Florian Perteneder, Yaoli Mao, and Pattie Maes. 2024. Putting
+Things into Context: Generative AI-Enabled Context Personalization for Vocabulary Learning Improves Learning
+Motivation. In Proceedings of the 2024 CHI Conference on Human Factors in Computing Systems. 1–15.
+[48] Rock Leung, Charlotte Tang, Shathel Haddad, Joanna Mcgrenere, Peter Graf, and Vilia Ingriany. 2012. How older
+adults learn to use mobile devices: Survey and field investigations. ACM Transactions on Accessible Computing
+(TACCESS) 4, 3 (2012), 1–33.
+[49] Lin Li, Wei Peng, Kendra Kamp, Marie Bowen, Shelia R Cotten, RV Rikard, and Anastasia Kononova. 2017. Poster:
+Understanding long-term adoption of wearable activity trackers among older adults. In Proceedings of the 2017
+workshop on wearable systems and applications. 33–34.
+[50] Qingyang Li, Clara Caldeira, Daniel A Epstein, and Yunan Chen. 2020. Supporting caring among intergenerational
+family members through family fitness tracking. In Proceedings of the 14th EAI International Conference on Pervasive
+Computing Technologies for Healthcare. 1–10.
+[51] Q Vera Liao, Yi-Chia Wang, Timothy Bickmore, Pascale Fung, Jonathan Grudin, Zhou Yu, and Michelle Zhou. 2019.
+Human-agent communication: Connecting research and development in HCI and AI. In Companion Publication of the
+2019 Conference on Computer Supported Cooperative Work and Social Computing. 122–126.
+[52] Siân E Lindley, Richard Harper, and Abigail Sellen. 2009. Desiring to be in touch in a changing communications
+landscape: attitudes of older adults. In Proceedings of the SIGCHI Conference on Human Factors in Computing Systems.
+1693–1702.
+[53] Fengli Liu and Jia Zhou. 2019. How to help older adults learn smartphone applications? A case study of instructional
+design for video training. In Proceedings of the 20th Congress of the International Ergonomics Association (IEA 2018)
+Volume IX: Aging, Gender and Work, Anthropometry, Ergonomics for Children and Educational Environments 20. Springer,
+123–136.
+[54] Qi Ma, Alan HS Chan, and Ke Chen. 2016. Personal and other factors affecting acceptance of smartphone technology
+by older Chinese adults. Applied ergonomics 54 (2016), 62–71.
+[55] Carolina Martinez and Tobias Olsson. 2022. The warm expert—A warm teacher? Learning about digital media in
+intergenerational interaction. Convergence 28, 6 (2022), 1861–1877.
+[56] Tamir Mendel and Eran Toch. 2019. My mom was getting this popup: Understanding motivations and processes in
+helping older relatives with mobile security and privacy. Proceedings of the ACM on Interactive, Mobile, Wearable and
+Ubiquitous Technologies 3, 4 (2019), 1–20.
+[57] Tamir Mendel and Eran Toch. 2023. Social support for mobile security: Comparing close connections and community
+volunteers in a field experiment. In Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems.
+1–18.
+[58] Carolyn A Mendez-Luck, David P Kennedy, and Steven P Wallace. 2008. Concepts of burden in giving care to older
+relatives: A study of female caregivers in a Mexico City neighborhood. Journal of Cross-Cultural Gerontology 23
+(2008), 265–282.
+[59] Helena M Mentis, Galina Madjaroff, and Aaron K Massey. 2019. Upside and downside risk in online security for older
+adults with mild cognitive impairment. In Proceedings of the 2019 CHI Conference on Human Factors in Computing
+Systems. 1–13.
+[60] Hazwani Mohd Mohadisdudis and Nazlena Mohamad Ali. 2014. A study of smartphone usage and barriers among
+the elderly. In 2014 3rd international conference on user science and engineering (i-USEr). IEEE, 109–114.
+[61] Mark W Newman and James A Landay. 2000. Sitemaps, storyboards, and specifications: A sketch of web site
+design practice. In Proceedings of the 3rd conference on Designing interactive systems: processes, practices, methods, and
+techniques. 263–274.
+[62] Carolyn Pang, Zhiqin Collin Wang, Joanna McGrenere, Rock Leung, Jiamin Dai, and Karyn Moffatt. 2021. Technology
+adoption and learning preferences for older adults: evolving perceptions, ongoing challenges, and emerging design
+opportunities. In Proceedings of the 2021 CHI Conference on Human Factors in Computing Systems. 1–13.
+[63] Natalie Pang, Samantha Vu, Xue Zhang, and Schubert Foo. 2015. Older adults and the appropriation and disappropriation of smartphones. In Human Aspects of IT for the Aged Population. Design for Aging: First International Conference,
+ITAP 2015, Held as Part of HCI International 2015, Los Angeles, CA, USA, August 2-7, 2015. Proceedings, Part I 1. Springer,
+484–495.
+[64] SangAh Park, Yoon Young Lee, Soobin Cho, Minjoon Kim, and Joongseek Lee. 2021. “Knock Knock, Here Is an Answer
+from Next Door”: Designing a Knowledge Sharing Chatbot to Connect Residents: Community Chatbot Design Case
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:30
+
+Haonan Zhang et al.
+
+Study. In Companion Publication of the 2021 Conference on Computer Supported Cooperative Work and Social Computing.
+144–148.
+[65] Sharon K Parker and Gudela Grote. 2022. Automation, algorithms, and beyond: Why work design matters more than
+ever in a digital world. Applied psychology 71, 4 (2022), 1171–1204.
+[66] Maria Raquel Patrício and António Osório. 2011. Lifelong learning, intergenerational relationships and ICT: perceptions of children and older adults. In Elderly, Education, Intergenerational Relationships and Social Development.
+Proceedings of 2nd Conference of ELOA. ELOA, 224–232.
+[67] Suporn Pongnumkul, Mira Dontcheva, Wilmot Li, Jue Wang, Lubomir Bourdev, Shai Avidan, and Michael F Cohen.
+2011. Pause-and-play: automatically linking screencast video tutorials with applications. In Proceedings of the 24th
+Annual ACM Symposium on User Interface Software and Technology. 135–144.
+[68] Erika Shehan Poole, Marshini Chetty, Tom Morgan, Rebecca E Grinter, and W Keith Edwards. 2009. Computer help at
+home: methods and motivations for informal technical support. In Proceedings of the 2009 CHI Conference on Human
+Factors in Computing Systems. 739–748.
+[69] Jungwook Rhim, Minji Kwak, Yeaeun Gong, and Gahgene Gweon. 2022. Application of humanization to survey
+chatbots: Change in chatbot perception, interaction experience, and survey data quality. Computers in Human Behavior
+126 (2022), 107034.
+[70] Tapani Rinta-Kahila, Esko Penttinen, Antti Salovaara, Wael Soliman, and Joona Ruissalo. 2023. The vicious circles of
+skill erosion: a case study of cognitive automation. Journal of the Association for Information Systems 24, 5 (2023),
+1378–1412.
+[71] Max Schemmer, Niklas Kuehl, Carina Benz, Andrea Bartos, and Gerhard Satzger. 2023. Appropriate reliance on
+AI advice: Conceptualization and the effect of explanations. In Proceedings of the 28th International Conference on
+Intelligent User Interfaces. 410–422.
+[72] Jakob Schoeffer, Maria De-Arteaga, and Niklas Kuehl. 2024. Explanations, Fairness, and Appropriate Reliance in
+Human-AI Decision-Making. In Proceedings of the 2024 CHI Conference on Human Factors in Computing Systems. 1–18.
+[73] Hasti Sharifi and Debaleena Chattopadhyay. 2023. Senior Technology Learning Preferences Model for Mobile
+Technology. Proceedings of the ACM on Human-Computer Interaction 7, MHCI (2023), 1–39.
+[74] Amanda Sharkey and Noel Sharkey. 2021. We need to talk about deception in social robotics! Ethics and Information
+Technology 23 (2021), 309–316.
+[75] Jennifer Shepherd. 2020. Generational differences in learning style preferences among adult learners in the United
+States. Journal of Behavioral & Social Sciences 7, 2 (2020).
+[76] Donghoon Shin, Soomin Kim, Ruoxi Shang, Joonhwan Lee, and Gary Hsieh. 2023. IntroBot: Exploring the use of
+chatbot-assisted familiarization in online collaborative groups. In Proceedings of the 2023 CHI Conference on Human
+Factors in Computing Systems. 1–13.
+[77] Donghoon Shin, Sangwon Yoon, Soomin Kim, and Joonhwan Lee. 2021. Blahblahbot: Facilitating conversation
+between strangers using a chatbot with ml-infused personalized topic suggestion. In Extended Abstracts of the 2021
+CHI Conference on Human Factors in Computing Systems. 1–6.
+[78] Joongi Shin, Michael A Hedderich, AndréS Lucero, and Antti Oulasvirta. 2022. Chatbots facilitating consensusbuilding in asynchronous co-design. In Proceedings of the 35th Annual ACM Symposium on User Interface Software and
+Technology. 1–13.
+[79] Yubo Shu, Haonan Zhang, Hansu Gu, Peng Zhang, Tun Lu, Dongsheng Li, and Ning Gu. 2024. RAH! RecSys–Assistant–
+Human: A Human-Centered Recommendation Framework With LLM Agents. IEEE Transactions on Computational
+Social Systems (2024).
+[80] Janice Jianing Si, Tanusree Sharma, and Kanye Ye Wang. 2024. Understanding User-Perceived Security Risks and
+Mitigation Strategies in the Web3 Ecosystem. In Proceedings of the 2024 CHI Conference on Human Factors in Computing
+Systems. 1–22.
+[81] Jaisie Sin, Rachel L. Franz, Cosmin Munteanu, and Barbara Barbosa Neves. 2021. Digital design marginalization:
+New perspectives on designing inclusive interfaces. In Proceedings of the 2021 CHI Conference on Human Factors in
+Computing Systems. 1–11.
+[82] Bharat Srinivasan, Athanasios Kountouras, Najmeh Miramirkhani, Monjur Alam, Nick Nikiforakis, Manos Antonakakis, and Mustaque Ahamad. 2018. Exposing search and advertisement abuse tactics and infrastructure of technical
+support scammers. In Proceedings of the 2018 World Wide Web Conference. 319–328.
+[83] Yuchen Sun, Shanhui Zhao, Tao Yu, Hao Wen, Samith Va, Mengwei Xu, Yuanchun Li, and Chongyang Zhang. 2025.
+GUI-Xplore: Empowering Generalizable GUI Agents with One Exploration. arXiv preprint arXiv:2503.17709 (2025).
+[84] Keith S Taber. 2018. Scaffolding learning: Principles for effective teaching and the design of classroom resources.
+Effective teaching and learning: Perspectives, strategies and implementation (2018), 1–43.
+[85] Sharon W Tabor. 2007. Narrowing the distance: Implementing a hybrid learning model for information security
+education. Quarterly Review of Distance Education 8, 1 (2007), 47.
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+CSCW522:31
+
+[86] Xinru Tang, Yuling Sun, Bowen Zhang, Zimi Liu, RAY Lc, Zhicong Lu, and Xin Tong. 2022. " I Never Imagined
+Grandma Could Do So Well with Technology" Evolving Roles of Younger Family Members in Older Adults’ Technology
+Learning and Use. Proceedings of the ACM on Human-Computer Interaction 6, CSCW2 (2022), 1–29.
+[87] Teerapaun Tanprasert, Jiamin Dai, and Joanna McGrenere. 2024. HelpCall: Designing Informal Technology Assistance
+for Older Adults via Videoconferencing. In Proceedings of the CHI Conference on Human Factors in Computing Systems.
+1–23.
+[88] Milka Trajkova and Aqueasha Martin-Hammond. 2020. " Alexa is a toy": exploring older adults’ reasons for using,
+limiting, and abandoning echo. In Proceedings of the 2020 CHI conference on human factors in computing systems. 1–13.
+[89] Jianqiang Wan, Sibo Song, Wenwen Yu, Yuliang Liu, Wenqing Cheng, Fei Huang, Xiang Bai, Cong Yao, and Zhibo
+Yang. 2024. Omniparser: A unified framework for text spotting key information extraction and table recognition. In
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 15641–15653.
+[90] Cheng-Yao Wang, Wei-Chen Chu, Hou-Ren Chen, Chun-Yen Hsu, and Mike Y Chen. 2014. Evertutor: Automatically
+creating interactive guided tutorials on smartphones by user demonstration. In Proceedings of the 2014 CHI Conference
+on Human Factors in Computing Systems. 4027–4036.
+[91] Dakuo Wang, Elizabeth Churchill, Pattie Maes, Xiangmin Fan, Ben Shneiderman, Yuanchun Shi, and Qianying Wang.
+2020. From human-human collaboration to Human-AI collaboration: Designing AI systems that can work together
+with people. In Extended abstracts of the 2020 CHI Conference on Human Factors in Computing Systems. 1–6.
+[92] Xinru Wang and Ming Yin. 2022. Effects of explanations in ai-assisted decision making: Principles and comparisons.
+ACM Transactions on Interactive Intelligent Systems 12, 4 (2022), 1–36.
+[93] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou, et al. 2022.
+Chain-of-thought prompting elicits reasoning in large language models. Advances in neural information processing
+systems 35 (2022), 24824–24837.
+[94] Wikipedia. 2024. Distributed learning — Wikipedia, The Free Encyclopedia. http://en.wikipedia.org/w/index.php?
+title=Distributed%20learning&oldid=1181008424. [Online; accessed 10-October-2024].
+[95] Angie Williams and Jon F Nussbaum. 2013. Intergenerational communication across the life span. Routledge.
+[96] Thomas A Wills and Bella M DePaulo. 1991. Interpersonal analysis of the help-seeking process. Handbook of social
+and clinical psychology: The health perspective 162 (1991), 350–375.
+[97] Christoph Wimmer, Alex Untertrifaller, and Thomas Grechenig. 2020. SketchingInterfaces: a tool for automatically
+generating high-fidelity user interface mockups from hand-drawn sketches. In Proceedings of the 32nd Australian
+Conference on Human-Computer Interaction. 538–545.
+[98] Jun Xiao and Qingchun Bai. 2022. iTutor: Promoting AI Guided Knowledge Interaction in Online Learning. In 2022
+International Symposium on Educational Technology (ISET). IEEE, 253–257.
+[99] Jie Xiong and Meiyun Zuo. 2019. How does family support work when older adults obtain information from mobile
+internet? Information Technology & People 32, 6 (2019), 1496–1516.
+[100] Zhao Yang, Jiaxuan Liu, Yucheng Han, Xin Chen, Zebiao Huang, Bin Fu, and Gang Yu. 2023. Appagent: Multimodal
+agents as smartphone users. arXiv preprint arXiv:2312.13771 (2023).
+[101] Junnan Yu, Xiang Qi, and Siqi Yang. 2024. Parent-Child Joint Media Engagement Within HCI: A Scoping Analysis of
+the Research Landscape. In Proceedings of the 2024 CHI Conference on Human Factors in Computing Systems. 1–21.
+[102] Ja Eun Yu and Debaleena Chattopadhyay. 2024. Reducing the Search Space on demand helps Older Adults find Mobile
+UI Features quickly, on par with Younger Adults. In Proceedings of the CHI Conference on Human Factors in Computing
+Systems. 1–22.
+[103] Ja Eun Yu, Natalie Parde, and Debaleena Chattopadhyay. 2023. “Where is history”: toward designing a voice assistant
+to help older adults locate interface features quickly. In Proceedings of the 2023 CHI Conference on Human Factors in
+Computing Systems. 1–19.
+[104] Wenwen Yu, Zhibo Yang, Jianqiang Wan, Sibo Song, Jun Tang, Wenqing Cheng, Yuliang Liu, and Xiang Bai. 2025.
+OmniParser V2: Structured-Points-of-Thought for Unified Visual Text Parsing and Its Generality to Multimodal Large
+Language Models. arXiv preprint arXiv:2502.16161 (2025).
+[105] Zheng Zhang, Ying Xu, Yanhao Wang, Bingsheng Yao, Daniel Ritchie, Tongshuang Wu, Mo Yu, Dakuo Wang, and
+Toby Jia-Jun Li. 2022. Storybuddy: A human-ai collaborative chatbot for parent-child interactive storytelling with
+flexible parental involvement. In Proceedings of the 2022 CHI Conference on Human Factors in Computing Systems.
+1–21.
+[106] Mingyuan Zhong, Gang Li, Peggy Chi, and Yang Li. 2021. HelpViz: Automatic generation of contextual visual mobile
+tutorials from text-based instructions. In The 34th Annual ACM Symposium on User Interface Software and Technology.
+1144–1153.
+[107] Xiaowen Zhu and Xianping Cheng. 2024. Staying connected: smartphone acceptance and use level differences of older
+adults in China. Universal Access in the Information Society 23, 1 (01 Mar 2024), 203–212. https://doi.org/10.1007/s10209022-00933-4
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:32
+
+Haonan Zhang et al.
+
+[108] Randall Ziman and Greg Walsh. 2018. Factors affecting seniors’ perceptions of voice-enabled user interfaces. In
+Extended abstracts of the 2018 CHI conference on human factors in computing systems. 1–6.
+
+A
+
+Original Chinese Figures
+(a) YFM-lead
+Natural Language
+
+(b) YFM-lead
+Link
+
+(c) Agent-lead
+
+Feedback
+
+(d) Feedback
+Feedback of
+Repetitive Task
+
+Query
+
+Initial
+Solution
+Initial
+Solution
+
+Initial
+Solution
+
+Refined
+Solution
+
+Refined
+Solution
+
+Confirmation
+
+Confirmation
+
+Confirmation
+
+Fig. 9. Interaction interface between YFMs and WePilot, displaying three modes of solution provision and
+state feedback.
+
+Correct
+Operation
+
+Correct
+Operation
+
+History Help Item
+
+F1
+
+F7
+
+您现在可以点击中间的红
+色方块来进入常规的设置
+界面。
+
+Correct
+Operation
+
+这是什么？
+
+Correct
+Operation
+
+Wrong
+Operation
+F2
+
+F3
+
+F4
+
+就像是您的小屋里有控
+制不同东西的操纵杆，
+这个是其中之一，用来
+控制一般的零件。
+
+您可以点击屏幕上右下
+角的红色方块进入“我”
+的界面。
+
+行。但这个“我”的界面是
+什么意思呢？
+
+它其实就像是您自己的
+小屋。里面有您的照片
+呀，名片和其他的配置。
+如果您想要在微信上改
+变字体大小的话，就要
+操作这个小屋子里面的
+字体大小的操纵杆。
+
+你现在可以点击中间靠
+下的红色方块，进入字
+体大小设置的界面进行
+修改啦！
+
+您现在可以点击中间的
+红色方块来进入您的设
+置界面，然后操作操控
+杆。
+
+F5
+
+行！
+
+…
+
+Question-Format Titles
+
+您现在需要点一下中间
+的确定，来让新的字体
+设置生效。然后教程就
+结束啦！
+
+好的。
+
+知道了！我来试试看！
+
+Reoperation
+
+哦，我明白了!
+
+F6
+
+哎呀，看起来您好像点
+错地方了。您想继续学
+习吗？
+
+是吗？我点错了。继续
+吧。
+
+好的！
+
+Fig. 10. Interaction process between OAs and WePilot. Green arrows indicate
+the correct operation paths, while red arrows show incorrect operations and
+subsequent recovery steps.
+
+Fig. 11. History
+Help Panel.
+
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+WePilot
+
+B
+
+CSCW522:33
+
+Expectations and System Design
+Table 5. Overview of user expectation and system design.
+Expectation and
+Gap
+
+Improve the accessibility of support
+
+OA
+Provide intuitive instructions and guidance
+
+Enhance
+tions
+
+interac-
+
+Offer flexible options
+
+Reduce time and effort
+
+YFM
+
+Provide feedback
+
+Maintain
+participation and
+connection
+
+System Design
+Feature/Functionality
+
+Module
+
+• Fea.1: Incorporating chatbot into
+the help-seeking interactions between OAs and YFMs
+
+• Solution Finding Module
+• Operation Guiding Module
+• Feedback Module
+
+• Fea.2: Logging support instances
+for reusing
+
+• Solution Finding Module (Reuse
+Mechanism)
+
+• Fea.3: Voice prompts
+• Fea.4: Visual highlight
+
+• Operation Guiding Module (Stepby-step mode and One-click go
+mode)
+
+• Fea.5: Performing actions step-bystep
+• Fea.6: Using metaphors to translate technical concepts and converting abstract ICT terms into familiar
+analogies
+• Fea.7: Providing visual and audio
+feedback for correct action and vibration and voice notification for incorrect action
+• Fea.8: Answering questions about
+interface elements, ICT terms or operational steps and generating comprehensible explanations
+• Fea.9: Offering OAs two forms
+of operation guidance: step-by-step
+guidance and one-click-go operation
+
+• Fea.1
+• Fea.10: Allowing YFMs to just provide brief descriptions or online tutorial resources
+
+• Operation Guiding Module (Stepby-step mode)
+
+• Operation Guiding Module (Stepby-step mode)
+
+• Operating Guiding Module
+
+• Solution Finding Module (YFMlead mode)
+
+• Fea.11: Providing automated solution discovery when YFMs do not
+know the solution well
+
+• Solution Finding Module (Agentlead mode)
+
+• Fea.12: Responding to OAs’ repeated requests by taking advantage
+of solution reuse mechanism
+
+• Solution Finding Module (Reuse
+Mechanism)
+
+• Fea.13: Allowing YFMs to get
+to know OAs’ interaction patterns
+and potential difficulties in problemsolving
+• Fea.14: Allowing YFMs to track
+OAs’ changes over time
+
+• Feedback Module
+
+• Fea.15: Providing a refine-confirm
+process in solution finding
+
+• Solution Finding Module (YFMlead mode and Agent-lead mode)
+
+• Fea.16: Allowing YFMs to know
+OAs problem-solving status and
+changes
+
+• Solution Finding Module (Function Library)
+
+Limitation
+
+• Lim.1: YFMs still need
+to confirm the solution,
+which may delay the support if they are unavailable
+• Lim.2: MLLM has limitations in locating complex UI elements (iconbased controls without
+text labels)
+
+• Lim.3: Some concept
+explanations are not coherent or disconnected
+from OAs’ life experiences during interactions
+
+• Lim.4: One-click-go
+mode may lead to OAs’
+diminished learning engagement and excessive
+tool dependency
+• Lim.5: With YFMs’
+participation
+reduces,
+there may be security
+concerns such as potential hacking or theft
+
+\
+
+• Lim.6: Direct communication opportunities
+between YFMs and OAs
+may reduce
+
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+CSCW522:34
+Expectation and
+Gap
+
+Detailed Guidance
+vs. Quick Resolution
+
+Expectation
+Gaps
+Immediate Needs vs.
+Belated Support
+
+Complex Instructions vs. Weak
+Comprehension
+
+Haonan Zhang et al.
+System Design
+Feature/Functionality
+
+Module
+
+•
+•
+•
+•
+•
+•
+
+Fea.3
+Fea.4
+Fea.5
+Fea.6
+Fea.7
+Fea.8
+
+• Operation Guiding Module
+
+• Fea.10
+• Fea.11
+
+• Solution Finding Module
+
+• Fea.1
+• Fea.2
+
+• Solution Finding Module
+• Operation Guiding Module
+• Feedback Module
+
+• Fea.10
+• Fea.11
+• Fea.12
+
+• Solution Finding Module
+
+• Fea.6
+• Fea.8
+
+• Operation Guiding Module (Stepby-step mode)
+
+• Fea.10
+
+• Solution Finding Module (YFMlead mode)
+
+Limitation
+
+• Lim.2
+• Lim.4
+• Lim.5
+
+• Lim.1
+• Lim.6
+
+• Lim.3
+
+Received October 2024; revised April 2025; accepted August 2025
+
+Proc. ACM Hum.-Comput. Interact., Vol. 9, No. 7, Article CSCW522. Publication date: November 2025.
+
+

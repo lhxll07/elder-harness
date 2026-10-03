@@ -1,0 +1,5 @@
+前台App	指令	结果	步数	前台确认
+微信(com.tencent.mm)	给我闺女说一声	ASKING	1	是
+拼多多(com.xunmeng.pinduoduo)	我要买那个东西	ASKING	1	是
+系统设置(com.android.settings)	把这个弄一下	ASKING	1	是
+智行火车票(com.yipiao)	看看明天有没有	COMPLETED	22	是

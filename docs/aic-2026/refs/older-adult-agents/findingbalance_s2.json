@@ -1,0 +1,29 @@
+{
+ "paperId": "076ccc25a71f37693ffcb2364a1d057131cdaa52",
+ "externalIds": {
+  "DBLP": "conf/chi/KarimiM25",
+  "DOI": "10.1145/3706599.3719773",
+  "CorpusId": 278058491
+ },
+ "publicationVenue": null,
+ "title": "Finding the Right Balance: User Control and Automation in AI Tools for Supporting Older Adults' Health Information Tasks",
+ "venue": "CHI Extended Abstracts",
+ "year": 2025,
+ "openAccessPdf": {
+  "url": "https://scholarworks.indianapolis.iu.edu/bitstreams/565b843e-ba4d-4e56-bb7c-2e0aa2e2ff4f/download",
+  "status": "GREEN",
+  "license": null,
+  "disclaimer": "Notice: Paper or abstract available at https://api.unpaywall.org/v2/10.1145/3706599.3719773?email=<INSERT_YOUR_EMAIL> or https://doi.org/10.1145/3706599.3719773, which is subject to the license by the author or copyright owner provided with this content. Please go to the source to verify the license and copyright information for your use."
+ },
+ "authors": [
+  {
+   "authorId": "15740913",
+   "name": "Pegah Karimi"
+  },
+  {
+   "authorId": "1399241644",
+   "name": "Aqueasha Martin-Hammond"
+  }
+ ],
+ "abstract": "Older adults face unique challenges in maintaining independence while managing increasingly complex health information tasks in their home environment. AI-assisted tools have emerged as promising solutions to support these needs, yet determining the optimal balance between system automation and user agency remains a critical challenge. This paper investigates older adults’ preferences regarding automation levels for different AI features supporting health information tasks. We developed a tablet-based prototype that explores various degrees of automation across these features, from fully automated to manual control and mixed-initiative approaches. Through focus group studies with nine older adults, we found that participants’ desired level of automation varied significantly based on task characteristics and complexity. Based on these insights, we developed a classification framework categorizing features by preferred interaction approaches: full delegation, direct control, and collaborative completion, leading to design recommendations for balancing system capabilities with user agency in AI-assisted health information tools."
+}

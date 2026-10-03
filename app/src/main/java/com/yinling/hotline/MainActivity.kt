@@ -61,6 +61,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.em
+import com.yinling.core.MarkdownLite
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -462,14 +468,14 @@ private fun HomePage(
                 }
 
                 state.phase == TaskPhase.CONFIRMING -> ElderCard {
-                    Text(state.message, fontSize = Elder.body)
+                    Text(markdownAnnotated(state.message), fontSize = Elder.body)
                     ElderPrimaryButton("确认", { onConfirm(true) })
                     ElderSecondaryButton("取消", { onConfirm(false) })
                 }
 
                 state.phase == TaskPhase.ASKING -> ElderCard {
                     Text(state.goal, fontSize = Elder.hint, color = Elder.inkSoft)
-                    Text(state.message, fontSize = Elder.body)
+                    Text(markdownAnnotated(state.message), fontSize = Elder.body)
                     OutlinedTextField(
                         value = answer,
                         onValueChange = onAnswerChange,
@@ -482,7 +488,7 @@ private fun HomePage(
 
                 state.outcomeUnverified -> ElderCard {
                     Text("结果无法核实", fontSize = Elder.heading, fontWeight = FontWeight.SemiBold)
-                    Text(state.message, fontSize = Elder.body)
+                    Text(markdownAnnotated(state.message), fontSize = Elder.body)
                     ElderSecondaryButton("结束这件事", onFinish)
                 }
 
@@ -494,7 +500,7 @@ private fun HomePage(
                         Text("要办的事", fontSize = Elder.hint, color = Elder.inkSoft)
                         Text(state.goal, fontSize = Elder.body, fontWeight = FontWeight.SemiBold)
                     }
-                    Text(state.message, fontSize = Elder.body)
+                    Text(markdownAnnotated(state.message), fontSize = Elder.body)
                     ElderPrimaryButton(
                         if (state.phase == TaskPhase.NEEDS_PERSON || state.needsPersonStep) "我已操作，继续" else "接着办",
                         onResumeTask,
@@ -503,7 +509,7 @@ private fun HomePage(
                 }
 
                 state.phase == TaskPhase.COMPLETED -> ElderCard {
-                    Text(state.message, fontSize = Elder.body)
+                    Text(markdownAnnotated(state.message), fontSize = Elder.body)
                     if (state.awaitingSuccessConfirmation) {
                         ElderPrimaryButton("这次办成了，记住这个方法", onConfirmSuccess)
                         ElderSecondaryButton("知道了", onFinish)
@@ -1024,5 +1030,33 @@ private fun ServerSection() {
             },
             modifier = Modifier.fillMaxWidth(),
         ) { Text("发一条测试求助") }
+    }
+}
+
+/**
+ * 把模型输出的 Markdown 渲染成老人能直接读的排版：加粗、标题、列表各有其形，而不是显示标记本身。
+ *
+ * 解析放在 core 的 [MarkdownLite]（有回归覆盖），这里只负责把它映射成 Compose 的 span。
+ * 字号用相对单位，跟随 [Elder.body]，不改动适老字号体系。
+ */
+private fun markdownAnnotated(text: String): AnnotatedString = buildAnnotatedString {
+    MarkdownLite.lines(text).forEachIndexed { index, line ->
+        if (index > 0) append('\n')
+        if (line.bullet) append("· ")
+        val lineStart = length
+        line.spans.forEach { span ->
+            val from = length
+            append(span.text)
+            if (span.bold) addStyle(SpanStyle(fontWeight = FontWeight.SemiBold), from, length)
+            if (span.code) addStyle(SpanStyle(fontFamily = FontFamily.Monospace), from, length)
+        }
+        if (line.heading > 0) {
+            val scale = when (line.heading) { 1 -> 1.25f; 2 -> 1.12f; else -> 1.05f }
+            addStyle(
+                SpanStyle(fontSize = scale.em, fontWeight = FontWeight.SemiBold),
+                lineStart,
+                length,
+            )
+        }
     }
 }
