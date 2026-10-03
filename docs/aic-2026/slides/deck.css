@@ -4,7 +4,7 @@
 :root{
   --teal:#0f7b6c; --teal-d:#0b5a4f; --teal-l:#e8f3f1;
   --ink:#1a2b32; --ink2:#4a5c63; --line:#d9e4e1;
-  --gold:#c9a227; --red:#c0392b; --bg:#ffffff;
+  --gold:#D9722B; --red:#C2410C; --bg:#ffffff;
 }
 body{ font-family:"微软雅黑","Noto Sans CJK SC",sans-serif; color:var(--ink); background:#fff; }
 .slide{
@@ -37,8 +37,8 @@ h2{ font-size:30px; font-weight:800; margin-bottom:6px; }
        padding:18px 20px; }
 .card .k{ font-size:21px; font-weight:800; color:var(--teal-d); margin-bottom:6px; }
 .card .v{ font-size:16px; line-height:1.62; color:var(--ink2); }
-.card.w{ background:#fdf7e6; border-left-color:var(--gold); }
-.card.w .k{ color:#8a6d10; }
+.card.w{ background:#FDF1E7; border-left-color:var(--gold); }
+.card.w .k{ color:#9A4A12; }
 .card.r{ background:#fdecea; border-left-color:var(--red); }
 .card.r .k{ color:var(--red); }
 /* 关键数字 */
@@ -94,7 +94,7 @@ td.c,th.c{ text-align:center; }
 .slide.dark .card{ background:rgba(255,255,255,.07); border-left-color:#4fd1c5; }
 .slide.dark .card .k{ color:#8fe3d6; }
 .slide.dark .card .v{ color:rgba(255,255,255,.76); }
-.slide.dark .quote{ background:rgba(255,255,255,.08); border-left-color:#c9a227; color:#fff; }
+.slide.dark .quote{ background:rgba(255,255,255,.08); border-left-color:#D9722B; color:#fff; }
 .slide.dark .quote .src{ color:rgba(255,255,255,.6); }
 .slide.dark .mono{ background:rgba(255,255,255,.12); color:#bff3ea; }
 
@@ -103,7 +103,7 @@ td.c,th.c{ text-align:center; }
 .divider .no{ font-size:120px; font-weight:800; color:rgba(79,209,197,.34); line-height:.9; letter-spacing:-4px; }
 .divider h1{ font-size:58px; margin:6px 0 14px; }
 .divider .lead{ font-size:20px; color:rgba(255,255,255,.66); max-width:820px; line-height:1.65;
-                border-left:4px solid #c9a227; padding-left:20px; }
+                border-left:4px solid #D9722B; padding-left:20px; }
 
 /* 手机样机 */
 .phones{ display:flex; gap:26px; align-items:center; justify-content:center; }
@@ -120,7 +120,7 @@ td.c,th.c{ text-align:center; }
 .cover2 .meta{ font-size:17px; color:rgba(255,255,255,.72); line-height:1.95; }
 .cover2 .meta b{ color:#8fe3d6; }
 .cover2 .kicker{ display:inline-block; font-size:14px; letter-spacing:2px; color:#0a3733;
-                 background:#c9a227; padding:5px 14px; border-radius:20px; font-weight:700; margin-bottom:20px; }
+                 background:#D9722B; padding:5px 14px; border-radius:20px; font-weight:700; margin-bottom:20px; }
 
 /* 一条判据三层复用：贯穿式示意图 */
 .flow{ display:flex; flex-direction:column; gap:0; align-items:center; }
@@ -135,7 +135,7 @@ td.c,th.c{ text-align:center; }
 .flow .layer:before{ content:""; position:absolute; top:-32px; left:50%; width:3px; height:32px; background:#bcd8d3; }
 .flow .layer .lt{ font-size:19px; font-weight:800; color:#0b5a4f; margin-bottom:8px; }
 .flow .layer .lv{ font-size:15px; line-height:1.6; color:#4a5c63; }
-.flow .layer .src{ margin-top:10px; font-size:12px; color:#8a6d10; background:#fdf7e6;
+.flow .layer .src{ margin-top:10px; font-size:12px; color:#9A4A12; background:#FDF1E7;
                    border-radius:12px; padding:3px 10px; display:inline-block; }
 
 /* 大数字带 */
@@ -172,7 +172,7 @@ td.c,th.c{ text-align:center; }
 /* ══════════ v4 面向评委的叙事语言 ══════════ */
 /* 陈述页：一句话就是全部，不要卡片 */
 .statement{ justify-content:center; }
-.statement .kick{ font-size:15px; font-weight:700; letter-spacing:3px; color:#b8912a; margin-bottom:22px; }
+.statement .kick{ font-size:15px; font-weight:700; letter-spacing:3px; color:#C2410C; margin-bottom:22px; }
 .statement h1{ font-size:70px; line-height:1.14; letter-spacing:-1.8px; font-weight:800; }
 .statement h1 .hl{ color:var(--teal); }
 .statement .lead{ font-size:22px; line-height:1.7; color:var(--ink2); margin-top:26px; max-width:960px; }
@@ -195,9 +195,9 @@ td.c,th.c{ text-align:center; }
 .fullbleed .shot{ position:absolute; inset:0; z-index:0; overflow:hidden; }
 .fullbleed .shot img{ position:absolute; right:6%; top:50%; transform:translateY(-50%); height:104%; }
 .fullbleed .scrim{ position:absolute; inset:0; z-index:1;
-  background:linear-gradient(90deg,rgba(8,44,41,.97) 0%,rgba(8,44,41,.93) 40%,rgba(8,44,41,.55) 62%,rgba(8,44,41,0) 88%); }
-.fullbleed .txt{ position:relative; z-index:2; align-self:center; padding-left:76px; max-width:600px; color:#fff; }
-.fullbleed .txt .kick{ font-size:14px; font-weight:700; letter-spacing:3px; color:#c9a227; margin-bottom:18px; }
+  background:linear-gradient(90deg,rgba(8,44,41,.98) 0%,rgba(8,44,41,.96) 46%,rgba(8,44,41,.72) 62%,rgba(8,44,41,.18) 78%,rgba(8,44,41,0) 92%); }
+.fullbleed .txt{ position:relative; z-index:2; align-self:center; padding-left:72px; max-width:588px; color:#fff; }
+.fullbleed .txt .kick{ font-size:14px; font-weight:700; letter-spacing:3px; color:#D9722B; margin-bottom:18px; }
 .fullbleed .txt h1{ font-size:52px; line-height:1.2; letter-spacing:-1.2px; }
 .fullbleed .txt .lead{ font-size:19px; line-height:1.75; color:rgba(255,255,255,.76); margin-top:22px; }
 .fullbleed .txt ul li{ font-size:17px; color:rgba(255,255,255,.78); }
@@ -219,7 +219,7 @@ td.c,th.c{ text-align:center; }
 .bars .row .lbl{ font-size:17px; font-weight:700; color:var(--ink); }
 .bars .track{ height:32px; background:#eef4f3; border-radius:16px; overflow:hidden; }
 .bars .fill{ height:100%; border-radius:16px; background:linear-gradient(90deg,#0f7b6c,#4fd1c5); }
-.bars .fill.w{ background:linear-gradient(90deg,#a8811f,#e0c25c); }
+.bars .fill.w{ background:linear-gradient(90deg,#C2410C,#E9A06B); }
 .bars .val{ font-size:20px; font-weight:800; color:var(--teal); text-align:right; }
 .bars .cap{ font-size:14px; color:var(--ink2); margin-top:6px; }
 .bars .head{ font-size:15px; color:var(--ink2); font-weight:700; }
@@ -227,3 +227,61 @@ td.c,th.c{ text-align:center; }
 /* 正文里的行内加粗必须保持正文大小，不能被上面的展示型 b 规则带偏 */
 .statement .facts .f > span b, .statement .lead b{ font-size:inherit; font-weight:700; color:var(--ink); }
 .slide.dark .statement .facts .f > span b, .slide.dark .statement .lead b{ color:#fff; }
+
+/* ══════════ v6 投影可读性（按答辩字号规范整体上调） ══════════
+   换算：幻灯片 960×540pt，CSS 1px = 0.75pt
+   规范：页标题 28–32pt / 正文 20–24pt / 注释 ≥14–16pt / 正文绝不低于 18pt
+   即：页标题 37–43px、正文 27–32px、注释 19–21px、大数字 128–192px */
+.slide{ padding:40px 52px 54px; }
+h1{ font-size:52px; }
+.hd{ margin-bottom:22px; }
+.hd img{ height:30px; }
+.hd .t{ font-size:30px; }          /* 22.5pt */
+.hd .n{ font-size:20px; }          /* 15pt */
+h2{ font-size:38px; }
+.sub{ font-size:26px; line-height:1.62; }        /* 19.5pt */
+ul li{ font-size:26px; line-height:1.6; margin-bottom:10px; }
+ol li{ font-size:26px; line-height:1.6; }
+.card{ padding:20px 24px; }
+.card .k{ font-size:30px; margin-bottom:8px; }   /* 22.5pt */
+.card .v{ font-size:25px; line-height:1.62; }    /* 18.75pt */
+.quote{ font-size:27px; }
+.quote .src{ font-size:21px; }
+table{ font-size:25px; }
+th,td{ padding:11px 14px; }
+.ft{ font-size:19px; }             /* 14pt */
+.mono{ font-size:22px; }
+/* 陈述页 */
+.statement h1{ font-size:74px; line-height:1.16; }
+.statement .lead{ font-size:29px; line-height:1.62; }
+.statement .kick{ font-size:20px; }
+.statement .facts .f > b{ font-size:54px; }
+.statement .facts .f > span{ font-size:25px; line-height:1.6; }
+/* 引语页 */
+.bigquote .q{ font-size:56px; }
+.bigquote .attr{ font-size:25px; }
+/* 数字英雄 */
+.heronums .h b{ font-size:140px; letter-spacing:-5px; }
+.heronums .h b small{ font-size:52px; }
+.heronums .h span{ font-size:23px; }
+/* 柱状对照 */
+.bars .row{ grid-template-columns:250px 1fr 110px; }
+.bars .row .lbl{ font-size:25px; }
+.bars .track{ height:40px; border-radius:20px; }
+.bars .val{ font-size:28px; }
+.bars .head{ font-size:23px; }
+/* 封面 */
+.cover2 .brand h1{ font-size:84px; }
+.cover2 .brand img{ width:76px; height:76px; }
+.cover2 .kicker{ font-size:19px; padding:7px 18px; }
+.cover2 .meta{ font-size:24px; }
+.cover2 h2{ font-size:34px; }
+.cover2 .phone .cap{ font-size:19px; }
+/* 全幅页 */
+.fullbleed .txt h1{ font-size:66px; }
+.fullbleed .txt .lead{ font-size:25px; }
+.fullbleed .txt .kick{ font-size:19px; }
+/* 章节页 */
+.divider .no{ font-size:150px; }
+.divider h1{ font-size:72px; }
+.divider .lead{ font-size:28px; }
