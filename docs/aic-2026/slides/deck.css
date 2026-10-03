@@ -168,3 +168,62 @@ td.c,th.c{ text-align:center; }
 .pagehead{ display:flex; align-items:center; gap:14px; margin-bottom:4px; }
 .pagehead img{ width:42px; height:42px; }
 .pagehead .ph{ font-size:26px; font-weight:800; color:var(--teal-d); }
+
+/* ══════════ v4 面向评委的叙事语言 ══════════ */
+/* 陈述页：一句话就是全部，不要卡片 */
+.statement{ justify-content:center; }
+.statement .kick{ font-size:15px; font-weight:700; letter-spacing:3px; color:#b8912a; margin-bottom:22px; }
+.statement h1{ font-size:70px; line-height:1.14; letter-spacing:-1.8px; font-weight:800; }
+.statement h1 .hl{ color:var(--teal); }
+.statement .lead{ font-size:22px; line-height:1.7; color:var(--ink2); margin-top:26px; max-width:960px; }
+.statement .facts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:38px; margin-top:48px; }
+.statement .facts .f > b{ display:block; font-size:40px; font-weight:800; color:var(--teal); line-height:1.12; letter-spacing:-1px; }
+.statement .facts .f > span{ display:block; font-size:16px; color:var(--ink2); margin-top:10px; line-height:1.62; }
+.slide.dark .statement .lead{ color:rgba(255,255,255,.72); }
+.slide.dark .statement .facts .f > b{ color:#8fe3d6; }
+.slide.dark .statement .facts .f > span{ color:rgba(255,255,255,.6); }
+
+/* 引语页：把一句真话放到最大 */
+.bigquote{ justify-content:center; align-items:center; text-align:center; }
+.bigquote .q{ font-size:46px; line-height:1.42; font-weight:700; letter-spacing:-.8px; max-width:1000px; }
+.bigquote .q em{ font-style:normal; color:#8fe3d6; }
+.bigquote .attr{ margin-top:34px; font-size:17px; color:rgba(255,255,255,.62); line-height:1.8; }
+.bigquote .attr b{ color:#fff; }
+
+/* 全幅产品页：真机图铺满，文字压在暗罩上 */
+.fullbleed{ padding:0 !important; position:relative; }
+.fullbleed .shot{ position:absolute; inset:0; z-index:0; overflow:hidden; }
+.fullbleed .shot img{ position:absolute; right:6%; top:50%; transform:translateY(-50%); height:104%; }
+.fullbleed .scrim{ position:absolute; inset:0; z-index:1;
+  background:linear-gradient(90deg,rgba(8,44,41,.97) 0%,rgba(8,44,41,.93) 40%,rgba(8,44,41,.55) 62%,rgba(8,44,41,0) 88%); }
+.fullbleed .txt{ position:relative; z-index:2; align-self:center; padding-left:76px; max-width:600px; color:#fff; }
+.fullbleed .txt .kick{ font-size:14px; font-weight:700; letter-spacing:3px; color:#c9a227; margin-bottom:18px; }
+.fullbleed .txt h1{ font-size:52px; line-height:1.2; letter-spacing:-1.2px; }
+.fullbleed .txt .lead{ font-size:19px; line-height:1.75; color:rgba(255,255,255,.76); margin-top:22px; }
+.fullbleed .txt ul li{ font-size:17px; color:rgba(255,255,255,.78); }
+.fullbleed .txt ul li b{ color:#fff; }
+
+/* 数字英雄 */
+.heronums{ display:flex; align-items:stretch; flex:1; }
+.heronums .h{ flex:1; display:flex; flex-direction:column; justify-content:center;
+              padding:0 30px; border-left:1px solid var(--line); }
+.heronums .h:first-child{ border-left:none; padding-left:0; }
+.heronums .h b{ font-size:82px; font-weight:800; color:var(--teal); line-height:1;
+                letter-spacing:-3px; display:block; }
+.heronums .h b small{ font-size:30px; letter-spacing:0; font-weight:800; }
+.heronums .h span{ display:block; margin-top:14px; font-size:16px; color:var(--ink2); line-height:1.55; }
+
+/* CSS 柱状对照（替代表格） */
+.bars{ display:flex; flex-direction:column; gap:20px; }
+.bars .row{ display:grid; grid-template-columns:210px 1fr 84px; align-items:center; gap:18px; }
+.bars .row .lbl{ font-size:17px; font-weight:700; color:var(--ink); }
+.bars .track{ height:32px; background:#eef4f3; border-radius:16px; overflow:hidden; }
+.bars .fill{ height:100%; border-radius:16px; background:linear-gradient(90deg,#0f7b6c,#4fd1c5); }
+.bars .fill.w{ background:linear-gradient(90deg,#a8811f,#e0c25c); }
+.bars .val{ font-size:20px; font-weight:800; color:var(--teal); text-align:right; }
+.bars .cap{ font-size:14px; color:var(--ink2); margin-top:6px; }
+.bars .head{ font-size:15px; color:var(--ink2); font-weight:700; }
+
+/* 正文里的行内加粗必须保持正文大小，不能被上面的展示型 b 规则带偏 */
+.statement .facts .f > span b, .statement .lead b{ font-size:inherit; font-weight:700; color:var(--ink); }
+.slide.dark .statement .facts .f > span b, .slide.dark .statement .lead b{ color:#fff; }
