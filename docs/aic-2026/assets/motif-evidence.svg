@@ -1,0 +1,12 @@
+<!-- 证据：可核对的刻度网格 —— 大部分格子暗，少数被点亮（留档、可复核） -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700">
+  <g stroke="#4fd1c5" stroke-width="1" opacity=".12">
+    <path d="M60 120H1140M60 220H1140M60 320H1140M60 420H1140M60 520H1140M60 620H1140"/>
+    <path d="M60 120V620M210 120V620M360 120V620M510 120V620M660 120V620M810 120V620M960 120V620M1110 120V620"/>
+  </g>
+  <g fill="#4fd1c5" opacity=".26">
+    <rect x="212" y="322" width="146" height="96" rx="6"/>
+    <rect x="662" y="422" width="146" height="96" rx="6"/>
+  </g>
+  <rect x="362" y="222" width="146" height="96" rx="6" fill="#c9a227" opacity=".26"/>
+</svg>

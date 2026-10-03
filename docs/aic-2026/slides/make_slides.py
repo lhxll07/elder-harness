@@ -9,8 +9,10 @@ def page(title, num, body, cls=""):
           f'<span class="r">{num}</span></div>\n') if num else ""
     return f'<section class="slide {cls}">\n{hd}<div class="body">{body}</div>\n{ft}</section>\n'
 
-def divider(no, title, lead, num):
-    return (f'<section class="slide dark divider"><div class="no">{no}</div><h1>{title}</h1>'
+def divider(no, title, lead, num, motif="solution"):
+    return (f'<section class="slide dark divider">'
+            f'<img class="motif" src="assets/motif-{motif}.svg">'
+            f'<div class="no">{no}</div><h1>{title}</h1>'
             f'<div class="lead">{lead}</div>'
             f'<div class="ft"><span>银龄智办 · 可信自进化跨应用助老智能体</span>'
             f'<span class="r">{num}</span></div></section>\n')
@@ -21,7 +23,7 @@ B = []
 B.append('''<section class="slide dark cover2">
   <div>
     <span class="kicker">2026 AIC · 算法创新赛 · AI+软件创新</span>
-    <h1>银龄智办</h1>
+    <div class="brand"><img src="assets/mark.svg"><h1>银龄智办</h1></div>
     <div class="rule"></div>
     <h2 style="font-size:22px;font-weight:600;color:rgba(255,255,255,.88);line-height:1.5">可信自进化跨应用助老智能体</h2>
     <div class="meta" style="margin-top:26px">
@@ -29,13 +31,14 @@ B.append('''<section class="slide dark cover2">
       团队 <b>能工智人</b>　｜　参赛编号 <b>AIC-2026-86471901</b>
     </div>
   </div>
+  <img class="bgmotif" src="assets/motif-solution.svg">
   <div class="phones">
     <div class="phone"><img src="figures/shot-home.png"><div class="cap">老人端首页</div></div>
     <div class="phone" style="margin-top:54px"><img src="figures/shot-result-card.png"><div class="cap">任务结论卡</div></div>
   </div>
 </section>\n''')
 
-B.append(divider("01", "问题", "老年人“能上网，却办不成事”。<br>通用手机智能体又有<b>谎报、越权、僵化</b>三大硬伤。", 2))
+B.append(divider("01", "问题", "老年人“能上网，却办不成事”。<br>通用手机智能体又有<b>谎报、越权、僵化</b>三大硬伤。", 2, motif="problem"))
 
 B.append(page("老年人“能上网，却办不成事”", 3, '''
 <div class="two">
@@ -55,7 +58,7 @@ B.append(page("老年人“能上网，却办不成事”", 3, '''
 <div class="quote" style="border:none;background:var(--teal);color:#fff;font-size:21px;text-align:center">
   缺的不是更聪明的模型，而是<b style="color:#fff">让架构保证可信</b>。</div>'''))
 
-B.append(divider("02", "方案", "把“可信”从<b>提示词约束</b>下沉为<b>架构约束</b>——<br>三条可检查的设计决定，四项机制。", 4))
+B.append(divider("02", "方案", "把“可信”从<b>提示词约束</b>下沉为<b>架构约束</b>——<br>三条可检查的设计决定，四项机制。", 4, motif="solution"))
 
 B.append(page("主张：可信由架构保证，而非模型的顺从", 5, '''
 <div class="cards g3" style="flex:1;align-content:center">
@@ -143,7 +146,7 @@ B.append(page("产品形态：老人只说一句话，其余交给系统", 9, ''
   <div class="phones"><div class="phone"><img src="figures/shot-home.png"></div></div>
 </div>'''))
 
-B.append(divider("03", "证据", "不是 Demo，也不是自说自话：<br>真机 13 项任务、五组对抗实验、核验三组对照，全部可复现。", 10))
+B.append(divider("03", "证据", "不是 Demo，也不是自说自话：<br>真机 13 项任务、五组对抗实验、核验三组对照，全部可复现。", 10, motif="evidence"))
 
 B.append(page("真机证据：不是 Demo，是真机上跑出来的", 11, '''
 <div class="statband">
@@ -202,7 +205,7 @@ B.append(page("工程可信度：能天天跑的护栏，不是一次性演示",
   <div class="fig"><img src="figures/chart-constraint.png"></div>
 </div>'''))
 
-B.append(divider("04", "价值与展望", "政策与市场都指向这里。<br>我们也如实说明：<b>还没有一位真实老人用过</b>——这是下一步。", 15))
+B.append(divider("04", "价值与展望", "政策与市场都指向这里。<br>我们也如实说明：<b>还没有一位真实老人用过</b>——这是下一步。", 15, motif="value"))
 
 B.append(page("应用价值：政策与市场都指向这里", 16, '''
 <div class="cards g3">

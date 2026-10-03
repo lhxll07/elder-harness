@@ -99,7 +99,7 @@ td.c,th.c{ text-align:center; }
 .slide.dark .mono{ background:rgba(255,255,255,.12); color:#bff3ea; }
 
 /* 章节分隔页 */
-.divider{ justify-content:center; }
+.divider{ justify-content:flex-end; padding-bottom:104px; }
 .divider .no{ font-size:120px; font-weight:800; color:rgba(79,209,197,.34); line-height:.9; letter-spacing:-4px; }
 .divider h1{ font-size:58px; margin:6px 0 14px; }
 .divider .lead{ font-size:20px; color:rgba(255,255,255,.66); max-width:820px; line-height:1.65;
@@ -145,3 +145,26 @@ td.c,th.c{ text-align:center; }
 .statband .s:last-child{ border-right:none; }
 .statband .s b{ display:block; font-size:42px; font-weight:800; color:var(--teal); line-height:1.05; }
 .statband .s span{ font-size:14px; color:var(--ink2); }
+
+/* ══════════ v3 视觉识别 ══════════ */
+.mark{ width:60px; height:60px; display:block; }
+.cover2 .brand{ display:flex; align-items:center; gap:16px; margin-bottom:10px; }
+.cover2 .brand img{ width:60px; height:60px; }
+.cover2 .brand h1{ font-size:62px; margin:0; }
+/* 封面：手机背后的柔光 */
+.cover2 .phones{ position:relative; }
+.cover2 .phones:before{ content:""; position:absolute; inset:-70px -50px -40px -50px;
+  background:radial-gradient(circle at 50% 46%, rgba(79,209,197,.20), rgba(79,209,197,0) 66%); z-index:0; }
+.cover2 .phones .phone{ position:relative; z-index:1; }
+/* 封面左下角的大幅母题（背景质感） */
+.cover2 .bgmotif{ position:absolute; left:-140px; bottom:-190px; width:900px; opacity:.5; z-index:0; pointer-events:none; }
+.cover2 > div{ position:relative; z-index:2; }
+/* 章节页母题 */
+.divider{ position:relative; }
+.divider .motif{ position:absolute; right:-130px; top:44%; transform:translateY(-50%);
+                 width:1060px; opacity:.62; pointer-events:none; z-index:0; }
+.divider .no, .divider h1, .divider .lead{ position:relative; z-index:2; }
+/* 主张页左上的标记 */
+.pagehead{ display:flex; align-items:center; gap:14px; margin-bottom:4px; }
+.pagehead img{ width:42px; height:42px; }
+.pagehead .ph{ font-size:26px; font-weight:800; color:var(--teal-d); }
