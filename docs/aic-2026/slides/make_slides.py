@@ -75,7 +75,7 @@ B.append('''<section class="slide bleed">
 # P4 主张（画作横带贯中，顺「乱→闸→序」读）
 B.append('''<section class="slide bleed">
   <img class="art" src="art/principle-gate.png" style="height:56%;top:22%;object-fit:cover">
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#fff 0%,#fff 20%,rgba(255,255,255,0) 27%,rgba(255,255,255,0) 73%,#fff 80%,#fff 100%)"></div>
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,#fff 0%,#fff 17%,rgba(255,255,255,.55) 22%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(255,255,255,.55) 78%,#fff 83%,#fff 100%)"></div>
   <div style="position:absolute;left:0;right:0;top:52px;text-align:center;z-index:2">
     <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#C2410C;margin-bottom:14px">我们的答案</div>
     <h1 style="font-size:52px;color:#0E3F4E;line-height:1.2;letter-spacing:-1.4px;margin:0">我们把“可信”从<span style="color:#C2410C">提示词</span>里搬进了<span style="color:#C2410C">架构</span>里</h1>
@@ -90,18 +90,21 @@ B.append('''<section class="slide bleed">
   </div>
 </section>\n''')
 
-# P5 产品（全幅）
-B.append('''<section class="slide dark fullbleed">
-  <div class="shot"><img src="figures/shot-home.png" style="right:8%;height:112%"></div>
-  <div class="scrim"></div>
-  <div class="txt">
-    <div class="kick">产品形态</div>
-    <h1>一个圆钮，<br>一句话</h1>
-    <div class="lead">一屏只有一件事。圆钮既是<b style="color:#fff">状态</b>也是<b style="color:#fff">开关</b>。</div>
-    <ul style="margin-top:18px">
-      <li>只有“不再请求工具”才算完成；<b>“做不到”与“已完成”并排</b></li>
-      <li>家人只能看状态、领求助、留言——<b>不提供远程控制</b></li>
-    </ul>
+# P5 产品（真机铺右，文字固定在左侧窄区，不与之相碰）
+B.append('''<section class="slide bleed">
+  <img class="art" src="figures/shot-home.png" style="left:auto;right:0;width:auto;height:100%;object-fit:contain;object-position:right center;background:#0A2E3A">
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#0A2E3A 0%,#0A2E3A 46%,rgba(10,46,58,.86) 56%,rgba(10,46,58,.25) 70%,rgba(10,46,58,0) 84%)"></div>
+  <div style="position:absolute;left:76px;top:86px;width:510px;z-index:2;color:#fff">
+    <div style="font-size:17px;font-weight:700;letter-spacing:3px;color:#E9A06B;margin-bottom:16px">产品形态</div>
+    <h1 style="font-size:52px;line-height:1.2;letter-spacing:-1.3px;margin:0 0 20px">一个圆钮，<br>一句话</h1>
+    <div style="font-size:21px;color:rgba(255,255,255,.80);line-height:1.65;margin-bottom:22px">
+      一屏只有一件事。圆钮既是<b style="color:#fff">状态</b>，也是<b style="color:#fff">开关</b>。</div>
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <div style="font-size:19px;color:rgba(255,255,255,.78);line-height:1.5;padding-left:16px;border-left:3px solid #D9722B">
+        只有“不再请求工具”才算完成<br><b style="color:#fff">“做不到”与“已完成”并排</b></div>
+      <div style="font-size:19px;color:rgba(255,255,255,.78);line-height:1.5;padding-left:16px;border-left:3px solid #D9722B">
+        家人只能看状态、领求助、留言<br><b style="color:#fff">不提供远程控制</b></div>
+    </div>
   </div>
 </section>\n''')
 
@@ -116,77 +119,109 @@ B.append('''<section class="slide bleed">
   </div>
 </section>\n''')
 
-# P7 证据（大字 + 留白：数字本身就是图）
-B.append(page("", 7, '''<h1 style="font-size:44px;letter-spacing:-1px">13 项真机任务、149 条断言、<span style="color:var(--teal)">五组对抗实验</span></h1>
-<div class="heronums" style="margin-top:40px;flex:0 0 auto">
-  <div class="h"><b>8<small>+1</small></b><span>第三方应用 + 系统设置<br>共 9 个页面跑通</span></div>
-  <div class="h"><b>13</b><span>真机任务<br>查票 · 点餐 · 取件 · 缴费</span></div>
-  <div class="h"><b>0</b><span>美团 10 步点餐<br>全程打扰次数</span></div>
-  <div class="h"><b>149</b><span>回归断言<br>每次改动 2 秒全绿</span></div>
-</div>
-<div class="quote" style="margin-top:48px;font-size:27px;line-height:1.6">
-  五组对抗实验：<b>发现 5 处问题，修复 4 处</b>，回归断言 <b>99 → 149</b>。
-  <span class="src">第 5 处（词表对边界动作的天花板）<b>我们没修，也没藏</b>——见 P10。
-  每一次运行的原始输出（含修复前）逐级留档，报告里每处“修复前/修复后”都能翻到对应记录。</span></div>'''))
-
-# P8 对比
-B.append(page("", 8, '''<h1 style="font-size:40px;letter-spacing:-1px">别人靠模型的<span style="color:#C2410C">自律</span>，我们靠架构的<span style="color:var(--teal)">兜底</span></h1>
-<table style="margin-top:30px;font-size:18px">
-  <tr><th style="width:22%">同一个问题</th><th style="width:38%">常见做法</th><th>我们的做法</th></tr>
-  <tr><td><b>谁来判定危险</b></td><td>更强的模型 + 更细的提示词 + 事后过滤</td><td><b>本地闸门只读动作内容</b>——不读模型说辞</td></tr>
-  <tr><td><b>谁说了算“办成”</b></td><td>采信模型自述，或再叫一个模型来打分</td><td><b>本轮自己的执行日志</b>——查账不查嘴</td></tr>
-  <tr><td><b>卡住了怎么办</b></td><td>重试到底，或直接失败</td><td><b>五种收尾各有界面</b>：做不到 ≠ 已完成，失败能接真人</td></tr>
-  <tr><td><b>家人的通道</b></td><td>远程协助／远程控制</td><td><b>不做远程控制</b>——从产品形态上排除这条诈骗通道</td></tr>
-</table>
-<div class="quote" style="margin-top:26px;font-size:17px">我们不声称在模型能力上领先。我们主张的是：
-  <b>安全属性应该由架构保证，而不是由模型的顺从保证。</b></div>'''))
-
-# P9 价值
-B.append(page("", 9, '''<div class="statement">
-  <div class="kick">应用价值</div>
-  <h1>改变的不是“能不能上网”，<br>是<span class="hl">能不能自己办完一件小事</span></h1>
-  <div class="lead">而不必等子女下班、不必反复打电话问“那个码在哪”。</div>
-  <div class="facts" style="margin-top:42px">
-    <div class="f"><b>政策指向</b><span>国办发〔2020〕45 号、工信部专项行动、《无障碍环境建设法》——<b>都指向“让老人真正用得上”</b></span></div>
-    <div class="f"><b>落地形态轻</b><span><b>不换手机、不换 App、零学习成本</b>；家人端零安装</span></div>
-    <div class="f"><b>可复制</b><span>不绑定具体应用，<b>新增 App 无需改造对方</b></span></div>
+# P7 证据（网格=可测量，数字压在其上）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/evidence-grid.png">
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.30) 0%,rgba(10,46,58,.42) 42%,rgba(10,46,58,.86) 100%)"></div>
+  <div style="position:absolute;left:76px;right:76px;top:52px;z-index:2">
+    <h1 style="font-size:40px;color:#fff;letter-spacing:-1px;margin:0">13 项真机任务、149 条断言、<span style="color:#E9A06B">五组对抗实验</span></h1>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:34px;margin-top:44px">
+      <div><div style="font-size:118px;font-weight:800;color:#fff;line-height:1;letter-spacing:-4px">8<span style="font-size:54px;color:#E9A06B">+1</span></div>
+        <div style="font-size:19px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:12px">第三方应用 + 系统设置<br>共 9 个页面跑通</div></div>
+      <div><div style="font-size:118px;font-weight:800;color:#fff;line-height:1;letter-spacing:-4px">13</div>
+        <div style="font-size:19px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:12px">真机任务<br>查票 · 点餐 · 取件 · 缴费</div></div>
+      <div><div style="font-size:118px;font-weight:800;color:#fff;line-height:1;letter-spacing:-4px">0</div>
+        <div style="font-size:19px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:12px">美团 10 步点餐<br>全程打扰次数</div></div>
+      <div><div style="font-size:118px;font-weight:800;color:#E9A06B;line-height:1;letter-spacing:-4px">149</div>
+        <div style="font-size:19px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:12px">回归断言<br>每次改动 2 秒全绿</div></div>
+    </div>
   </div>
-</div>'''))
-
-# P10 诚实页
-B.append(page("", 10, '''<div class="statement">
-  <div class="kick">边界</div>
-  <h1>这三件事，我们现在<br><span style="color:#C2410C">还不敢让它做</span></h1>
-  <div class="cards g3" style="margin-top:34px">
-    <div class="card r"><div class="k">边界动作拦不住</div>
-      <div class="v">「关闭查找手机」「退出登录」这类文字中性、后果不可逆的动作，词表<b>6/6 漏拦</b>。
-      <b>这是“词表匹配”这条路线的天花板，不是实现缺陷。</b>下一步要靠页面语义而非词表。</div></div>
-    <div class="card r"><div class="k">高动态页面会失败</div>
-      <div class="v">含常驻轮播的首页（如京东）会让页面版本校验持续判为过期，<b>2 步即耗尽修复预算</b>而暂停。
-      同题在拼多多、淘宝成功，说明是<b>间歇性</b>的——而间歇性失败对老人更难理解。</div></div>
-    <div class="card r"><div class="k">还没有一位真实老人用过</div>
-      <div class="v">现阶段完成的是实验室与团队内部的高仿真任务走查。<b>零老年用户数据</b>是我们最大的缺口。
-      最小可用性观察（知情同意 + 3 类任务 + 四项指标）已在筹备。</div></div>
+  <div style="position:absolute;left:76px;right:76px;bottom:56px;z-index:2;border-left:4px solid #D9722B;padding-left:20px">
+    <div style="font-size:23px;color:#fff;line-height:1.55">五组对抗实验：<b>发现 5 处问题，修复 4 处</b>，回归断言 <b style="color:#E9A06B">99 → 149</b>。</div>
+    <div style="font-size:18px;color:rgba(255,255,255,.62);line-height:1.55;margin-top:6px">第 5 处（词表对边界动作的天花板）<b style="color:rgba(255,255,255,.85)">我们没修，也没藏</b>——见 P10。每处“修复前/修复后”都能翻到对应记录。</div>
   </div>
-  <div class="quote" style="margin-top:32px;font-size:18px">我们不用“漏拦率 0”这类把<b>“模型没能力”</b>算作<b>“安全有效”</b>的表述，
-    也不把“没做到”写成“下一阶段工作”。</div>
-</div>'''))
+</section>\n''')
 
-# P11 展望
-B.append(page("", 11, '''<div class="statement">
-  <div class="kick">下一步</div>
-  <h1>先补上<span class="hl">人</span>，再补上<span class="hl">证据层</span></h1>
-  <div class="facts" style="margin-top:44px">
-    <div class="f"><b>1 · 老年用户观察</b><span>5–8 位老人、知情同意、3 类任务，
-      记录四项：能否<b>独立发起</b> / <b>理解状态</b> / <b>中止</b> / <b>找到真人</b>。
-      这一项同时抬“应用价值”与“功能完整性”。</span></div>
-    <div class="f"><b>2 · 证据层核验接入主流程</b><span>我们已经在回归套件里做出了原型并量化过它
-      （识别谎报 4/5 → 5/5，代价 1/4 → 2/4），下一步是给它一个能区分
-      “<b>页面上没有</b>”与“<b>事情没发生</b>”的判据，然后接进执行循环。</span></div>
-    <div class="f"><b>3 · 动态页面与技能闭环</b><span>把页面版本校验与修复预算解耦；
-      完成技能自进化的完整闭环（失败归因、独立任务验证、按版本自动选版）。</span></div>
+# P8 对比（两条路分岔的画面为底，表格改深色排版）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/two-paths.png">
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.88) 0%,rgba(10,46,58,.86) 30%,rgba(10,46,58,.30) 52%,rgba(10,46,58,.55) 72%,rgba(10,46,58,.90) 100%)"></div>
+  <div style="position:absolute;left:76px;right:76px;top:48px;z-index:2">
+    <h1 style="font-size:42px;color:#fff;letter-spacing:-1px;margin:0 0 26px">别人靠模型的<span style="color:#E9A06B">自律</span>，我们靠架构的<span style="color:#E9A06B">兜底</span></h1>
+    <table style="font-size:21px;color:#fff">
+      <tr><th style="width:22%;color:rgba(255,255,255,.55);border-bottom:1px solid rgba(255,255,255,.28)">同一个问题</th>
+          <th style="color:rgba(255,255,255,.55);border-bottom:1px solid rgba(255,255,255,.28)">常见做法</th>
+          <th style="color:#E9A06B;border-bottom:1px solid rgba(255,255,255,.28)">我们的做法</th></tr>
+      <tr><td style="border-bottom:1px solid rgba(255,255,255,.13)"><b>谁来判定危险</b></td>
+          <td style="border-bottom:1px solid rgba(255,255,255,.13);color:rgba(255,255,255,.68)">更强的模型 + 更细的提示词</td>
+          <td style="border-bottom:1px solid rgba(255,255,255,.13)"><b>本地闸门只读动作内容</b></td></tr>
+      <tr><td style="border-bottom:1px solid rgba(255,255,255,.13)"><b>谁说了算“办成”</b></td>
+          <td style="border-bottom:1px solid rgba(255,255,255,.13);color:rgba(255,255,255,.68)">采信模型自述，或再叫一个模型打分</td>
+          <td style="border-bottom:1px solid rgba(255,255,255,.13)"><b>本轮自己的执行日志</b>——查账不查嘴</td></tr>
+      <tr><td style="border-bottom:1px solid rgba(255,255,255,.13)"><b>卡住了怎么办</b></td>
+          <td style="border-bottom:1px solid rgba(255,255,255,.13);color:rgba(255,255,255,.68)">重试到底，或直接失败</td>
+          <td style="border-bottom:1px solid rgba(255,255,255,.13)"><b>五种收尾各有界面</b>，失败能接真人</td></tr>
+      <tr><td><b>家人的通道</b></td>
+          <td style="color:rgba(255,255,255,.68)">远程协助 / 远程控制</td>
+          <td><b>不做远程控制</b>——从产品形态上排除这条通道</td></tr>
+    </table>
   </div>
-</div>'''))
+  <div style="position:absolute;left:76px;right:76px;bottom:52px;z-index:2;font-size:20px;color:rgba(255,255,255,.80);line-height:1.55;border-left:4px solid #D9722B;padding-left:18px">
+    我们不声称在模型能力上领先。我们主张的是：<b style="color:#fff">安全属性应该由架构保证，而不是由模型的顺从保证。</b></div>
+</section>\n''')
+
+# P9 价值（从一个人到一个圈子；文字压底部空白）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/reach-outward.png">
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.12) 0%,rgba(10,46,58,.20) 48%,rgba(10,46,58,.86) 72%,rgba(10,46,58,.95) 100%)"></div>
+  <div style="position:absolute;left:76px;right:76px;bottom:60px;z-index:2">
+    <h1 style="font-size:44px;color:#fff;line-height:1.24;letter-spacing:-1.2px;margin:0 0 30px">改变的不是“能不能上网”，<br>是<span style="color:#E9A06B">能不能自己办完一件小事</span></h1>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px">
+      <div><div style="font-size:25px;font-weight:800;color:#E9A06B">政策指向</div>
+        <div style="font-size:18px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">国办发〔2020〕45 号、工信部专项行动、《无障碍环境建设法》——<b style="color:#fff">都指向“让老人真正用得上”</b></div></div>
+      <div><div style="font-size:25px;font-weight:800;color:#E9A06B">落地形态轻</div>
+        <div style="font-size:18px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px"><b style="color:#fff">不换手机、不换 App、零学习成本</b>；家人端零安装</div></div>
+      <div><div style="font-size:25px;font-weight:800;color:#E9A06B">可复制</div>
+        <div style="font-size:18px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">不绑定具体应用，<b style="color:#fff">新增 App 无需改造对方</b></div></div>
+    </div>
+  </div>
+</section>\n''')
+
+# P10 边界（地形被一刀切开，卡片压在切线下）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/boundary-edge.png">
+  <div style="position:absolute;left:76px;right:76px;bottom:52px;z-index:2">
+    <h1 style="font-size:42px;color:#fff;letter-spacing:-1px;margin:0 0 24px">这三件事，我们现在<span style="color:#D9722B">还不敢让它做</span></h1>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:26px">
+      <div style="border-top:3px solid #D9722B;padding-top:14px">
+        <div style="font-size:23px;font-weight:800;color:#fff">边界动作拦不住</div>
+        <div style="font-size:17.5px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">「关闭查找手机」「退出登录」这类文字中性、后果不可逆的动作，词表 <b style="color:#fff">6/6 漏拦</b>。这是<b style="color:#fff">词表路线的天花板</b>，不是实现缺陷。</div></div>
+      <div style="border-top:3px solid #D9722B;padding-top:14px">
+        <div style="font-size:23px;font-weight:800;color:#fff">高动态页面会失败</div>
+        <div style="font-size:17.5px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">含常驻轮播的首页会让页面版本校验持续判为过期，<b style="color:#fff">2 步即耗尽修复预算</b>而暂停。同题在拼多多、淘宝成功——说明是<b style="color:#fff">间歇性</b>的。</div></div>
+      <div style="border-top:3px solid #D9722B;padding-top:14px">
+        <div style="font-size:23px;font-weight:800;color:#fff">还没有一位真实老人用过</div>
+        <div style="font-size:17.5px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">现阶段是实验室与团队内部的高仿真任务走查。<b style="color:#fff">零老年用户数据是我们最大的缺口。</b>最小可用性观察已在筹备。</div></div>
+    </div>
+  </div>
+</section>\n''')
+
+# P11 展望（三个路标；文字压左下安静区）
+B.append('''<section class="slide bleed">
+  <img class="art" src="art/waypoints.png">
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(10,46,58,.10) 0%,rgba(10,46,58,.30) 40%,rgba(10,46,58,.88) 72%,rgba(10,46,58,.96) 100%)"></div>
+  <div style="position:absolute;left:76px;bottom:56px;width:1128px;z-index:2">
+    <h1 style="font-size:44px;color:#fff;letter-spacing:-1.2px;margin:0 0 26px">先补上<span style="color:#E9A06B">人</span>，再补上<span style="color:#E9A06B">证据层</span></h1>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px">
+      <div><div style="font-size:24px;font-weight:800;color:#fff">1 · 老年用户观察</div>
+        <div style="font-size:17.5px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">5–8 位老人、知情同意、3 类任务，记录四项：能否<b style="color:#fff">独立发起／理解状态／中止／找到真人</b>。</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:#fff">2 · 证据层核验接入主流程</div>
+        <div style="font-size:17.5px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">原型已量化过（识别谎报 <b style="color:#fff">4/5 → 5/5</b>，代价 1/4 → 2/4）；差的是一个能区分“<b style="color:#fff">页面上没有</b>”与“<b style="color:#fff">事情没发生</b>”的判据。</div></div>
+      <div><div style="font-size:24px;font-weight:800;color:#fff">3 · 动态页面与技能闭环</div>
+        <div style="font-size:17.5px;color:rgba(255,255,255,.72);line-height:1.55;margin-top:8px">把页面版本校验与修复预算解耦；完成技能自进化的完整闭环（失败归因、独立任务验证）。</div></div>
+    </div>
+  </div>
+</section>\n''')
 
 # P12 收尾（文字在上，路从下面出去）
 B.append('''<section class="slide bleed">

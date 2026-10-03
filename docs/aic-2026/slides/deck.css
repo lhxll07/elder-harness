@@ -176,12 +176,12 @@ td.c,th.c{ text-align:center; }
 .statement h1{ font-size:70px; line-height:1.14; letter-spacing:-1.8px; font-weight:800; }
 .statement h1 .hl{ color:var(--teal); }
 .statement .lead{ font-size:22px; line-height:1.7; color:var(--ink2); margin-top:26px; max-width:960px; }
-.statement .facts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:38px; margin-top:48px; }
-.statement .facts .f > b{ display:block; font-size:40px; font-weight:800; color:var(--teal); line-height:1.12; letter-spacing:-1px; }
-.statement .facts .f > span{ display:block; font-size:16px; color:var(--ink2); margin-top:10px; line-height:1.62; }
+.facts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:38px; margin-top:48px; }
+.facts .f > b{ display:block; font-size:40px; font-weight:800; color:var(--teal); line-height:1.12; letter-spacing:-1px; }
+.facts .f > span{ display:block; font-size:16px; color:var(--ink2); margin-top:10px; line-height:1.62; }
 .slide.dark .statement .lead{ color:rgba(255,255,255,.72); }
-.slide.dark .statement .facts .f > b{ color:#8fe3d6; }
-.slide.dark .statement .facts .f > span{ color:rgba(255,255,255,.6); }
+.slide.dark .facts .f > b{ color:#8fe3d6; }
+.slide.dark .facts .f > span{ color:rgba(255,255,255,.6); }
 
 /* 引语页：把一句真话放到最大 */
 .bigquote{ justify-content:center; align-items:center; text-align:center; }
@@ -225,8 +225,8 @@ td.c,th.c{ text-align:center; }
 .bars .head{ font-size:15px; color:var(--ink2); font-weight:700; }
 
 /* 正文里的行内加粗必须保持正文大小，不能被上面的展示型 b 规则带偏 */
-.statement .facts .f > span b, .statement .lead b{ font-size:inherit; font-weight:700; color:var(--ink); }
-.slide.dark .statement .facts .f > span b, .slide.dark .statement .lead b{ color:#fff; }
+.facts .f > span b, .statement .lead b{ font-size:inherit; font-weight:700; color:var(--ink); }
+.slide.dark .facts .f > span b, .slide.dark .statement .lead b{ color:#fff; }
 
 /* ══════════ v6 投影可读性（按答辩字号规范整体上调） ══════════
    换算：幻灯片 960×540pt，CSS 1px = 0.75pt
@@ -255,8 +255,8 @@ th,td{ padding:11px 14px; }
 .statement h1{ font-size:74px; line-height:1.16; }
 .statement .lead{ font-size:29px; line-height:1.62; }
 .statement .kick{ font-size:20px; }
-.statement .facts .f > b{ font-size:54px; }
-.statement .facts .f > span{ font-size:25px; line-height:1.6; }
+.facts .f > b{ font-size:54px; }
+.facts .f > span{ font-size:25px; line-height:1.6; }
 /* 引语页 */
 .bigquote .q{ font-size:56px; }
 .bigquote .attr{ font-size:25px; }
@@ -306,3 +306,8 @@ th,td{ padding:11px 14px; }
 .slide.bleed{ padding:0 !important; position:relative; overflow:hidden; }
 .slide.bleed .art{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
 .slide.bleed > div{ z-index:2; }
+
+/* 备用页 Q&A：表格与正文统一压到安全字号，避免撑破页脚 */
+.qatable table{ font-size:21px; }
+.qatable th, .qatable td{ padding:8px 12px; }
+.qatable .quote{ font-size:18px; }
