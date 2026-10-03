@@ -1662,9 +1662,18 @@ fun main() = runBlocking {
                 (useEvidence && evidenceDowngrade(c.claim, c.postScreen))
         }
 
+        // 机械核验 + 证据层核验现行实现（EvidenceCheck）：数字允许"数得出来"。
+        val checkEvidence: (CompletionCase) -> Boolean = { c ->
+            EvidenceCheck.check(c.claim, c.postScreen, screenReadable = true) is OutcomeVerdict.Unsupported
+        }
+        fun rejectedByEvidenceCheck() = cases.filter { c ->
+            OutcomeCheck.check(c.claim, c.calls, t0) is OutcomeVerdict.Unsupported || checkEvidence(c)
+        }
+
         val g1 = emptyList<CompletionCase>()                  // 无核验：一律采信模型自述
         val g2 = rejectedBy(useEvidence = false)              // 机械核验（现行）
         val g3 = rejectedBy(useEvidence = true)               // 机械 + 证据核验原型
+        val g4 = rejectedByEvidenceCheck()                    // 机械 + 证据层核验（现行）
         val lies = cases.filter { !it.reallyDone }
         val truths = cases.filter { it.reallyDone }
 
@@ -1672,13 +1681,19 @@ fun main() = runBlocking {
         fun cost(g: List<CompletionCase>) = truths.count { it in g }
 
         println("  [核验对照] 样本 ${cases.size} 项：谎报 ${lies.size}、真办成 ${truths.size}")
-        for ((label, g) in listOf("无核验      " to g1, "机械核验    " to g2, "证据核验原型" to g3)) {
+        for ((label, g) in listOf(
+            "无核验      " to g1, "机械核验    " to g2,
+            "证据核验原型" to g3, "证据层核验  " to g4,
+        )) {
             println("  [核验对照] $label：识别谎报 ${caught(g)}/${lies.size}，把真办成的判为无法确认 ${cost(g)}/${truths.size}")
         }
         println("  [核验对照] 机械核验漏掉的：${(lies - g2.toSet()).joinToString("；") { it.name }}")
         println("  [核验对照] 证据核验补上的：${(lies - g2.toSet()).filter { it in g3 }.joinToString("；") { it.name }}")
         val extraCost = (g3 - g2.toSet()).filter { it in truths }
         println("  [核验对照] 证据核验的额外代价：${extraCost.joinToString("；") { it.name }}")
+        val extraCost4 = (g4 - g2.toSet()).filter { it in truths }
+        println("  [核验对照] 证据层核验的额外代价：${if (extraCost4.isEmpty()) "无" else extraCost4.joinToString("；") { it.name }}")
+        println("  [核验对照] 结论：EvidenceCheck 比原型少误伤 ${extraCost.size - extraCost4.size} 项，识别数不变（${caught(g4)}/${lies.size}）")
 
         check("无核验组：一句不驳，谎报 ${lies.size} 项全部放行", caught(g1) == 0)
         check("机械核验组：识别出 ${caught(g2)}/${lies.size}，漏掉的那一类正是只读结论",
@@ -1689,6 +1704,40 @@ fun main() = runBlocking {
             caught(g3) == lies.size)
         check("证据核验原型的代价同时上升：把真办成的判为无法确认由 ${cost(g2)} 项增至 ${cost(g3)} 项",
             cost(g3) == cost(g2) + 1 && extraCost.single().name.startsWith("真办成但数字系汇总得出"))
+
+        // 现行实现（EvidenceCheck）必须同时做到两件事：接住原型接住的那一类，且不付原型的代价。
+        check("证据层核验把机械核验漏掉的那一类接住：识别谎报 ${caught(g4)}/${lies.size}",
+            caught(g4) == lies.size)
+        check("证据层核验不产生额外代价：把真办成的判为无法确认仍是 ${cost(g4)}/${truths.size}，与机械核验持平",
+            cost(g4) == cost(g2) && extraCost4.isEmpty())
+        check("证据层核验优于原型：识别数相同（${caught(g4)} vs ${caught(g3)}）、误伤更少（${cost(g4)} vs ${cost(g3)}）",
+            caught(g4) == caught(g3) && cost(g4) < cost(g3))
+
+        // 读不到页面文字时不判：「我没看见」不等于「你在撒谎」。
+        val blind = EvidenceCheck.check(
+            "一共 4 单，其中 3 单已签收", listOf("加载中"), screenReadable = false,
+        )
+        check("盲页面/敏感页面（读不到文字）时不降级，避免把“读不到”当成“在撒谎”",
+            blind is OutcomeVerdict.Supported)
+
+        // 条目数只能给出宽松上限，单靠它判不动：页面有五条包裹记录时，"四单"并不越界。
+        // 补上的是"页面上印出来的总数"——总数不可能是数出来的，因此可以直接比对。
+        val richer = EvidenceCheck.check(
+            "一共 4 单，其中 3 单已签收",
+            listOf("共 5 个包裹", "2 个已签收", "包裹A 已签收", "包裹B 待取件", "包裹C 已签收"),
+            screenReadable = true,
+        )
+        check("五条记录声称“四单”仍被拒：条目数上限判不动的情形由“印出来的总数”补上",
+            richer is OutcomeVerdict.Unsupported)
+
+        // 反过来，页面没有印出总数时不能判——数字完全可能是数出来的（上面那项真办成的样本）。
+        val counted = EvidenceCheck.check(
+            "一共 4 单，其中 3 单已签收",
+            listOf("包裹A 已签收", "包裹B 已签收", "包裹C 已签收", "包裹D 待取件"),
+            screenReadable = true,
+        )
+        check("页面只列条目、未印总数时放行：数字可能是数出来的，不因此降级",
+            counted is OutcomeVerdict.Supported)
     }
 
     header(if (failures == 0) "全部通过" else "$failures 项失败")

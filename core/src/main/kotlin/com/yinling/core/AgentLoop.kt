@@ -265,6 +265,18 @@ class AgentLoop(
     /** True when the last observation had no actionable controls worth showing. */
     private var lastScreenWasBlind = false
 
+    /**
+     * Page text this run actually saw, for the evidence layer ([EvidenceCheck]).
+     *
+     * Accumulated across the whole run rather than taken from the last observation alone: a claim
+     * may legitimately refer to something read several steps earlier, and keeping only the final
+     * screen would manufacture downgrades for honest answers.
+     */
+    private val seenScreenText = mutableListOf<String>()
+
+    /** True once any observation in this run yielded readable page text. */
+    private var screenWasReadable = false
+
     /** True when the page has a tree but its content is drawn (table, chart, web canvas). */
     private var lastScreenWasGraphical = false
 
@@ -364,6 +376,8 @@ class AgentLoop(
         lastPageFingerprint = null
         lastScreenWasBlind = false
         lastScreenWasGraphical = false
+        seenScreenText.clear()
+        screenWasReadable = false
         graphicalShotRevision = null
         executedCalls.clear()
         runStartedAt = System.currentTimeMillis()
@@ -420,14 +434,24 @@ class AgentLoop(
                 // "Done" is a claim about the world, and it is the one claim we can partly check
                 // without asking anyone: a run that typed nothing cannot have sent the text it
                 // quotes, and a time from before the run cannot be its own work.
-                val verdict = OutcomeCheck.check(text, executedCalls, runStartedAt)
-                if (verdict is OutcomeVerdict.Unsupported) {
-                    val honest = OutcomeCheck.explain(verdict)
-                    logger("outcome rejected: ${verdict.reason}")
+                //
+                // Two layers, both local and deterministic, neither of which a confident sentence
+                // can talk out of:
+                //   mechanical ([OutcomeCheck]) — does this run's own action log allow the claim?
+                //   evidence   ([EvidenceCheck]) — is what it says it read actually on a page it saw?
+                // The second is asked only when the first passes, and it is skipped entirely when
+                // nothing readable was ever observed, because "I could not see" is not "you lied".
+                val rejected = OutcomeCheck.check(text, executedCalls, runStartedAt)
+                    as? OutcomeVerdict.Unsupported
+                    ?: (EvidenceCheck.check(text, seenScreenText, screenWasReadable)
+                        as? OutcomeVerdict.Unsupported)
+                if (rejected != null) {
+                    val honest = OutcomeCheck.explain(rejected)
+                    logger("outcome rejected: ${rejected.reason}")
                     transcript += assistant(honest)
                     transcript += AgentMessage(
                         AgentMessage.Role.USER,
-                        content = "（系统提示：刚才的收尾被驳回，因为 ${verdict.reason}。" +
+                        content = "（系统提示：刚才的收尾被驳回，因为 ${rejected.reason}。" +
                             "如果要继续，请真的把这一步做出来，再说明结果；做不到就如实讲。）",
                     )
                     hook.onMessage(honest)
@@ -521,6 +545,15 @@ class AgentLoop(
     private suspend fun observeIntoScreen() {
         val screen = tools.observe()
         if (screen.sensitive) clearImages()
+        // Evidence for the outcome check: what this run can honestly claim to have "read".
+        // A sensitive page contributes nothing — we deliberately do not keep its content.
+        if (!screen.sensitive) {
+            val read = screen.labels + screen.elements.mapNotNull { it.text.takeIf(String::isNotBlank) }
+            if (read.isNotEmpty()) {
+                seenScreenText += read
+                screenWasReadable = true
+            }
+        }
         val rendered = if (screen.sensitive) PhoneToolCatalog.render(screen) else renderScreen(screen)
         if (rendered.isBlank()) return
         lastScreenWasBlind = screen.elements.none { it.clickable || it.editable || it.scrollable }
