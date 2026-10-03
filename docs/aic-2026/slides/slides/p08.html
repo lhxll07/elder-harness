@@ -15,8 +15,10 @@
   </style>
   <img class="art" src="art/two-paths.png" alt="">
   <!-- 暗罩基色 = art/two-paths.png 四角实测底色 (9,48,64)(7,48,62)(7,48,63)(8,49,64) → rgb(8,49,64)
-       分界压在 y≈374（52%）：白线在这里向上碎裂，全部落入暗区；橙线在 (0,396)→(1280,520)，
-       整条都在亮区，可见度稳定在 50%–73%，中部一样透得出来。 -->
+       亮暗分界压在 y≈382（53%）：白线在 (400,386) 之后向上碎裂，全部落入暗区；
+       橙线在 (0,396)→(1280,520)，整条都在亮区，可见度 50%–73%，中部一样透得出来。
+       （试过与橙线平行的 185.5° 斜渐变：橙线 x<400 那段是平的、与直线模型差 40px，
+        中段被压到只剩 23% 可见，故改用竖直渐变。） -->
   <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(8,49,64,.91) 0%,rgba(8,49,64,.90) 44%,rgba(8,49,64,.90) 53%,rgba(8,49,64,.50) 55%,rgba(8,49,64,.30) 58%,rgba(8,49,64,.27) 72%,rgba(8,49,64,.27) 86%,rgba(8,49,64,.34) 100%)"></div>
   <div style="position:absolute;left:76px;right:76px;top:30px;z-index:3;display:flex;justify-content:space-between;align-items:center;font-size:16px;color:rgba(255,255,255,.42);letter-spacing:.5px"><span>能工智人　·　AIC-2026-86471901</span><span>银龄智办 · 可信自进化跨应用助老智能体</span></div>
   <div style="position:absolute;left:76px;right:76px;bottom:22px;z-index:3;display:flex;justify-content:flex-end;font-size:17px;color:rgba(255,255,255,.42)">8</div>
