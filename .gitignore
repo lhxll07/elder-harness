@@ -21,3 +21,7 @@ server/.env
 
 # Binary document templates
 *.doc
+
+# 演示 HTML 的符号链接（指向同目录的 figures/assets）
+docs/aic-2026/slides/figures
+docs/aic-2026/slides/assets
