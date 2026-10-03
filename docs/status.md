@@ -284,8 +284,8 @@ isRecognitionAvailable` = false），也没有 `RECOGNIZE_SPEECH` 的 Activity�
 ## 回归校验
 
 ```bash
-harness/run.sh      # 144 项 JVM 检查
+harness/run.sh      # 149 项 JVM 检查
 cd server && pytest # 31 项服务端检查
 ```
 
-JVM 上对着严格校验 transcript 的 mock 提供方跑（**144 项**）：循环、协议转换、审批策略、停滞与周期检测、观察层呈现、收尾语义、结果校验（含多引用正文与收件人解耦测试、用一个会撒谎的 mock 提供方跑完整循环）。服务端有 **28 项** pytest 覆盖鉴权隔离、心跳失联、配对码 TTL 与音频转写防护。此外，`core` 模块补充了 `AgentLoopCancellationTest`（协程取消安全性）与 `OutcomeCheckTest` 单元测试。**Android 侧（辅助功能服务、截图管线、悬浮窗、真实应用）没有自动化测试**，靠真机手工验证，结果记在上面。详见 `harness/README.md` 与 `server/README.md`。
+JVM 上对着严格校验 transcript 的 mock 提供方跑（**149 项**）：循环、协议转换、审批策略、停滞与周期检测、观察层呈现、收尾语义、结果校验（含多引用正文与收件人解耦测试、用一个会撒谎的 mock 提供方跑完整循环）。服务端有 **28 项** pytest 覆盖鉴权隔离、心跳失联、配对码 TTL 与音频转写防护。此外，`core` 模块补充了 `AgentLoopCancellationTest`（协程取消安全性）与 `OutcomeCheckTest` 单元测试。**Android 侧（辅助功能服务、截图管线、悬浮窗、真实应用）没有自动化测试**，靠真机手工验证，结果记在上面。详见 `harness/README.md` 与 `server/README.md`。
