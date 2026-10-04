@@ -108,7 +108,10 @@ object EvidenceCheck {
             observation.texts.flatMap { factsIn(it, index, observation.app) }
         }
         val sources = readable.flatMap { it.value.texts }
-        if (sources.isEmpty()) return OutcomeVerdict.Unverified("这一轮没有读到可供核对的页面文字")
+        if (sources.isEmpty()) {
+            // Nothing readable was observed at all: retrying the same claim cannot help.
+            return OutcomeVerdict.Unverified("这一轮没有读到可供核对的页面文字", EvidenceGap.PERCEPTUAL_BLIND)
+        }
         for (quantity in claim.quantities.filter { it.pageCheckable }) {
             checkQuantity(quantity, facts, typed)?.let { return it }
         }
@@ -145,11 +148,17 @@ object EvidenceCheck {
             val candidates = facts.filter { it.total && it.unit == quantity.unit }
             if (candidates.isEmpty()) {
                 return if (selfSupplied(quantity.value, typed)) selfTypedVerdict(quantity)
-                else OutcomeVerdict.Unverified("结论中的汇总数量缺少同单位的总数依据")
+                else OutcomeVerdict.Unverified(
+                    "结论中的汇总数量缺少同单位的总数依据",
+                    EvidenceGap.WORLD_UNOBSERVED,
+                )
             }
             val newest = newestValues(candidates)
             if (newest.size > 1 || crossAppDisagreement(candidates)) {
-                return OutcomeVerdict.Unverified("页面上同单位的总数不止一个，无法据此确认汇总数量")
+                return OutcomeVerdict.Unverified(
+                    "页面上同单位的总数不止一个，无法据此确认汇总数量",
+                    EvidenceGap.CONTRADICTED,
+                )
             }
             return if (quantity.value in newest) null
             else OutcomeVerdict.Unsupported("结论中的总数与页面显示的同类总数不一致")
@@ -158,10 +167,16 @@ object EvidenceCheck {
             val bound = facts.filter { it.field == quantity.field || it.field?.contains(quantity.field) == true }
             if (bound.isNotEmpty()) {
                 if (crossAppDisagreement(bound)) {
-                    return OutcomeVerdict.Unverified("不同应用里「${quantity.field}」显示的值不一样，请您核对")
+                    return OutcomeVerdict.Unverified(
+                        "不同应用里「${quantity.field}」显示的值不一样，请您核对",
+                        EvidenceGap.CONTRADICTED,
+                    )
                 }
                 return if (quantity.value in newestValues(bound)) null
-                else OutcomeVerdict.Unverified("结论中「${quantity.field}」的值与页面看到的不一致，或页面已经变化")
+                else OutcomeVerdict.Unverified(
+                    "结论中「${quantity.field}」的值与页面看到的不一致，或页面已经变化",
+                    EvidenceGap.CONTRADICTED,
+                )
             }
         }
         val sameKind = facts.filter { it.kind == quantity.kind }
@@ -176,12 +191,16 @@ object EvidenceCheck {
             ValueKind.DATE -> "日期"
             ValueKind.NUMBER -> "数字"
         }
-        return OutcomeVerdict.Unverified("结论中的$what「${quantity.raw}」还没有在这一轮看到过")
+        return OutcomeVerdict.Unverified(
+            "结论中的$what「${quantity.raw}」还没有在这一轮看到过",
+            EvidenceGap.WORLD_UNOBSERVED,
+        )
     }
 
     /** The person is told the difference between "not seen" and "you typed it yourself". */
     private fun selfTypedVerdict(quantity: Quantity): OutcomeVerdict = OutcomeVerdict.Unverified(
         "结论里的「${quantity.raw}」是执行助手自己输入到手机里的文字，页面上并没有看到这个事实",
+        EvidenceGap.SELF_TYPED,
     )
 
     private fun checkQuote(quote: Quote, facts: List<Fact>, sources: List<String>, typed: List<Fact>): OutcomeVerdict? {
@@ -193,16 +212,28 @@ object EvidenceCheck {
             }
             return if (bound) null
             else if (selfSupplied(quote.text, typed)) {
-                OutcomeVerdict.Unverified("结论中的「${quote.text}」是执行助手自己输入的文字，不是页面上的内容")
+                OutcomeVerdict.Unverified(
+                    "结论中的「${quote.text}」是执行助手自己输入的文字，不是页面上的内容",
+                    EvidenceGap.SELF_TYPED,
+                )
             } else {
-                OutcomeVerdict.Unverified("结论中「${quote.text}」没有绑定到页面上的「${quote.field}」")
+                OutcomeVerdict.Unverified(
+                    "结论中「${quote.text}」没有绑定到页面上的「${quote.field}」",
+                    EvidenceGap.WORLD_UNOBSERVED,
+                )
             }
         }
         return if (sources.any { containsCitation(it, quote.text) }) null
         else if (selfSupplied(quote.text, typed)) {
-            OutcomeVerdict.Unverified("结论中的引用文字「${quote.text}」是执行助手自己输入的文字，不是页面上的内容")
+            OutcomeVerdict.Unverified(
+                "结论中的引用文字「${quote.text}」是执行助手自己输入的文字，不是页面上的内容",
+                EvidenceGap.SELF_TYPED,
+            )
         } else {
-            OutcomeVerdict.Unverified("结论中的引用文字「${quote.text}」还没有在这一轮看到过")
+            OutcomeVerdict.Unverified(
+                "结论中的引用文字「${quote.text}」还没有在这一轮看到过",
+                EvidenceGap.WORLD_UNOBSERVED,
+            )
         }
     }
 

@@ -391,6 +391,25 @@ class AgentLoop(
     /** Consecutive screenshot failures; a sensor the system refuses is not worth retrying. */
     private var screenshotFailures = 0
 
+    /**
+     * Ladder rungs already spent on each anchor (mechanism B).
+     *
+     * Keyed by the control id, or by a quantised coordinate bucket for a blind gesture. A rung that
+     * produced no effect at all is spent: asking for it a second time is refused *before* execution,
+     * which is what stops the "same coordinate pressed ten times" failure at the second press
+     * instead of relying on `REPEAT_STOP_LIMIT`.
+     */
+    private val spentRungs = mutableMapOf<String, MutableSet<Int>>()
+
+    /** The quotable evidence of the last no-effect on each anchor, for the refusal message. */
+    private val noEffectEvidence = mutableMapOf<String, String>()
+
+    /** One bounded retry when the model finishes with controls this run never tried (mechanism C). */
+    private var affordanceRetryUsed = false
+
+    /** One bounded rebind when the claim rested on text the run typed itself. */
+    private var selfTypedRetryUsed = false
+
 
     /**
      * Continues after the person answered a question: their words become the newest user message,
@@ -464,6 +483,10 @@ class AgentLoop(
         fetched.clear()
         blindNoticeGiven = false
         screenshotFailures = 0
+        spentRungs.clear()
+        noEffectEvidence.clear()
+        affordanceRetryUsed = false
+        selfTypedRetryUsed = false
         lastRenderedPage = null
         lastPageFingerprint = null
         lastScreenWasBlind = false
@@ -534,18 +557,31 @@ class AgentLoop(
                     window = RunWindow(taskStartedAt, System.currentTimeMillis()),
                 )
                 // A reviewer that throws must degrade to "ask the person", never to a silent "done".
-                val verdict = try {
+                val reviewed = try {
                     reviewer.review(request)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
                     logger("reviewer failed: ${error.javaClass.simpleName} ${error.message}")
-                    OutcomeVerdict.Unverified("核验没有完成，请您自己看一眼")
+                    OutcomeVerdict.Unverified("核验没有完成，请您自己看一眼", EvidenceGap.REVIEW_FAILED)
                 }
+                // One verdict, then the honest ending: a Supported claim whose last screen action had
+                // no local effect is downgraded here (mechanism A), before it can be spoken.
+                //
+                // The gap travels *inside* the verdict: every producer names it (EvidenceCheck does,
+                // and a reviewer that threw is REVIEW_FAILED above), and the retry logic below reads
+                // `verdict.gap` directly. Nothing routes on the Chinese reason text any more, so a
+                // wording change can no longer move a contradiction into the retry path.
+                var verdict = reviewed
                 if (verdict is OutcomeVerdict.Supported) {
-                    transcript += assistant(text)
-                    hook.onMessage(text)
-                    return AgentOutcome.COMPLETED(text)
+                    val shortfall = effectShortfall(ClaimReader.read(text))
+                    if (shortfall == null) {
+                        transcript += assistant(text)
+                        hook.onMessage(text)
+                        return AgentOutcome.COMPLETED(text)
+                    }
+                    logger("completion downgraded: latest screen action effect=${shortfall.first.name}")
+                    verdict = OutcomeVerdict.Unverified(shortfall.second, EvidenceGap.WORLD_UNOBSERVED)
                 }
                 if (verdict is OutcomeVerdict.NotDone) {
                     // The run itself says the task was not achieved. That is an honest ending, but it
@@ -554,6 +590,37 @@ class AgentLoop(
                     transcript += assistant(text)
                     hook.onMessage(text)
                     return AgentOutcome.PAUSED(text, reason = PauseReason.OUTCOME_NOT_DONE)
+                }
+                if (verdict is OutcomeVerdict.Unverified) {
+                    // Mechanism C: an "I could not see it this round" verdict is not the end when the
+                    // page still holds controls this run never touched. Give the model exactly one
+                    // more bounded round, naming them. Retrying a perceptual blindness or a
+                    // contradiction is pointless and is deliberately not offered.
+                    if (verdict.gap == EvidenceGap.WORLD_UNOBSERVED && !affordanceRetryUsed) {
+                        val untried = untriedAffordances()
+                        if (untried.isNotEmpty()) {
+                            affordanceRetryUsed = true
+                            logger("unverified but untried affordances remain: ${untried.size}")
+                            transcript += assistant(text)
+                            transcript += AgentMessage(
+                                AgentMessage.Role.USER,
+                                content = affordanceRetryPrompt(untried),
+                            )
+                            hook.onWarning("还有没试过的控件，先让它去试一遍。")
+                            return null
+                        }
+                    }
+                    if (verdict.gap == EvidenceGap.SELF_TYPED && !selfTypedRetryUsed) {
+                        selfTypedRetryUsed = true
+                        logger("claim rested on self-typed text; asking once for a page-bound check")
+                        transcript += assistant(text)
+                        transcript += AgentMessage(
+                            AgentMessage.Role.USER,
+                            content = "（系统提示：你的结论依据的是你自己输入到手机里的文字，那不是页面上的事实。" +
+                                "请重新在页面上找到这条信息；如果页面上确实没有，就如实说没有找到。）",
+                        )
+                        return null
+                    }
                 }
                 val honest = OutcomeCheck.explain(verdict)
                 logger("outcome needs review: ${verdict::class.simpleName}")
@@ -1126,6 +1193,12 @@ class AgentLoop(
         }
         appendResults(executed.map { it.first }, executed.map { it.second })
 
+        // Mechanism B's other half: after a no-effect step, tell the model *what was observed* and
+        // which rung of the bounded ladder is next, instead of leaving it to repeat itself.
+        escalationHint(executed)?.let { hint ->
+            transcript += AgentMessage(AgentMessage.Role.USER, content = hint)
+        }
+
         // An unclassified platform failure stops the run outright: the action may or may not have
         // landed, and the honest answer is to hand the page back to the person rather than to guess.
         val broke = hardFailure
@@ -1184,8 +1257,13 @@ class AgentLoop(
         val noEffect = executed.isNotEmpty() && executed.all { it.second.screenChanged == false }
         if (!observational && !repeatable && noEffect && batchSignature == repeatSignature) {
             repeatCount += 1
-        } else {
-            repeatSignature = if (observational || repeatable) null else batchSignature
+        } else if (!observational && !repeatable) {
+            // A genuinely new action replaces the remembered one. Observational steps
+            // (screenshot/wait) and legitimate repeats (scroll/back) must neither count nor
+            // erase: a vision-driven loop alternates "tap, screenshot, tap, screenshot", and
+            // erasing the memory on every screenshot is exactly what let the same coordinate be
+            // pressed ten times in a row on a real device without tripping this detector.
+            repeatSignature = batchSignature
             repeatCount = 1
         }
 
@@ -1198,6 +1276,15 @@ class AgentLoop(
             results.any { it.code == "requires_user" } ->
                 AgentOutcome.PAUSED(
                     results.first { it.code == "requires_user" }.detail,
+                    needsPerson = true,
+                    reason = PauseReason.PERSON_ACTION,
+                )
+            results.any { it.code == LADDER_EXHAUSTED_CODE } ->
+                // Every rung was spent on this one anchor and the page never moved. That is exactly
+                // the moment to hand the step back instead of letting the model guess again.
+                AgentOutcome.PAUSED(
+                    "这一步按编号点、换手势、按文字点、放大重看都试过了，页面没有任何变化，我先停下。" +
+                        "您可以自己操作，或让我把这一步交给家人。",
                     needsPerson = true,
                     reason = PauseReason.PERSON_ACTION,
                 )
@@ -1260,13 +1347,25 @@ class AgentLoop(
         // id on the new page could authorize or block a different control.
         val dispatchScreen = tools.observe()
         return ManualActionPolicy.checkSensitiveScreen(invocation.tool, dispatchScreen) ?: run {
-            val proposed = resolveCoordinates(invocation, plannedScreen ?: safetyScreen)
-            val call = ScreenActionGuard.rebind(proposed, dispatchScreen)
-            if (call == null) {
-                ToolResult(false, "操作目标已变化，请重新观察后再选择。", "stale_screen")
-            } else {
-                val rebound = invocation.copy(arguments = invocation.arguments + ("target" to call.target))
-                ManualActionPolicy.checkScreen(rebound, dispatchScreen) ?: tools.execute(call)
+            when (val resolved = resolveCoordinates(invocation, plannedScreen ?: safetyScreen)) {
+                is Resolved.Refused -> ToolResult(false, resolved.reason, resolved.code)
+                is Resolved.Call -> {
+                    val call = ScreenActionGuard.rebind(resolved.call, dispatchScreen)
+                    if (call == null) {
+                        ToolResult(false, "操作目标已变化，请重新观察后再选择。", "stale_screen")
+                    } else {
+                        val rebound = invocation.copy(arguments = invocation.arguments + ("target" to call.target))
+                        val result = ManualActionPolicy.checkScreen(rebound, dispatchScreen) ?: tools.execute(call).also {
+                            // Mechanism B's memory: a step that produced no page effect spends its
+                            // ladder rung on this anchor, so the same approach is refused next time.
+                            recordNoEffect(invocation, call, it)
+                        }
+                        // Say plainly when a coordinate was not taken literally, so the model can learn
+                        // which control it actually hit instead of believing its own estimate.
+                        if (resolved.snapNote.isBlank()) result
+                        else result.copy(detail = resolved.snapNote + "。" + result.detail)
+                    }
+                }
             }
         }
     }
@@ -1312,6 +1411,10 @@ class AgentLoop(
         }
         ManualActionPolicy.checkText(invocation)?.let { return it }
         ManualActionPolicy.checkScreen(invocation, plannedScreen ?: safetyScreen)?.let { return it }
+        // Checked after the safety gates: a payment the person must do themselves is reported as
+        // such, not as a missing declaration. Both are refusals; the person-facing one wins.
+        expectedEffectRefusal(invocation)?.let { return it }
+        anchorRefusal(invocation)?.let { return it }
         return null
     }
 
@@ -1375,6 +1478,240 @@ class AgentLoop(
         return wide + narrow / 4
     }
 
+    // ---- mechanism A/B/C helpers -------------------------------------------
+
+    /** Rebuilds `(action, effect)` from the transcript, so a restored run is audited identically. */
+    /** One entry of the effect trail: the action, the verdict, and the evidence behind it. */
+    private data class EffectRecord(val call: ExecutedCall, val effect: ActionEffect, val detail: String)
+
+    private fun effectTrail(): List<EffectRecord> {
+        val proposed = HashMap<String, ToolInvocation>()
+        for (message in transcript) {
+            if (message.role == AgentMessage.Role.ASSISTANT) {
+                message.toolCalls.forEach { proposed[it.id] = it }
+            }
+        }
+        val records = mutableListOf<EffectRecord>()
+        for (message in transcript) {
+            if (message.role != AgentMessage.Role.TOOL) continue
+            val call = message.toolCallId?.let(proposed::get) ?: continue
+            if (call.tool !in EFFECT_REQUIRED) continue
+            val marker = parseEffectMarker(message.content) ?: continue
+            val success = message.outcome?.success ?: message.content.startsWith("success")
+            if (!success) continue
+            records += EffectRecord(
+                ExecutedCall(call.tool, auditArgument(call), success, message.outcome?.screenChanged),
+                marker.first,
+                marker.second,
+            )
+        }
+        return records
+    }
+
+    /**
+     * Mechanism A's link to the completion check: if the newest screen action the run performed was
+     * locally judged to have had no effect (or to have repainted only the touched region), then a
+     * "办成了" sentence has nothing under it, whatever the reviewer thinks.
+     */
+    private fun effectShortfall(claim: Claim): Pair<ActionEffect, String>? {
+        if (!claim.assertsChange) return null
+        val last = effectTrail().lastOrNull() ?: return null
+        if (last.effect != ActionEffect.NO_EFFECT && last.effect != ActionEffect.LOCAL_ONLY) return null
+        val reason = "本地核验显示最后一步没有对页面产生预期效果（${last.effect.name}" +
+            (if (last.detail.isBlank()) "）" else "：${last.detail}）") +
+            "，所以不能说这件事办成了"
+        return last.effect to reason
+    }
+
+    /**
+     * The controls this run never touched, out of what the current page offers.
+     *
+     * This is the concrete shape of "放弃太早": on the real device the run concluded a timetable
+     * answer without ever paging forward. An affordance counts as tried when the run addressed it by
+     * id, including the control a `tap_xy` was snapped onto, or when it already spent a ladder rung
+     * on it.
+     */
+    private fun untriedAffordances(): List<ScreenElement> {
+        val screen = plannedScreen ?: return emptyList()
+        if (screen.elements.isEmpty()) return emptyList()
+        val tried = triedTargets()
+        return screen.elements
+            .filter { actionable(it) && it.enabled && it.id !in tried && !spentRungs.containsKey("t:${it.id}") }
+            .take(UNTRIED_LIST_LIMIT)
+    }
+
+    private fun triedTargets(): Set<String> {
+        val tried = mutableSetOf<String>()
+        for (message in transcript) {
+            if (message.role != AgentMessage.Role.ASSISTANT) continue
+            for (call in message.toolCalls) {
+                call.arguments["target"]?.trim()?.takeIf(String::isNotEmpty)?.let(tried::add)
+            }
+        }
+        // A snap rewrote a blind coordinate into a click on a control; that control was tried even
+        // though no invocation ever named it.
+        for (message in transcript) {
+            if (message.role != AgentMessage.Role.TOOL) continue
+            SNAP_NOTE.findAll(message.content).forEach { tried += it.groupValues[1] }
+        }
+        return tried
+    }
+
+    private fun affordanceRetryPrompt(untried: List<ScreenElement>): String {
+        val screen = plannedScreen
+        val listed = untried.joinToString("、") { element ->
+            val label = element.text.ifBlank { element.description }.take(20)
+            val position = if (screen != null && element.bounds.size == 4 && screen.width > 0 && screen.height > 0) {
+                " @%.2f,%.2f".format(
+                    (element.bounds[0] + element.bounds[2]) / 2f / screen.width,
+                    (element.bounds[1] + element.bounds[3]) / 2f / screen.height,
+                )
+            } else ""
+            "[${element.id}]${if (label.isBlank()) "未命名控件" else label}$position"
+        }
+        return "（系统提示：现在还不能收工：这一页还有本次没有试过的控件：$listed。" +
+            "先去试它们（能按编号就 click，读不到就 swipe 或 scroll）；" +
+            "列表、课表、日历这类要翻页，可以试试横向 swipe。" +
+            "试过之后再说结果；如果确实做不到，如实说明卡在哪一步。）"
+    }
+
+    /** True when this invocation is an action that must declare its expected effect. */
+    private fun declaresEffect(tool: String): Boolean = tool in EFFECT_REQUIRED
+
+    private fun expectedEffectRefusal(invocation: ToolInvocation): ToolResult? {
+        if (!declaresEffect(invocation.tool)) return null
+        val declared = invocation.arguments[EXPECTED_EFFECT_ARG].orEmpty().trim()
+        if (declared.isEmpty()) {
+            return ToolResult(
+                false,
+                "这一步没有声明预期效果（$EXPECTED_EFFECT_ARG），所以没有执行。" +
+                    "请用一句话写清：这一步做完后你在页面上会看到什么（≤$EXPECTED_EFFECT_MAX_CHARS 字）。" +
+                    "例如：$EXPECTED_EFFECT_ARG: 表格日期范围变成 10月12日-10月18日。" +
+                    "只写“页面会变化”不算，要写出可核对的具体内容。",
+                "missing_expected_effect",
+            )
+        }
+        if (declared.length > EXPECTED_EFFECT_MAX_CHARS) {
+            return ToolResult(
+                false,
+                "预期效果写得不够短（${declared.length} 字，上限 $EXPECTED_EFFECT_MAX_CHARS 字），请压缩成一句话再试。",
+                "expected_effect_too_long",
+            )
+        }
+        return null
+    }
+
+    /**
+     * The anchor of an invocation *before* it is resolved: a target id, or the normalised coordinate
+     * bucket for a blind tap. The same anchor is used for the post-execution record of the resolved
+     * call, so a `tap_xy` that snapped onto `e7` and did nothing blocks both the same coordinate and
+     * a later `click(e7)`.
+     */
+    private fun invocationAnchor(invocation: ToolInvocation): String? {
+        if (!declaresEffect(invocation.tool)) return null
+        val target = invocation.arguments["target"].orEmpty().trim()
+        if (target.isNotEmpty()) return "t:$target"
+        // A label tap names a control without an id; resolving it here is what lets `click` (rung 1)
+        // and `tap_text` (rung 3) share one anchor and therefore spend the ladder together. Only a
+        // unique label resolves, exactly like the tap_text dispatch rule.
+        if (invocation.tool == "tap_text") {
+            val label = invocation.arguments["argument"].orEmpty()
+            val screen = plannedScreen
+            if (label.isNotBlank() && screen != null) {
+                val matches = screen.elements.filter {
+                    (it.text == label || it.description == label) && actionable(it)
+                }
+                if (matches.size == 1) return "t:${matches.single().id}"
+            }
+        }
+        val x = invocation.arguments["x"]?.toFloatOrNull()
+        val y = invocation.arguments["y"]?.toFloatOrNull()
+        if (x != null && y != null) return "n:" + String.format(java.util.Locale.US, "%.2f,%.2f", x, y)
+        return "a:${invocation.tool}:" + invocation.arguments.values.joinToString("|").take(60)
+    }
+
+    private fun callAnchor(call: ToolCall): String {
+        if (call.target.isNotBlank()) return "t:${call.target}"
+        if (call.x >= 0 && call.y >= 0) return "p:${call.x / ANCHOR_PIXELS},${call.y / ANCHOR_PIXELS}"
+        return "a:${call.name}:${call.argument.take(40)}:${call.text.take(40)}"
+    }
+
+    /**
+     * Refuses the second attempt at the same anchor with the same action when the first produced no
+     * effect at all, quoting the evidence that says so. This is the bounded-ladder rule, and it lives
+     * in the *static* gate on purpose: the person is never asked to approve a step the loop has
+     * already decided not to run.
+     */
+    private fun anchorRefusal(invocation: ToolInvocation): ToolResult? {
+        val anchor = invocationAnchor(invocation) ?: return null
+        val rung = EscalationLadder.rungOf(invocation.tool) ?: return null
+        val spent = spentRungs[anchor] ?: return null
+        if (rung !in spent) return null
+        val evidence = noEffectEvidence[anchor].orEmpty()
+        val next = EscalationLadder.nextRung(spent, rung)
+        val detail = buildString {
+            append("同一个动作在同一个目标上已经做过一次，而且页面上没有任何效果")
+            if (evidence.isNotBlank()) append("（外部证据：").append(evidence).append("）")
+            append("，所以这次没有执行，也没有让你再试同一个做法。")
+            if (next != null) {
+                append("下一步请按阶梯改试：").append(EscalationLadder.rungName(next)).append("。")
+            } else {
+                append("阶梯已经走完，请不要再用猜测的方式重试；如实说明卡在哪里，并用 ask_person 或 handoff 交回本人。")
+            }
+        }
+        // The last rung is a hand-back, not another attempt: once every rung has been spent on this
+        // anchor the loop names the exhaustion so execute() can stop the step itself.
+        val code = if (next == null) LADDER_EXHAUSTED_CODE else "no_effect_anchor"
+        return ToolResult(false, detail, code, screenChanged = false)
+    }
+
+    /** Records one no-effect verdict against both the declared and the resolved anchor. */
+    private fun recordNoEffect(invocation: ToolInvocation, call: ToolCall, result: ToolResult) {
+        if (!result.success) return
+        val effect = result.effect
+        if (effect != ActionEffect.NO_EFFECT && effect != ActionEffect.LOCAL_ONLY) return
+        val rung = EscalationLadder.rungOf(call.name) ?: return
+        // The refusal must always carry something quotable: "再试一次" without an observation is
+        // exactly what this mechanism exists to replace.
+        val evidence = result.effectDetail.ifBlank {
+            if (result.screenChanged == false) "页面像素与 revision 都没有变化" else "本地判定这一步没有产生效果"
+        }
+        val anchors = setOfNotNull(invocationAnchor(invocation), callAnchor(call))
+        for (anchor in anchors) {
+            spentRungs.getOrPut(anchor) { mutableSetOf() } += rung
+            if (evidence.isNotBlank()) noEffectEvidence[anchor] = evidence
+        }
+    }
+
+    /**
+     * The hint that pushes the model along the ladder after a no-effect step.
+     *
+     * It always carries the local evidence, because "再试一次" without a reason is exactly what the
+     * mechanism is meant to replace: the model has to be told *what was observed* to conclude the
+     * step failed, and which rung is next.
+     */
+    private fun escalationHint(executed: List<Pair<ToolInvocation, ToolResult>>): String? {
+        val failed = executed.firstOrNull { (invocation, result) ->
+            declaresEffect(invocation.tool) && result.success &&
+                (result.effect == ActionEffect.NO_EFFECT || result.effect == ActionEffect.LOCAL_ONLY)
+        } ?: return null
+        val (invocation, result) = failed
+        val rung = EscalationLadder.rungOf(invocation.tool) ?: return null
+        val spent = invocationAnchor(invocation)?.let { spentRungs[it] } ?: setOf(rung)
+        val next = EscalationLadder.nextRung(spent, rung)
+        val evidence = result.effectDetail.ifBlank { "页面没有变化" }
+        return buildString {
+            append("（系统提示：刚才这一步在页面上没有产生预期效果。外部证据：").append(evidence)
+            append("；你声明的预期效果是“").append(invocation.arguments[EXPECTED_EFFECT_ARG].orEmpty().take(30)).append("”。")
+            if (next != null) {
+                append("不要用同样的做法重复，按阶梯改试：").append(EscalationLadder.rungName(next)).append("。")
+            } else {
+                append("阶梯已经走完，不要再猜；请如实说明卡在哪里，并用 ask_person 或 handoff 交回本人。")
+            }
+            append("）")
+        }
+    }
+
     // ---- transcript helpers -------------------------------------------------
     private fun assistant(text: String, calls: List<ToolInvocation> = emptyList()): AgentMessage =
         AgentMessage(AgentMessage.Role.ASSISTANT, content = text, toolCalls = calls)
@@ -1436,6 +1773,23 @@ class AgentLoop(
             false -> append("\n页面没有变化。")
             null -> Unit
         }
+        // The local verdict rides on the tool message in a fixed, parseable shape for two reasons:
+        // the model sees what the local layer concluded (so it can change approach instead of
+        // repeating), and the same text survives a save/restore, which a typed field on the
+        // transcript would not. `effectTrail` reads it back for the completion audit.
+        if (result.effect != ActionEffect.UNKNOWN) {
+            append('\n').append(EFFECT_MARKER).append(result.effect.name)
+            if (result.effectDetail.isNotBlank()) append('｜').append(result.effectDetail)
+        }
+    }
+
+    /** The one line the audit reads back; kept next to its writer so the two cannot drift. */
+    private fun parseEffectMarker(content: String): Pair<ActionEffect, String>? {
+        val line = content.lineSequence().firstOrNull { it.startsWith(EFFECT_MARKER) } ?: return null
+        val body = line.removePrefix(EFFECT_MARKER)
+        val name = body.substringBefore('｜').trim()
+        val effect = ActionEffect.entries.firstOrNull { it.name == name } ?: return null
+        return effect to body.substringAfter('｜', "").trim()
     }
 
     // ---- catalog helpers ----------------------------------------------------
@@ -1452,6 +1806,9 @@ class AgentLoop(
     private fun validate(spec: AgentToolSpec, invocation: ToolInvocation): String? {
         for (param in spec.parameters) {
             val raw = invocation.arguments[param.name]
+            // `expectedEffect` has its own gate with its own refusal code and its own wording; the
+            // generic "参数无效" path would hide the instruction behind a code the model cannot act on.
+            if (param.name == EXPECTED_EFFECT_ARG) continue
             if (param.required && raw.isNullOrBlank()) return "missing_${param.name}"
             if (raw.isNullOrBlank()) continue
             when (param.type) {
@@ -1465,6 +1822,16 @@ class AgentLoop(
                 val ratio = invocation.arguments[axis]?.toFloatOrNull() ?: return "missing_$axis"
                 if (ratio !in 0f..1f) return "invalid_$axis"
             }
+        }
+        if (invocation.tool == "zoom") {
+            // The region decides what the person's screen shows the model; a malformed or too-small
+            // crop is refused here rather than sent to the platform to fail there.
+            val parts = invocation.arguments["region"].orEmpty().split(',').map { it.trim().toFloatOrNull() }
+            if (parts.size != 4 || parts.any { it == null }) return "invalid_region"
+            val (left, top, width, height) = parts.map { it!! }
+            if (left !in 0f..1f || top !in 0f..1f) return "invalid_region"
+            if (width < 0.15f || height < 0.15f) return "invalid_region"
+            if (left + width > 1.001f || top + height > 1.001f) return "invalid_region"
         }
         invocation.arguments["durationMs"]?.takeIf { it.isNotBlank() }?.let { raw ->
             val ms = raw.toIntOrNull() ?: return "invalid_durationMs"
@@ -1493,12 +1860,76 @@ class AgentLoop(
         y = invocation.arguments["y"]?.toIntOrNull() ?: -1,
         endX = invocation.arguments["endX"]?.toIntOrNull() ?: -1,
         endY = invocation.arguments["endY"]?.toIntOrNull() ?: -1,
+        region = invocation.arguments["region"].orEmpty(),
+        expectedEffect = invocation.arguments[EXPECTED_EFFECT_ARG].orEmpty().trim(),
         revision = observed.revision,
         observedScreen = observed,
     )
 
     /** `tap_xy` carries fractions of the screen; convert them to the pixels the service expects. */
-    private fun resolveCoordinates(invocation: ToolInvocation, screen: ScreenSnapshot): ToolCall {
+    /** Either a call to dispatch, or a refusal to dispatch anything at all. */
+    private sealed interface Resolved {
+        data class Call(val call: ToolCall, val snapNote: String = "") : Resolved
+        data class Refused(val reason: String, val code: String) : Resolved
+    }
+
+    private fun actionable(element: ScreenElement): Boolean =
+        element.id.isNotBlank() && element.bounds.size == 4 &&
+            (element.clickable || element.longClickable || element.editable ||
+                element.scrollable || element.isSlider)
+
+    /**
+     * The control a normalised tap should act on, and whether the point was already inside it.
+     *
+     * A coordinate is a guess; a control id is a fact. The model can only ever estimate a
+     * normalised position, so any tap that lands on or near a control we already listed is
+     * rewritten into a click on that control — which is both exact and checkable against the
+     * observation that justified it.
+     */
+    private fun snapTarget(fx: Float, fy: Float, screen: ScreenSnapshot): Pair<ScreenElement, Boolean>? {
+        if (screen.width <= 0 || screen.height <= 0) return null
+        val px = fx * screen.width
+        val py = fy * screen.height
+        val candidates = screen.elements.filter(::actionable)
+        if (candidates.isEmpty()) return null
+        candidates.firstOrNull {
+            px >= it.bounds[0] && px <= it.bounds[2] && py >= it.bounds[1] && py <= it.bounds[3]
+        }?.let { return it to true }
+        val tolerance = maxOf(24f, minOf(screen.width, screen.height) * 0.03f)
+        return candidates
+            .map { it to distanceToCentre(it, px, py) }
+            .filter { it.second <= tolerance }
+            .minByOrNull { it.second }
+            ?.let { it.first to false }
+    }
+
+    private fun distanceToCentre(element: ScreenElement, px: Float, py: Float): Float {
+        val cx = (element.bounds[0] + element.bounds[2]) / 2f
+        val cy = (element.bounds[1] + element.bounds[3]) / 2f
+        return kotlin.math.hypot(cx - px, cy - py)
+    }
+
+    /** Up to three named alternatives, so a refusal tells the model where to look next. */
+    private fun nearestHint(fx: Float, fy: Float, screen: ScreenSnapshot): String {
+        if (screen.width <= 0 || screen.height <= 0) return ""
+        val px = fx * screen.width
+        val py = fy * screen.height
+        val scale = minOf(screen.width, screen.height).toFloat()
+        val near = screen.elements.filter(::actionable)
+            .map { it to distanceToCentre(it, px, py) }
+            .sortedBy { it.second }
+            .take(3)
+        if (near.isEmpty()) return ""
+        return near.joinToString("、") { (element, d) ->
+            "[${element.id}] @%.2f,%.2f（距离 %.2f）".format(
+                (element.bounds[0] + element.bounds[2]) / 2f / screen.width,
+                (element.bounds[1] + element.bounds[3]) / 2f / screen.height,
+                d / scale,
+            )
+        }
+    }
+
+    private fun resolveCoordinates(invocation: ToolInvocation, screen: ScreenSnapshot): Resolved {
         val call = toCall(invocation, screen)
         if (invocation.tool == "tap_xy") {
             val fx = invocation.arguments["x"]?.toFloatOrNull() ?: -1f
@@ -1507,11 +1938,31 @@ class AgentLoop(
             // 1080x2400 and (0.5, 0.5), which turned a malformed call into a real tap on the middle
             // of the person's screen; an out-of-range coordinate is refused by the service instead.
             if (fx !in 0f..1f || fy !in 0f..1f || screen.width <= 0 || screen.height <= 0) {
-                return call.copy(name = "tap", x = -1, y = -1, endX = -1, endY = -1)
+                return Resolved.Call(call.copy(name = "tap", x = -1, y = -1, endX = -1, endY = -1))
             }
-            val x = (fx * screen.width).toInt()
-            val y = (fy * screen.height).toInt()
-            return call.copy(name = "tap", x = x, y = y, endX = x, endY = y)
+            val snap = snapTarget(fx, fy, screen)
+                ?: return Resolved.Refused(
+                    buildString {
+                        append("这个位置 (").append("%.2f,%.2f".format(fx, fy))
+                        append(") 上没有可点按的控件，所以我没有点。")
+                        val hint = nearestHint(fx, fy, screen)
+                        if (hint.isNotBlank()) {
+                            append("附近的可点按控件是 ").append(hint)
+                            append("。如果其中之一就是你要的，请改用 click 传它的编号；")
+                        }
+                        append("否则先 screenshot 看清页面，不要重复点同一个位置。")
+                    },
+                    "unsnapped_tap",
+                )
+            val (element, alreadyInside) = snap
+            // Deliver the control, not the estimate. `tap_xy` names a place; `click` names a thing,
+            // and only the latter can be checked against the observation that justified it.
+            val note = if (alreadyInside) {
+                "你给的位置落在这张图上，系统按控件执行：已吸附到 [${element.id}]"
+            } else {
+                "你给的位置不在任何控件上，已改为点按最近的 [${element.id}]"
+            }
+            return Resolved.Call(call.copy(name = "click", target = element.id), note)
         }
         // Remember what the chosen id looked like. The service re-observes before dispatch; without
         // this identity, an id that still exists after the page changed could point at a new control.
@@ -1522,7 +1973,7 @@ class AgentLoop(
                 .ifBlank { it.viewId.takeIf(String::isNotBlank)?.let { id -> "viewId:$id" }.orEmpty() }
                 .ifBlank { if (it.isSlider) "slider" else "bounds:${it.bounds}" }
         }.orEmpty()
-        return if (expected.isBlank()) call else call.copy(expected = expected)
+        return Resolved.Call(if (expected.isBlank()) call else call.copy(expected = expected))
     }
 
     /**
@@ -1603,6 +2054,24 @@ class AgentLoop(
         val REPEATABLE_TOOLS = PhoneTool.repeatable
         val SCREEN_ACTIONS = PhoneTool.screenActions
 
+        /** Actions that must declare `expectedEffect`; exactly the screen-touching set. */
+        val EFFECT_REQUIRED = PhoneTool.declaringEffect
+
+        /** Marks the local effect verdict on a tool message; the completion audit reads it back. */
+        const val EFFECT_MARKER = "本地核验："
+
+        /** Coordinate bucket a blind gesture is remembered by, in pixels. */
+        const val ANCHOR_PIXELS = 64
+
+        /** How many untried controls the bounded retry names; more would be a wall of text. */
+        const val UNTRIED_LIST_LIMIT = 6
+
+        /** Result code for "every ladder rung has been spent on this anchor"; the step is handed back. */
+        const val LADDER_EXHAUSTED_CODE = "ladder_exhausted"
+
+        /** The snap note a rewritten `tap_xy` carries, used to count the control it actually hit. */
+        val SNAP_NOTE = Regex("(?:已吸附到|已改为点按最近的) \\[([^\\]]+)\\]")
+
         /** Give up on screenshots after this many consecutive refusals. */
         const val SCREENSHOT_FAILURE_LIMIT = 2
         val HANDOFF_TOOL = PhoneTool.HANDOFF.toolName
@@ -1618,6 +2087,10 @@ class AgentLoop(
             // A batch of identical calls is the model spinning, not progress: it must spend the same
             // budget as any other obstacle, otherwise it can run to the step limit unnoticed.
             "duplicate_skipped",
+            // A step that cannot say what it expects is not a step; it must be sent back for a
+            // rewrite rather than silently run. A blocked anchor (the bounded ladder refusing a
+            // second attempt with no effect) spends the same budget, so insisting on it stops the run.
+            "missing_expected_effect", "expected_effect_too_long", "no_effect_anchor", "invalid_region",
         )
 
         /** A tool threw something we cannot classify: the action's outcome is unknown. */
@@ -1630,6 +2103,7 @@ class AgentLoop(
             "input_text" to "填写", "scroll" to "翻动", "swipe" to "滑动",
             "back" to "返回", "home" to "回桌面", "open_app" to "打开",
             "open_settings" to "打开设置", "wait" to "等待", "screenshot" to "看屏幕",
+            "zoom" to "放大看这块区域",
         )
     }
 }

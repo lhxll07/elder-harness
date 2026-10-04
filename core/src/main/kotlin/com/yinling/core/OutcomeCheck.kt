@@ -26,8 +26,37 @@ data class ExecutedCall(
 sealed interface OutcomeVerdict {
     object Supported : OutcomeVerdict
     data class Unsupported(val reason: String) : OutcomeVerdict
-    data class Unverified(val reason: String) : OutcomeVerdict
+    data class Unverified(
+        val reason: String,
+        val gap: EvidenceGap = EvidenceGap.WORLD_UNOBSERVED,
+    ) : OutcomeVerdict
     data class NotDone(val reason: String) : OutcomeVerdict
+}
+
+/**
+ * Why a completion claim could not be checked. The reason decides what to do next, and the four
+ * cases must not be collapsed into one "I could not confirm":
+ *
+ * - [WORLD_UNOBSERVED] — the screen was readable, the claimed thing simply was not on it. On a real
+ *   device this is what "tomorrow's timetable is week 4, and I only looked at week 3" produced.
+ *   It means "go and look, or try the control you have not tried yet", not "give up".
+ * - [PERCEPTUAL_BLIND] — there was nothing to check against at all (content drawn in pixels, an
+ *   empty tree). Retrying the same claim cannot help, so a person is asked instead.
+ * - [CONTRADICTED] — the claim disagrees with what the page or another app showed. Retrying would
+ *   mean re-running the same wrong belief, so it must be reported honestly.
+ * - [SELF_TYPED] — the claim leans on text the assistant itself typed, which is not evidence.
+ * - [REVIEW_FAILED] — the reviewer itself threw or was cancelled; nobody checked anything.
+ *
+ * The gap is **named at the source**: [EvidenceCheck] sets it on every verdict it produces, and
+ * `AgentLoop` uses `REVIEW_FAILED` when the reviewer threw. `AgentLoop` reads `verdict.gap` directly
+ * and never infers it from the `reason` text, so rewording a sentence cannot change the routing.
+ */
+enum class EvidenceGap {
+    WORLD_UNOBSERVED,
+    PERCEPTUAL_BLIND,
+    CONTRADICTED,
+    SELF_TYPED,
+    REVIEW_FAILED,
 }
 
 /**
@@ -38,7 +67,7 @@ sealed interface OutcomeVerdict {
 data class RunWindow(val startedAt: Long, val observedAt: Long)
 
 /** What kind of effect on the world an action the message reports has. */
-enum class Effect {
+enum class WorldEffect {
     SEND, PAY, ORDER, SUBMIT, TRANSFER, ACCOUNT, DELETE, RESET, WRITE, SET, INSTALL, OTHER;
 
     /**
@@ -108,7 +137,7 @@ data class Quantity(
 data class Claim(
     val text: String,
     val normalized: String,
-    val effects: Set<Effect>,
+    val effects: Set<WorldEffect>,
     /** The message reports that the task was *not* achieved ("支付未成功"). */
     val negated: Boolean,
     val quotes: List<Quote>,
@@ -336,26 +365,26 @@ object ClaimReader {
      * Effect words, longest first so "购买" wins over "买". Single-character verbs are checked
      * against [BLOCKED_SINGLE_PREFIX] so "出发" and "开发" are not read as "发".
      */
-    private val EFFECT_WORDS: List<Pair<String, Effect>> = listOf(
-        "恢复出厂" to Effect.RESET, "解除绑定" to Effect.ACCOUNT, "退出登录" to Effect.ACCOUNT,
-        "发送" to Effect.SEND, "发出" to Effect.SEND, "发出去" to Effect.SEND, "转发" to Effect.SEND,
-        "回复" to Effect.SEND, "提交" to Effect.SUBMIT, "支付" to Effect.PAY, "付款" to Effect.PAY,
-        "下单" to Effect.ORDER, "购买" to Effect.ORDER, "结算" to Effect.PAY, "拼单" to Effect.ORDER,
-        "转账" to Effect.TRANSFER, "充值" to Effect.PAY, "提现" to Effect.TRANSFER, "还款" to Effect.PAY,
-        "退款" to Effect.TRANSFER, "退货" to Effect.TRANSFER, "注销" to Effect.ACCOUNT, "销户" to Effect.ACCOUNT,
-        "解绑" to Effect.ACCOUNT, "停用" to Effect.ACCOUNT, "绑定" to Effect.ACCOUNT, "转让" to Effect.TRANSFER,
-        "删除" to Effect.DELETE, "清空" to Effect.DELETE, "抹除" to Effect.DELETE, "重置" to Effect.RESET,
-        "安装" to Effect.INSTALL, "卸载" to Effect.INSTALL, "下载" to Effect.INSTALL, "上传" to Effect.INSTALL,
-        "填写" to Effect.WRITE, "输入" to Effect.WRITE, "写入" to Effect.WRITE, "粘贴" to Effect.WRITE,
-        "保存" to Effect.OTHER, "设置" to Effect.SET, "修改" to Effect.SET, "更改" to Effect.SET,
-        "添加" to Effect.OTHER, "关注" to Effect.OTHER, "报名" to Effect.OTHER, "预约" to Effect.OTHER,
-        "关闭" to Effect.OTHER, "关掉" to Effect.OTHER, "开启" to Effect.OTHER,
-        "收货" to Effect.OTHER, "取消" to Effect.OTHER,
+    private val EFFECT_WORDS: List<Pair<String, WorldEffect>> = listOf(
+        "恢复出厂" to WorldEffect.RESET, "解除绑定" to WorldEffect.ACCOUNT, "退出登录" to WorldEffect.ACCOUNT,
+        "发送" to WorldEffect.SEND, "发出" to WorldEffect.SEND, "发出去" to WorldEffect.SEND, "转发" to WorldEffect.SEND,
+        "回复" to WorldEffect.SEND, "提交" to WorldEffect.SUBMIT, "支付" to WorldEffect.PAY, "付款" to WorldEffect.PAY,
+        "下单" to WorldEffect.ORDER, "购买" to WorldEffect.ORDER, "结算" to WorldEffect.PAY, "拼单" to WorldEffect.ORDER,
+        "转账" to WorldEffect.TRANSFER, "充值" to WorldEffect.PAY, "提现" to WorldEffect.TRANSFER, "还款" to WorldEffect.PAY,
+        "退款" to WorldEffect.TRANSFER, "退货" to WorldEffect.TRANSFER, "注销" to WorldEffect.ACCOUNT, "销户" to WorldEffect.ACCOUNT,
+        "解绑" to WorldEffect.ACCOUNT, "停用" to WorldEffect.ACCOUNT, "绑定" to WorldEffect.ACCOUNT, "转让" to WorldEffect.TRANSFER,
+        "删除" to WorldEffect.DELETE, "清空" to WorldEffect.DELETE, "抹除" to WorldEffect.DELETE, "重置" to WorldEffect.RESET,
+        "安装" to WorldEffect.INSTALL, "卸载" to WorldEffect.INSTALL, "下载" to WorldEffect.INSTALL, "上传" to WorldEffect.INSTALL,
+        "填写" to WorldEffect.WRITE, "输入" to WorldEffect.WRITE, "写入" to WorldEffect.WRITE, "粘贴" to WorldEffect.WRITE,
+        "保存" to WorldEffect.OTHER, "设置" to WorldEffect.SET, "修改" to WorldEffect.SET, "更改" to WorldEffect.SET,
+        "添加" to WorldEffect.OTHER, "关注" to WorldEffect.OTHER, "报名" to WorldEffect.OTHER, "预约" to WorldEffect.OTHER,
+        "关闭" to WorldEffect.OTHER, "关掉" to WorldEffect.OTHER, "开启" to WorldEffect.OTHER,
+        "收货" to WorldEffect.OTHER, "取消" to WorldEffect.OTHER,
         // Generic action verbs. They prove nothing about the world by themselves, but a sentence
         // that says one of them is done is still a change claim, so it must at least have an action.
-        "办理" to Effect.OTHER, "处理" to Effect.OTHER,
-        "办" to Effect.OTHER, "弄" to Effect.OTHER, "搞" to Effect.OTHER, "做" to Effect.OTHER,
-        "填" to Effect.WRITE, "付" to Effect.PAY, "买" to Effect.ORDER, "发" to Effect.SEND,
+        "办理" to WorldEffect.OTHER, "处理" to WorldEffect.OTHER,
+        "办" to WorldEffect.OTHER, "弄" to WorldEffect.OTHER, "搞" to WorldEffect.OTHER, "做" to WorldEffect.OTHER,
+        "填" to WorldEffect.WRITE, "付" to WorldEffect.PAY, "买" to WorldEffect.ORDER, "发" to WorldEffect.SEND,
     ).sortedByDescending { it.first.length }
 
     private val BLOCKED_SINGLE_PREFIX = setOf(
@@ -378,8 +407,8 @@ object ClaimReader {
         )
     }
 
-    private fun effectsIn(text: String): Pair<Set<Effect>, Boolean> {
-        val positive = mutableSetOf<Effect>()
+    private fun effectsIn(text: String): Pair<Set<WorldEffect>, Boolean> {
+        val positive = mutableSetOf<WorldEffect>()
         var failed = false
         for ((word, effect) in EFFECT_WORDS) {
             var index = text.indexOf(word)

@@ -1,0 +1,24 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart LR
+  subgraph R1["第一轮 · 盲点，点到死（9 步 · PAUSED）"]
+    direction TB
+    A1["tap_text 打不开课表"] --> A2["改用盲坐标<br/>tap_xy(0.37, 0.96)"] --> A3["撞上 stale_screen<br/>页面在观察与派发之间已变"] --> A4["翻到第 3 周，<br/>结论仍是 Unverified"]
+  end
+  subgraph R2["第二轮 · 点了正确的控件但没生效（9 步 · PAUSED）"]
+    direction TB
+    B1["修好观察层，改用 tap_text"] --> B2["点中「我的课表」→「第3周」→「第4周」"] --> B3["页面确实切到第 4 周"] --> B4["结论日期「10月5日」<br/>本轮页面没出现过 → 如实拒绝"]
+  end
+  subgraph R3["第三轮 · 声明预期后被检测器停住（13 步 · STUCK）"]
+    direction TB
+    C1["每步声明 expectedEffect"] --> C2["核验出现 APPLIED，<br/>也大量出现 CHANGED_OTHER"] --> C3["页面来回振荡"] --> C4["由旧的振荡检测判 STUCK<br/>新阶梯真机触发 0 次"]
+  end
+  R1 --> R2 --> R3
+  N["三轮共同点：每一次都由本地核验如实拒绝，<br/>没有任何一次谎报"] -.-> R1
+  N -.-> R2
+  N -.-> R3
+  classDef bad fill:#fdecea,stroke:#c0392b
+  classDef mid fill:#fdf3e3,stroke:#c9a227
+  classDef ok fill:#eef4f3,stroke:#0f7b6c
+  class A4,B4 bad
+  class C3 mid
+  class C4,N ok

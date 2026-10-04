@@ -80,6 +80,10 @@ enum class PhoneTool(
     CURRENT_TIME("current_time", informational = true),
     WAIT("wait", repeatable = true),
     SCREENSHOT("screenshot", needsApproval = true, visionOnly = true, touchesScreen = true),
+    // The fourth rung of the escalation ladder: crop a region of the page, enlarge it and hand back
+    // the candidates inside it renumbered. It reads the page (progress = false) and sends part of the
+    // screen away, so it is vision-only and goes through the same consent as a full screenshot.
+    ZOOM("zoom", needsApproval = true, visionOnly = true, touchesScreen = true),
     ASK_PERSON("ask_person"),
     ASK_USER("ask_user"),
     HANDOFF("handoff"),
@@ -114,6 +118,16 @@ enum class PhoneTool(
 
         /** Actions that change the world, so a claim about a change needs one of them. */
         val stateChanging: Set<String> = names { it.stateChanging }
+
+        /**
+         * Tools that must declare `expectedEffect` before they run.
+         *
+         * It is deliberately the same set as [stateChanging]: these are exactly the tools that press
+         * or type into the screen, and an action whose intended effect cannot be stated is not a step
+         * anyone can check afterwards. Reading tools (screenshot, zoom, wait, current_time) are not
+         * included — they have no effect on the page to declare.
+         */
+        val declaringEffect: Set<String> = names { it.stateChanging }
 
         /** Actions it is legitimate to repeat without the page changing. */
         val repeatable: Set<String> = names { it.repeatable }

@@ -1,6 +1,10 @@
 package com.yinling.hotline
 
 import com.yinling.core.AgentToolSpec
+import com.yinling.core.GoalFamily
+import com.yinling.core.SkillMeta
+import com.yinling.core.SkillSelect
+import com.yinling.core.SkillShadow
 import com.yinling.core.ToolCall
 import com.yinling.core.ToolResult
 
@@ -11,20 +15,11 @@ import com.yinling.core.ToolResult
  * `load_skill` tool and lands in the transcript, so ordinary tasks never pay for app-specific
  * text, and adding knowledge for a new app means adding data here rather than growing the
  * system prompt. This keeps the core loop free of third-party app scripts.
+ *
+ * [Skill] is now the shared core model: `id`/`version` separated, plus the provenance and gate
+ * numbers the verification loop needs. Built-in skills leave `id` empty and fall back to `name`.
  */
-data class Skill(
-    val name: String,
-    val description: String,
-    /** When the current package is one of these, the page shows a one-line pointer to the skill. */
-    val apps: Set<String> = emptySet(),
-    /** Shown in the page text when this app is in the foreground; empty falls back to a generic line. */
-    val hint: String = "",
-    val body: String,
-    /** Generated skills use these; the six hand-written skills keep the defaults. */
-    val version: Int = 1,
-    val status: String = "active",
-    val source: String = "manual",
-)
+typealias Skill = SkillMeta
 
 object SkillCatalog {
 
@@ -38,6 +33,9 @@ object SkillCatalog {
     private val builtin: List<Skill> = listOf(
         Skill(
             name = "reading_tables",
+            id = "reading_tables",
+            goalFamily = "read_table",
+            validators = listOf("page_reached"),
             description = "读表格、课表、账单这类格子内容时的方法（防止把相邻列的内容读成目标列）",
             body = """
 从截图里读表格时，按这个顺序做：
@@ -51,6 +49,9 @@ object SkillCatalog {
         ),
         Skill(
             name = "blind_page",
+            id = "blind_page",
+            goalFamily = "blind_app",
+            validators = listOf("handed_back_to_person"),
             description = "页面读不到任何控件时（如微信、银行类应用）如何观察和操作",
             // Known blind apps: the page hint then names this skill while the person is in one.
             apps = setOf("com.tencent.mm"),
@@ -64,6 +65,9 @@ object SkillCatalog {
         ),
         Skill(
             name = "wechat_input",
+            id = "wechat_input",
+            goalFamily = "send_message",
+            validators = listOf("cursor_in_input_box"),
             hint = "微信里不要试图点屏幕键盘打字（点不准、也打不进去）：先点一下输入框，再用 paste_text 粘贴。" +
                 "详细步骤见 wechat_input 技巧。",
             description = "微信里如何把文字填进输入框（它不接受程序写入和外部注入）",
@@ -88,6 +92,9 @@ object SkillCatalog {
         ),
         Skill(
             name = "meituan_order",
+            id = "meituan_order",
+            goalFamily = "order_food",
+            validators = listOf("no_send_no_pay"),
             hint = "美团里**不要点底部的“外卖”标签**（那是图片信息流，页面重、点不准）：" +
                 "直接点首页顶部的搜索框搜要买的东西，路径最短。详细步骤见 meituan_order 技巧。",
             description = "美团点外卖/买药/买菜：直接在首页搜索，绕开外卖信息流",
@@ -130,16 +137,52 @@ object SkillCatalog {
      * A one-line nudge shown with the page when the current app has know-how available. A skill may
      * supply its own wording: "there is a skill" was too weak to stop the model from trying the
      * on-screen keyboard in WeChat first and only reaching for the clipboard much later.
+     *
+     * Only what the family has already adopted (`active/`) is here; `shadow` revisions stay invisible
+     * until they beat the incumbent on the frozen task set.
+     *
+     * [observation] is the *page text* of the very render this hint is appended to, produced by
+     * [com.yinling.core.SkillShadow.observationFor] so the decorations (installed-app list, this
+     * hint's own `提示：` line) cannot satisfy a `requires`. A skill with a non-empty `requires` is
+     * offered only when every entry matches; an empty observation therefore hides it rather than
+     * silently falling back to `apps` alone — the same expression Tier 1 replays.
      */
-    fun hintFor(app: String?): String {
-        val relevant = skills.filter { app != null && app in it.apps }
-        if (relevant.isEmpty()) return ""
-        relevant.firstOrNull { it.hint.isNotBlank() }?.let { return "提示：${it.hint}" }
-        return "提示：当前应用有可用技巧 " + relevant.joinToString("、") { it.name } +
+    fun hintFor(app: String?, goalFamily: String? = null, observation: String = ""): String {
+        val relevant = skills
+            .filter { app != null && app in it.apps }
+            .filter { SkillShadow.requiresSatisfied(it.requires, observation) }
+        val matched = if (goalFamily.isNullOrBlank()) {
+            relevant
+        } else {
+            relevant.filter { SkillSelect.matches(it, app, goalFamily) }
+        }
+        val pool = matched.ifEmpty { relevant }
+        if (pool.isEmpty()) return ""
+        pool.firstOrNull { it.hint.isNotBlank() }?.let { return "提示：${it.hint}" }
+        return "提示：当前应用有可用技巧 " + pool.joinToString("、") { it.stableId } +
             "，遇到困难时可用 load_skill 查看。\n"
     }
 
-    fun find(name: String): Skill? = skills.find { it.name == name }
+    /**
+     * Rule-based automatic choice, in the order written down in [SkillSelect]: app package, then
+     * `goal_family`, then `requires` against [observation], then the passing version with the lowest
+     * shadow rate (newest on a tie), only if at least two independent runs verified it. This is a
+     * **gate, not a learned router** — there is deliberately no embedding ranker and no model in this
+     * path.
+     *
+     * The `requires` half goes through [SkillSelect.surfaced], the exact predicate Tier 1 counts
+     * exposed points with; passing an empty [observation] can only hide a `requires`-bearing skill.
+     */
+    fun selectFor(app: String?, goalFamily: String? = null, observation: String = ""): Skill? {
+        val candidates = skills.filter { SkillSelect.surfaced(it, app, goalFamily, observation) }
+        return SkillSelect.chooseActive(candidates)
+    }
+
+    fun find(name: String): Skill? = skills.find { it.stableId == name || it.name == name }
+
+    /** Grouped view for the family screen: one entry per id, its versions newest first. */
+    fun versionsOf(id: String, all: List<Skill>): List<Skill> =
+        all.filter { it.stableId == id }.sortedByDescending { it.version }
 
     val toolSpec: AgentToolSpec
         get() = AgentToolSpec(
@@ -147,7 +190,7 @@ object SkillCatalog {
             informational = true,
             name = "load_skill",
             description = "读取某个经验技巧的详细步骤。包含：" +
-                skills.joinToString("；") { "${it.name}（${it.description}）" },
+                skills.joinToString("；") { "${it.stableId}（${it.description}）" },
             parameters = listOf(
                 // Named "argument" on purpose: the loop only forwards a fixed set of argument names
                 // (argument/target/text/...), so a parameter called "name" would arrive empty.
@@ -159,9 +202,12 @@ object SkillCatalog {
     fun load(call: ToolCall): ToolResult {
         val skill = find(call.argument) ?: return ToolResult(
             false,
-            "没有名为“${call.argument}”的技巧。可用：" + skills.joinToString("、") { it.name },
+            "没有名为“${call.argument}”的技巧。可用：" + skills.joinToString("、") { it.stableId },
             "unknown_skill",
         )
         return ToolResult(true, skill.body)
     }
+
+    /** Goals are mapped to families by a fixed keyword table (see `GoalFamily`), never by a model. */
+    fun familyOf(goal: String): String = GoalFamily.of(goal)
 }

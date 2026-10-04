@@ -34,8 +34,8 @@ class AgentLoopCancellationTest {
         ): AgentStep = when (turn++) {
             0 -> AgentStep.Calls(
                 listOf(
-                    ToolInvocation("c1", "click", mapOf("target" to "e1")),
-                    ToolInvocation("c2", "click", mapOf("target" to "e2")),
+                    ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化")),
+                    ToolInvocation("c2", "click", mapOf("target" to "e2", "expectedEffect" to "页面出现变化")),
                 ),
             )
             else -> AgentStep.Final("done")
@@ -53,7 +53,7 @@ class AgentLoopCancellationTest {
             instructions: String,
             tools: List<AgentToolSpec>,
             transcript: List<AgentMessage>,
-        ) = AgentStep.Calls(listOf(ToolInvocation("c${turn++}", "click", mapOf("target" to "e1"))))
+        ) = AgentStep.Calls(listOf(ToolInvocation("c${turn++}", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化"))))
     }
 
     @Test
@@ -105,7 +105,7 @@ class AgentLoopCancellationTest {
                 tools: List<AgentToolSpec>,
                 transcript: List<AgentMessage>,
             ): AgentStep = if (turn++ == 0) {
-                AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1"))))
+                AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化"))))
             } else {
                 AgentStep.Final("消息已发送成功")
             }
@@ -130,7 +130,7 @@ class AgentLoopCancellationTest {
                 instructions: String,
                 tools: List<AgentToolSpec>,
                 transcript: List<AgentMessage>,
-            ) = AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1"))))
+            ) = AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化"))))
         }
         val outcome = AgentLoop(planner, tools, noApproval, "instructions").start("需要本人操作")
 

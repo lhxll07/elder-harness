@@ -43,7 +43,7 @@ fig.savefig("figures/chart-r3.png"); plt.close(fig)
 # ── 图 B：执行约束三组对照（六（七））────────────────────────────
 fig, (b1, b2) = plt.subplots(1, 2, figsize=(11, 3.7))
 groups = ["逐步确认", "固定词表\n（修复前）", "分级执行\n（本作品）"]
-executed = [0, 14, 6]      # 由智能体执行的危险动作数（20 项样本，越低越安全）
+executed = [0, 14, 5]      # 由智能体执行的危险动作数（20 项样本，越低越安全；分级执行拦住 15/20 → 执行 5）
 asks = [10, 1, 1]          # 一次 10 步任务的确认次数（越低越不打扰）
 cols = [C["old"], C["old"], C["mine"]]
 bars = b1.bar(groups, executed, color=cols, width=0.6)
@@ -62,7 +62,7 @@ fig.savefig("figures/chart-constraint.png"); plt.close(fig)
 # ── 图 C：隐蔽型危险动作的修复前后（六（六））────────────────────
 fig, ax = plt.subplots(figsize=(9.5, 3.4))
 cats = ["显性危险动作\n（词表设计目标内）", "隐蔽型危险动作\n（后果同样不可逆）", "边界探针\n（路线级上限）"]
-before = [6, 0, 0]; after = [6, 8, 0]; totals = [6, 8, 6]
+before = [6, 0, 0]; after = [6, 8, 1]; totals = [6, 8, 6]
 x = range(len(cats)); w = 0.34
 b1 = ax.bar([i-w/2 for i in x], before, w, label="修复前拦住", color=C["old"])
 b2 = ax.bar([i+w/2 for i in x], after, w, label="修复后拦住", color=C["mine"])
@@ -74,7 +74,7 @@ ax.set_xticks(list(x)); ax.set_xticklabels(cats, fontsize=9.5)
 ax.set_ylabel("被拦住的动作数"); ax.set_ylim(0, 9.6)
 ax.legend(frameon=False, fontsize=9.5, loc="upper left")
 style(ax)
-ax.set_title("隐蔽型由 0/8 提升至 8/8；边界探针仍 6/6 漏拦（如实保留）", fontsize=10.5, pad=10)
+ax.set_title("隐蔽型由 0/8 提升至 8/8；边界探针由 6/6 漏拦改善为 5/6（如实保留）", fontsize=10.5, pad=10)
 fig.savefig("figures/chart-x8.png"); plt.close(fig)
 
 # ── 图 D：只追加策略下的缓存命中（三（三）5 / 附录（三））──────────
@@ -92,3 +92,24 @@ style(ax, 110)
 ax.set_title("只追加对话记录带来的前缀缓存命中（同一任务，deepseek-chat）", fontsize=10.5, pad=10)
 fig.savefig("figures/chart-cache.png"); plt.close(fig)
 print("已生成 chart-r3 / chart-constraint / chart-x8 / chart-cache")
+
+# ── 图 D：完成核验的分层收益与代价（六（八），由 harness/run.sh 实跑）──────
+fig, (d1, d2) = plt.subplots(1, 2, figsize=(11, 3.6))
+groups = ["无核验\n（采信模型自述）", "机械核验", "机械 + 文本证据核验\n（本作品）"]
+blocked = [0, 12, 22]      # 阻止错误结论直接完成（共 22 项）
+cost = [0, 0, 1]           # 把真办成的判为“待核对”（共 10 项）
+cols = [C["old"], C["mid"], C["mine"]]
+bars = d1.bar(groups, blocked, color=cols, width=0.6)
+for b, v in zip(bars, blocked):
+    d1.text(b.get_x()+b.get_width()/2, v+0.5, f"{v}/22", ha="center", fontsize=11, fontweight="bold")
+d1.set_title("识别：阻止错误结论直接完成（共 22 项，越高越好）", fontsize=10.5, pad=8)
+d1.set_ylabel("项"); style(d1, 26)
+bars = d2.bar(groups, cost, color=cols, width=0.6)
+for b, v in zip(bars, cost):
+    d2.text(b.get_x()+b.get_width()/2, v+0.08, f"{v}/10", ha="center", fontsize=11, fontweight="bold")
+d2.set_title("代价：把真办成的判为“待核对”（共 10 项，越低越好）", fontsize=10.5, pad=8)
+d2.set_ylabel("项"); style(d2, 3)
+fig.suptitle("文本证据层把机械核验够不着的那一类补上（12/22 → 22/22），代价如实计入 1/10",
+             fontsize=10, color="#444", y=1.05)
+fig.savefig("figures/chart-verify.png"); plt.close(fig)
+print("chart-verify.png")

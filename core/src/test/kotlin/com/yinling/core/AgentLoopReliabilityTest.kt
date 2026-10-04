@@ -15,7 +15,7 @@ class AgentLoopReliabilityTest {
         private var turn = 0
         override suspend fun decide(instructions: String, tools: List<AgentToolSpec>, transcript: List<AgentMessage>) = next(turn++)
     }
-    private val click = ToolInvocation("click", "click", mapOf("target" to "e1"))
+    private val click = ToolInvocation("click", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化"))
     private fun page() = ScreenSnapshot("shop", listOf("订单"), revision = "r1", elements = listOf(
         ScreenElement("e1", "订单", "", "Button", listOf(0, 0, 100, 50), true, false, false, false, true),
     ))
@@ -48,7 +48,7 @@ class AgentLoopReliabilityTest {
             }
         }
         val loop = AgentLoop(planner { AgentStep.Calls(listOf(click, ToolInvocation("paste", "input_text",
-            mapOf("target" to "e1", "text" to "hello")))) }, tools, allow, "")
+            mapOf("target" to "e1", "text" to "hello", "expectedEffect" to "输入框显示 hello")))) }, tools, allow, "")
         assertIs<AgentOutcome.PAUSED>(loop.start("填草稿"))
         assertEquals(listOf("click", "click", "click"), dispatched)
         assertEquals(3, loop.conversation.count { it.toolCallId == "paste" && "skipped_stale_batch" in it.content })
@@ -111,7 +111,7 @@ class AgentLoopReliabilityTest {
     }
 
     @Test
-    fun `a value observed earlier in the task still counts in a later claim`() = runBlocking {
+    fun `a value observed earlier in the task still counts in a later claim`(): Unit = runBlocking {
         // The real font task read "中号" one screen before it finished. Discarding that observation
         // was what made an honest, actually-successful completion look unverifiable.
         var early = true
@@ -178,7 +178,7 @@ class AgentLoopReliabilityTest {
             }
         }
         val loop = AgentLoop(planner { if (it == 0) AgentStep.Calls(listOf(click,
-            ToolInvocation("long", "long_press", mapOf("target" to "e1")))) else AgentStep.Final("已查看") },
+            ToolInvocation("long", "long_press", mapOf("target" to "e1", "expectedEffect" to "页面出现变化")))) else AgentStep.Final("已查看") },
             tools, allow, "")
         loop.start("查看订单")
         assertEquals(listOf("click"), dispatched.map { it.name })
@@ -227,7 +227,7 @@ class AgentLoopReliabilityTest {
     }
 
     @Test
-    fun `the injected reviewer decides the completion, not the rules`() = runBlocking {
+    fun `the injected reviewer decides the completion, not the rules`(): Unit = runBlocking {
         val tools = object : AgentTools {
             override val catalog = PhoneToolCatalog.available(false)
             override suspend fun observe() = page().copy(elements = emptyList(), labels = listOf("加载中"))
@@ -239,7 +239,7 @@ class AgentLoopReliabilityTest {
             override suspend fun review(request: ReviewRequest) = OutcomeVerdict.Supported
         }
         val loop = AgentLoop(
-            planner { if (it == 0) AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1"))))
+            planner { if (it == 0) AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化"))))
                 else AgentStep.Final("已发送") },
             tools, allow, "", reviewer = supporter,
         )
@@ -257,7 +257,7 @@ class AgentLoopReliabilityTest {
             override suspend fun review(request: ReviewRequest): OutcomeVerdict = error("provider down")
         }
         val loop = AgentLoop(
-            planner { if (it == 0) AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1"))))
+            planner { if (it == 0) AgentStep.Calls(listOf(ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化"))))
                 else AgentStep.Final("查好了") },
             tools, allow, "", reviewer = broken,
         )
@@ -266,7 +266,7 @@ class AgentLoopReliabilityTest {
     }
 
     @Test
-    fun `a stale step followed by progress does not stop the run`() = runBlocking {
+    fun `a stale step followed by progress does not stop the run`(): Unit = runBlocking {
         // Meituan's live pages move under the action every few steps and the run kept making progress;
         // the old budget stopped it with "页面反复变化" on a page that never oscillated.
         var calls = 0

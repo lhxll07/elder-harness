@@ -1,12 +1,11 @@
 %%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
-flowchart LR
-  C["统一判据<br/>动作后果是否可逆"]
-  C --> L1["<b>屏幕动作层</b><br/>有文字动作 → 直接执行<br/>坐标点按 → 单次确认<br/>命中词表 → 交还本人"]
-  C --> L2["<b>业务动作层</b><br/>删除 / 恢复出厂设置 / 解绑<br/>→ 并入不可逆类，交还本人"]
-  C --> L3["<b>导航动作层</b><br/>越出任务应用集合的 open_app<br/>→ 该应用首次确认一次"]
-  F4["实验发现 F4"] -.->|驱动推广| L2
-  F3["实验发现 F3"] -.->|驱动推广| L3
-  classDef core fill:#0f7b6c,color:#fff,stroke:#0b5a4f
-  classDef ext fill:#eef4f3,stroke:#0f7b6c
-  class C core
-  class L1,L2,L3 ext
+flowchart TD
+  S[模型声明「办好了」] --> P[ClaimReader 解析<br/>效果 / 引文 / 数字 / 时刻]
+  P --> M[机械层<br/>R0 触发 · R1 文字来源<br/>R2 时间锚点 · R3 动作存在性]
+  M -->|不通过| U1[不以完成收尾<br/>如实说明无法确认]
+  M -->|通过| V[文本证据层<br/>引文与数字须出现在本轮页面上<br/>跨应用不互相担保]
+  V -->|不通过| U1
+  V -->|通过| W[模型复核<br/>只看到声明与本轮证据]
+  W -->|Supported| D[COMPLETED]
+  W -->|NotDone| U2[PAUSED：声明自己说没办成]
+  W -->|Unsupported / Unverified| U1

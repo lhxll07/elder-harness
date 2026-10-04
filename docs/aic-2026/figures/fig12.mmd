@@ -1,0 +1,14 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TD
+  O["观察当前页面"] --> Q1{"树里有目标文字?"}
+  Q1 -->|有| A["路径一：按编号操作"]
+  Q1 -->|无| Q2{"有无标签可点控件?"}
+  Q2 -->|有| B["路径二：补全后操作"]
+  Q2 -->|无| C["路径三：截图 + 比例网格"]
+  A --> G["同一套本地风控闸门<br/>与完成声明核验"]
+  B --> G
+  C --> G
+  classDef p fill:#eef4f3,stroke:#0f7b6c
+  classDef g fill:#0f7b6c,color:#fff,stroke:#0b5a4f
+  class A,B,C p
+  class G g

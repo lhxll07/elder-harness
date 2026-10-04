@@ -40,8 +40,8 @@ HEI, FANG = "黑体", "仿宋"
 LOGO = HERE / "assets" / "aic-logo-header.png"   # 已按模板 srcRect 裁掉底部年份文字
 HEADER_TEXT = "2026第八届全球校园人工智能算法精英大赛"
 S = {"一号": 26, "二号": 22, "三号": 16, "四号": 14, "小四": 12, "五号": 10.5, "小五": 9}
-H1, H2, H3, BODY = S["三号"], S["四号"], S["小四"], S["小四"]
-TBL, NOTE = S["五号"], S["小五"]
+H1, H2, H3, BODY = S["三号"], S["四号"], S["小四"], S["小四"]   # 正文小四(12pt)：大赛格式硬要求，不得为压页数下调
+TBL, NOTE = S["小五"], S["小五"]   # 表格用小五：全文 57 张表，表格字号是页数最大的单一杠杆
 
 # ---------------------------------------------------------------- 图表题注
 # 按文档中出现顺序一一对应；数量不符时脚本报错，避免编号错位。
@@ -62,16 +62,19 @@ TABLE_CAPTIONS = [
     "已有工作与本作品的技术差异",
     "三条机制在相邻领域的先行工作与边界",
     "八项创新点及其差异与支撑证据",
+    "四条执行期机制及其验证状态",
+    "技能影子率 πm 的留档回放实测（275 决策点 / 31 条运行）",
     "智能体可调用的工具目录",
     "五种任务收尾方式及其对老人的呈现",
     "典型任务全流程走查（美团点餐至结算交接）",
+    "S1 查课表的三轮演进",
     "跨应用悬浮接线台的交互要素与工程细节",
     "多应用适配路径与真机任务覆盖",
     "真机问题驱动的开发迭代阶段",
     "开发阶段的时间节点与成员分工",
     "代码规模统计",
     "测试分层与覆盖内容",
-    "真机任务测试记录（小样本）",
+    "真机留档盘点（tasks/runs/results.csv，31 行）",
     "测试发现问题与改进效果",
     "已修复的安全与可靠性问题",
     "待改进问题与计划",
@@ -85,7 +88,7 @@ TABLE_CAPTIONS = [
     "实验四修复后的结果与反向用例",
     "实验五（隐蔽型危险动作）的词表覆盖与边界",
     "执行约束的三组对照",
-    "完成核验的三组对照：无核验 / 机械核验 / 证据核验（原型）",
+    "完成核验的三组对照：无核验 / 机械核验 / 机械 + 文本证据核验",
     "F1—F4 四项修复的前后对照",
     "同一目标在三个电商 App 上的结果",
     "模糊指令与明确指令下的澄清行为",
@@ -94,6 +97,8 @@ TABLE_CAPTIONS = [
     "坐标定位命中率的空间分布",
     "真机实验发现的三个新问题",
     "典型应用场景与交接边界",
+    "如实披露的口径与局限（截至 2026-10-04）",
+    "研发方向：问题、现状与验收方式",
     "插图清单与作图说明",
     "关键设计参数",
     "上下文前缀缓存命中实测",
@@ -104,10 +109,15 @@ TABLE_CAPTIONS = [
 FIGURE_CAPTIONS = [
     "痛点四层因果闭环与四项机制的补位位置",
     "系统总体架构（四层）",
-    "完成声明核验的三值判定流程",
+    "单一执行入口与单调闸门链：模型发起的与循环自行发起的调用走同一条链",
+    "完成声明核验的两级串联：本机核验通过后才允许模型复核",
+    "证据来源三分：哪一类事实可以为完成声明背书",
     "一个判据的三层复用：屏幕动作 / 业务动作 / 导航动作",
+    "有界升级阶梯：click → swipe → tap_text → zoom → handoff 与排序依据",
+    "技能准入的三层门禁：Tier0 契约 lint → Tier1 反事实影子率 πm → Tier2 冻结任务集真机回归 → 不可变版本与回滚",
     "功能架构：发起 / 办事 / 保障 / 接力",
     "任务执行流程与五种收尾方式",
+    "S1 查课表的三轮演进：盲点 → 点中正确控件 → 被检测器停住",
     "观察层的三条路径与自动切换",
     "平安守望的判定状态机（含“绝不狼来了”的四道闸门）",
 ]
@@ -397,8 +407,8 @@ def new_document():
         for _a in ("w:ascii", "w:hAnsi", "w:cs"):
             _sf.set(qn(_a), LATIN)
         st.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
-        st.paragraph_format.space_before = Pt(12 if name == "Heading 1" else 8)
-        st.paragraph_format.space_after = Pt(6 if name == "Heading 1" else 4)
+        st.paragraph_format.space_before = Pt(8 if name == "Heading 1" else 5)
+        st.paragraph_format.space_after = Pt(4 if name == "Heading 1" else 2)
         st.paragraph_format.keep_with_next = True
 
     # 页眉照搬模板：大赛 Logo + 「2026第八届全球校园人工智能算法精英大赛」，五号、左对齐、下方横线
@@ -542,7 +552,7 @@ def build_cover(doc, title, subtitle, infos):
 # ---------------------------------------------------------------- 正文渲染
 
 def add_table(doc, rows, caption, number):
-    cap = spacing(doc.add_paragraph(), 6, 2)
+    cap = spacing(doc.add_paragraph(), 4, 1)
     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
     cap.paragraph_format.keep_with_next = True
     add_runs(cap, f"表 {number}　{caption}", NOTE, True)
@@ -593,8 +603,8 @@ def add_table(doc, rows, caption, number):
     spacing(doc.add_paragraph(), 0, 4).add_run("")
 
 
-MAX_FIG_W_CM = 15.0   # A4 正文宽度
-MAX_FIG_H_CM = 19.0   # 留出题注与页边距；过高会让图上的字印出来过小
+MAX_FIG_W_CM = 12.5   # 正文宽度上限（压页数：图是第二大杠杆）
+MAX_FIG_H_CM = 12.5   # 留出题注与页边距；过高会让图上的字印出来过小
 
 
 def add_figure(doc, png, caption, number, max_h_cm=MAX_FIG_H_CM):
@@ -750,17 +760,17 @@ def render(doc, text, num):
         else:
             # 列表
             if s.startswith("- "):
-                p = spacing(doc.add_paragraph(), 0, 2)
+                p = spacing(doc.add_paragraph(), 0, 0)
                 p.paragraph_format.left_indent = Cm(0.74)
                 p.paragraph_format.first_line_indent = Cm(-0.37)
                 add_runs(p, "· " + expand(s[2:]), BODY)
             elif re.match(r"^\d+\.\s", s):
-                p = spacing(doc.add_paragraph(), 0, 2)
+                p = spacing(doc.add_paragraph(), 0, 0)
                 p.paragraph_format.left_indent = Cm(0.74)
                 p.paragraph_format.first_line_indent = Cm(-0.37)
                 add_runs(p, expand(s), BODY)
             else:
-                p = spacing(doc.add_paragraph(), 0, 3)
+                p = spacing(doc.add_paragraph(), 0, 0)
                 p.paragraph_format.first_line_indent = Pt(BODY * 2)
                 add_runs(p, expand(s), BODY)
         i += 1
@@ -810,7 +820,7 @@ def main():
     p = spacing(doc.add_paragraph(), 0, 12)
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     add_runs(p, "目　录", S["二号"], True)
-    add_field(doc.add_paragraph(), 'TOC \\o "1-3" \\h \\z \\u',
+    add_field(doc.add_paragraph(), 'TOC \\o "1-2" \\h \\z \\u',
               "（在 Word / WPS 中按 F9 或右键“更新域”生成目录）")
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 

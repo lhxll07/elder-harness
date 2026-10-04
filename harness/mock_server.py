@@ -51,6 +51,12 @@ def validate(messages):
     return errs
 
 def call(cid, name, **args):
+    # The loop requires every screen-touching action to declare what it expects to happen (mechanism
+    # A). This mock emulates a *compliant* model, so the scripted scenarios below stay about what they
+    # are about; the dedicated scenario in Harness.kt omits the declaration to pin the refusal.
+    if name in {"tap_text", "click", "long_press", "input_text", "scroll", "swipe",
+                "tap_xy", "type_text", "paste_text"} and "expectedEffect" not in args:
+        args["expectedEffect"] = "页面按预期发生变化"
     return {"id": cid, "type": "function",
             "function": {"name": name, "arguments": json.dumps(args, ensure_ascii=False)}}
 

@@ -5,6 +5,7 @@ import com.yinling.core.AgentPlanner
 import com.yinling.core.AgentStep
 import com.yinling.core.AgentToolSpec
 import com.yinling.core.CompletionReviewer
+import com.yinling.core.EvidenceGap
 import com.yinling.core.OpenAiStream
 import com.yinling.core.OutcomeVerdict
 import com.yinling.core.ReviewDigest
@@ -380,7 +381,10 @@ class CloudReviewer(
 
     override suspend fun review(request: ReviewRequest): OutcomeVerdict = withContext(Dispatchers.IO) {
         if (config.apiKey.isBlank()) {
-            return@withContext OutcomeVerdict.Unverified("还没连接核验模型，请您自己看一眼")
+            // Infrastructure failure, not a page fact: nobody checked anything, so this must not be
+            // routed into "go and look again". The gap is named at the source now that the loop no
+            // longer guesses it from the sentence.
+            return@withContext OutcomeVerdict.Unverified("还没连接核验模型，请您自己看一眼", EvidenceGap.REVIEW_FAILED)
         }
         val digest = ReviewDigest.render(request)
         // A thinking model can spend its whole budget reasoning and return empty content; retry once
@@ -395,7 +399,7 @@ class CloudReviewer(
             log("[review] verdict=${verdict::class.simpleName} raw=${text.take(160)}")
             return@withContext verdict
         }
-        OutcomeVerdict.Unverified("核验模型没有给出判断，请您自己看一眼")
+        OutcomeVerdict.Unverified("核验模型没有给出判断，请您自己看一眼", EvidenceGap.REVIEW_FAILED)
     }
 
     /** One reviewer request. A transport failure or an empty generation comes back as null. */
@@ -489,7 +493,7 @@ class CloudReviewer(
 
         val verdict = json?.optString("verdict")?.lowercase()?.takeIf { it.isNotBlank() }
             ?: headerVerdict(raw)
-            ?: return OutcomeVerdict.Unverified("核验模型没有给出可用判断，请您自己看一眼")
+            ?: return OutcomeVerdict.Unverified("核验模型没有给出可用判断，请您自己看一眼", EvidenceGap.REVIEW_FAILED)
 
         val reason = json?.optString("reason")?.takeIf { it.isNotBlank() }
             ?: "核验模型认为证据不足"
@@ -504,6 +508,10 @@ class CloudReviewer(
             "supported" -> OutcomeVerdict.Supported
             "unsupported" -> OutcomeVerdict.Unsupported(text)
             "not_done" -> OutcomeVerdict.NotDone(text)
+            // The reviewer's own free-form "unverified": there is no honest way to classify a model's
+            // sentence into a gap, so it keeps the default WORLD_UNOBSERVED ("go and look again"),
+            // which is the one bounded, safe retry. Everything the *product* failed to do is named
+            // explicitly above with REVIEW_FAILED instead.
             else -> OutcomeVerdict.Unverified(text)
         }
     }

@@ -51,7 +51,7 @@ class ToolGateTest {
     }
 
     @Test
-    fun `an automatic screenshot on a blind page asks the person first`() = runBlocking {
+    fun `an automatic screenshot on a blind page asks the person first`(): Unit = runBlocking {
         val phone = Phone(::blindPage)
         var asked = 0
         var denied = 0
@@ -109,7 +109,7 @@ class ToolGateTest {
         val loop = AgentLoop(
             planner { turn ->
                 if (turn == 0) {
-                    AgentStep.Calls(listOf(ToolInvocation("c1", "tap_xy", mapOf("x" to "abc", "y" to "0.5"))))
+                    AgentStep.Calls(listOf(ToolInvocation("c1", "tap_xy", mapOf("x" to "abc", "y" to "0.5", "expectedEffect" to "页面出现变化"))))
                 } else {
                     AgentStep.Final("看好了")
                 }
@@ -130,7 +130,7 @@ class ToolGateTest {
         val loop = AgentLoop(
             planner { turn ->
                 if (turn == 0) {
-                    AgentStep.Calls(listOf(ToolInvocation("c1", "tap_xy", mapOf("x" to "1.4", "y" to "0.5"))))
+                    AgentStep.Calls(listOf(ToolInvocation("c1", "tap_xy", mapOf("x" to "1.4", "y" to "0.5", "expectedEffect" to "页面出现变化"))))
                 } else {
                     AgentStep.Final("看好了")
                 }
@@ -153,7 +153,7 @@ class ToolGateTest {
         val loop = AgentLoop(
             planner { turn ->
                 if (turn == 0) {
-                    AgentStep.Calls(listOf(ToolInvocation("c1", "tap_xy", mapOf("x" to "0.5", "y" to "0.5"))))
+                    AgentStep.Calls(listOf(ToolInvocation("c1", "tap_xy", mapOf("x" to "0.5", "y" to "0.5", "expectedEffect" to "页面出现变化"))))
                 } else {
                     AgentStep.Final("看好了")
                 }
@@ -177,7 +177,7 @@ class ToolGateTest {
             planner { turn ->
                 if (turn == 0) {
                     AgentStep.Calls(listOf(ToolInvocation("c1", "swipe", mapOf(
-                        "x" to "10", "y" to "10", "endX" to "20", "endY" to "20", "durationMs" to "99999",
+                        "x" to "10", "y" to "10", "endX" to "20", "endY" to "20", "durationMs" to "99999", "expectedEffect" to "页面滚动",
                     ))))
                 } else {
                     AgentStep.Final("看好了")

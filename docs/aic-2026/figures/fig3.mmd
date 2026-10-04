@@ -1,14 +1,16 @@
 %%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
 flowchart TD
-  A["准备以“完成”收尾"] --> B{"R0 声明含<br/>改变外部世界的说法?"}
-  B -->|否| P["通过：泛指完成不核验"]
-  B -->|是| C{"依次核验三条规则<br/>R1 文字来源 · R2 时间锚点 · R3 动作存在性"}
-  C -->|全部通过| S["通过：告知结果"]
-  C -->|任一条不通过| U["驳回并附原因"]
-  U --> U2["改说“我没法确认办成了”<br/>并回灌一次重做机会"]
-  classDef ok fill:#0f7b6c,color:#fff,stroke:#0b5a4f
-  classDef bad fill:#c0392b,color:#fff,stroke:#96281b
-  classDef ask fill:#fdf3e3,stroke:#c9a227
-  class P,S ok
-  class U bad
-  class U2 ask
+  A1[模型提出的工具调用] --> G
+  A2[循环自行发起的调用<br/>例如盲页上的自动截图] --> G
+  subgraph G[单调闸门链 —— 每道只能拒绝，后一道无法放行被前一道拒绝的动作]
+    direction TB
+    G1[参数类型与区间校验] --> G2[本人操作词表<br/>看目标控件标签与要写入的正文]
+    G2 --> G3[敏感页整体拦截]
+    G3 --> G4[需要同意时询问本人]
+  end
+  G1 -.->|拒绝| R[失败结果回传模型修正]
+  G2 -.->|拒绝| R
+  G3 -.->|拒绝| R
+  G4 -.->|拒绝| R
+  G4 -->|通过| E[执行层：一次调用、绑定页面版本]
+  E --> R2[结果与新页面回灌]

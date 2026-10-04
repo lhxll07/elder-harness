@@ -1,0 +1,28 @@
+# Shared golden table for "rendered prompt -> observation text" (Tier 1 and the runtime).
+#
+# Format: <rendered>|||<expected observation>, one record per line, `\n` escaped, `#` comments and
+# blank lines skipped.
+#
+# Both sides read this file and must agree:
+#   * Kotlin: com.yinling.core.SkillShadow.observationFor          (core/src/test/.../SkillObservationGoldenTest.kt)
+#   * Python: tasks/skill_replay.py:observation_from_payload       (server/tests/test_skill_observation_golden.py)
+# Editing one implementation without the other turns a suite red.
+#
+# A full realistic render: page text, installed-app list, the catalogue's hint, the Chinese tail.
+当前页面：com.sankuai.meituan（1272x2800）\n[e9] 搜索（TextView）@0.50,0.06\n已安装应用（open_app 必须用这里的完整名称）：美团、微信、拼多多\n（对老人说的每句话都必须用简体中文）|||当前页面：com.sankuai.meituan（1272x2800）\n[e9] 搜索（TextView）@0.50,0.06
+# The hint sits between the page and the installed-app list; it is stripped first.
+当前页面：com.tencent.mm（1272x2800）\n[k4]?@0.50,0.65\n提示：微信里不要试图点屏幕键盘打字\n已安装应用（open_app 必须用这里的完整名称）：美团、微信|||当前页面：com.tencent.mm（1272x2800）\n[k4]?@0.50,0.65
+# The hint arrives with its own leading newline (SessionController appends it); the tail is gone anyway.
+当前页面：com.tencent.mm（1272x2800）\n没有读到任何控件。\n提示：当前应用有可用技巧 wechat_input|||当前页面：com.tencent.mm（1272x2800）\n没有读到任何控件。
+# No hint and no installed apps: only the Chinese instruction tail is stripped.
+当前页面：com.android.settings（1272x2800）\n[e3] 字体（TextView）\n（对老人说的每句话都必须用简体中文）|||当前页面：com.android.settings（1272x2800）\n[e3] 字体（TextView）
+# The pipe-prefixed variant of the installed-app marker (as it appears mid-line in archived logs).
+当前页面：com.android.launcher（1272x2800） | [e3] 设置 | 已安装应用（open_app 必须用这里的完整名称）：美团|||当前页面：com.android.launcher（1272x2800） | [e3] 设置
+# Nothing after the page line at all: the whole render is the observation (trailing whitespace trimmed).
+当前页面：未知应用|||当前页面：未知应用
+# No `当前页面：` marker at all: empty observation, so a requires-bearing skill must not fire.
+已安装应用（open_app 必须用这里的完整名称）：美团、微信|||
+# Same, for an empty string.
+|||
+# A sensitive page returns early from PhoneToolCatalog.render: no tail marker, so the whole line is kept.
+当前页面：com.tencent.mm（1272x2800）  ⚠ 敏感页面：需要老人本人操作，页面内容已隐藏。|||当前页面：com.tencent.mm（1272x2800）  ⚠ 敏感页面：需要老人本人操作，页面内容已隐藏。

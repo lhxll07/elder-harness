@@ -46,9 +46,9 @@ class AgentLoopFailurePathTest {
         val loop = AgentLoop(
             planner {
                 AgentStep.Calls(listOf(
-                    ToolInvocation("c1", "click", mapOf("target" to "e1")),
-                    ToolInvocation("c2", "click", mapOf("target" to "e2")),
-                    ToolInvocation("c3", "click", mapOf("target" to "e3")),
+                    ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化")),
+                    ToolInvocation("c2", "click", mapOf("target" to "e2", "expectedEffect" to "页面出现变化")),
+                    ToolInvocation("c3", "click", mapOf("target" to "e3", "expectedEffect" to "页面出现变化")),
                 ))
             },
             tools { call ->
@@ -71,9 +71,9 @@ class AgentLoopFailurePathTest {
         val loop = AgentLoop(
             planner {
                 AgentStep.Calls(listOf(
-                    ToolInvocation("c1", "click", mapOf("target" to "e1")),
-                    ToolInvocation("c2", "click", mapOf("target" to "e2")),
-                    ToolInvocation("c3", "click", mapOf("target" to "e3")),
+                    ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化")),
+                    ToolInvocation("c2", "click", mapOf("target" to "e2", "expectedEffect" to "页面出现变化")),
+                    ToolInvocation("c3", "click", mapOf("target" to "e3", "expectedEffect" to "页面出现变化")),
                 ))
             },
             tools { call -> if (call.target == "e2") throw IllegalStateException("boom") else ToolResult(true, "ok") },
@@ -105,7 +105,7 @@ class AgentLoopFailurePathTest {
     @Test
     fun `a batch of identical calls spends the repair budget instead of running to the step limit`() = runBlocking {
         var dispatched = 0
-        val sixIdentical = List(6) { ToolInvocation("c$it", "click", mapOf("target" to "e1")) }
+        val sixIdentical = List(6) { ToolInvocation("c$it", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化")) }
         val loop = AgentLoop(
             planner { AgentStep.Calls(sixIdentical) },
             tools {

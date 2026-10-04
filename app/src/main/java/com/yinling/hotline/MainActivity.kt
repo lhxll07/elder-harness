@@ -596,7 +596,9 @@ private fun SettingsPage(session: SessionController, onBack: () -> Unit) {
     var model by remember { mutableStateOf(session.model) }
     var key by remember { mutableStateOf(session.apiKey) }
     var vision by remember { mutableStateOf(session.visionEnabled) }
-    var developer by remember { mutableStateOf(session.developerMode) }
+    // Either half being on means the switch reads as on, so a state left by an older build
+    // (auto_confirm=true without developer_mode) is still visible and can be turned off here.
+    var developer by remember { mutableStateOf(session.developerMode || session.autoConfirm) }
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -683,6 +685,10 @@ private fun SettingsPage(session: SessionController, onBack: () -> Unit) {
             session.apiKey = key.trim()
             session.visionEnabled = vision
             session.developerMode = developer
+            // The switch says "所有操作不再询问，直接执行" — that IS auto_confirm. Until now only
+            // the logging half was wired, so the confirmation mode could not be changed from the
+            // UI at all while both the settings text and the evaluation protocol assumed it could.
+            session.autoConfirm = developer
             onBack()
         }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("保存", fontSize = 19.sp) }
     }
@@ -842,8 +848,13 @@ private fun PeaceSection() {
 /**
  * A deliberately small window into generated skills.
  *
- * The model's flow summaries are not trusted immediately: they land in candidate/, the family can
- * view them, adopt one, and roll it back to retired/. Only active files are handed to the planner.
+ * The model's flow summaries are not trusted immediately: they land in `candidate/`, the family can
+ * view them, adopt one, and roll it back. Only `active/` is handed to the planner, and a `shadow`
+ * revision stays invisible until it beats the incumbent on the frozen task set.
+ *
+ * The card answers six questions and nothing else — what it is, what it fixed, whether it broke
+ * anything, where the evidence is, whether it ever triggered a local gate, and what to do with it.
+ * The elder's own screen never shows any of this.
  */
 @Composable
 private fun SkillSection() {
@@ -852,18 +863,84 @@ private fun SkillSection() {
     val store = remember { app.skills }
     var tick by remember { mutableIntStateOf(0) }
     var expanded by remember { mutableStateOf<String?>(null) }
-    val candidates = remember(tick) { store.candidateSkills() }
-    val active = remember(tick) { SkillCatalog.skills }
+    val candidates = remember(tick) { store.candidateSkills().groupBy { it.stableId } }
+    val active = remember(tick) { store.activeSkills().groupBy { it.stableId } }
 
     fun refresh() {
         app.refreshSkills()
         tick++
     }
 
+    @Composable
+    fun card(skill: Skill, isCandidate: Boolean) {
+        val blocked = skill.regressionResult == "fail" || skill.falseDone > 0
+        val key = "${skill.stableId}@${skill.version}"
+        ElderCard {
+            Text(skill.description, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${skill.stableId} · v${skill.version} · " +
+                    (if (isCandidate) "候选" else "生效") +
+                    " · " + (if (skill.source == "learned") "模型生成" else "内置"),
+                fontSize = 13.sp,
+                color = Color.DarkGray,
+            )
+            Text(skillApplicabilityLine(skill), fontSize = 13.sp, color = Color.DarkGray)
+            Text(skillFixLine(skill), fontSize = 14.sp)
+            Text(
+                skillRegressionLine(skill),
+                fontSize = 14.sp,
+                color = if (blocked) Color(0xFFB00020) else Color.DarkGray,
+            )
+            Text(skillEvidenceLine(skill), fontSize = 13.sp, color = Color.DarkGray)
+            Text(skillSafetyLine(skill), fontSize = 13.sp, color = Color.DarkGray)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                TextButton(onClick = { expanded = if (expanded == key) null else key }) { Text("查看") }
+                if (isCandidate) {
+                    TextButton(
+                        enabled = !blocked,
+                        onClick = {
+                            if (runCatching { store.promote(skill.stableId, skill.version) }.getOrDefault(false)) {
+                                Toast.makeText(context, "已采用，下一次任务会看到它", Toast.LENGTH_SHORT).show()
+                                refresh()
+                            } else {
+                                Toast.makeText(context, "采用被门禁拒绝", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                    ) { Text(if (blocked) "采用（已禁用）" else "采用") }
+                    TextButton(onClick = { expanded = null }) { Text("保持候选") }
+                    TextButton(onClick = {
+                        if (runCatching { store.deleteCandidate(skill.stableId) }.getOrDefault(false)) refresh()
+                    }) { Text("删除") }
+                } else if (skill.source == "learned") {
+                    TextButton(onClick = {
+                        if (runCatching { store.rollback(skill.stableId) }.getOrDefault(false)) {
+                            Toast.makeText(context, "已回退到上一个可用版本", Toast.LENGTH_SHORT).show()
+                            refresh()
+                        }
+                    }) { Text("回退到上一版") }
+                    TextButton(onClick = {
+                        if (runCatching { store.rollback(skill.stableId, 1) }.getOrDefault(false)) {
+                            Toast.makeText(context, "已回退到 v1", Toast.LENGTH_SHORT).show()
+                            refresh()
+                        }
+                    }) { Text("回退到 v1") }
+                    TextButton(onClick = {
+                        if (runCatching { store.retire(skill.stableId) }.getOrDefault(false)) {
+                            Toast.makeText(context, "已退休，下一次任务不再加载它", Toast.LENGTH_SHORT).show()
+                            refresh()
+                        }
+                    }) { Text("退休") }
+                }
+            }
+            if (expanded == key) Text(skill.body, fontSize = 14.sp)
+        }
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("技巧", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
         Text(
             "模型从成功任务里总结出的流程先进入候选；采用后才会出现在 load_skill 里，可随时回退。" +
+                "只有通过回归测试（没让旧任务变差、没有谎报）的候选才能点“采用”。" +
                 "这里只存文字步骤，不存截图，也不自动执行关键操作。",
             fontSize = 15.sp,
         )
@@ -872,63 +949,38 @@ private fun SkillSection() {
         if (candidates.isEmpty()) {
             Text("暂无候选技巧。", fontSize = 15.sp, color = Color.DarkGray)
         }
-        candidates.forEach { skill ->
-            ElderCard {
-                Text(skill.description, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Text("${skill.name} · v${skill.version} · 候选", fontSize = 13.sp, color = Color.DarkGray)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    TextButton(onClick = {
-                        expanded = if (expanded == skill.name) null else skill.name
-                    }) { Text("查看") }
-                    TextButton(onClick = {
-                        if (runCatching { store.promote(skill.name) }.getOrDefault(false)) {
-                            Toast.makeText(context, "已采用，下一次任务会看到它", Toast.LENGTH_SHORT).show()
-                            refresh()
-                        } else {
-                            Toast.makeText(context, "采用失败，候选文件可能已移动", Toast.LENGTH_SHORT).show()
-                        }
-                    }) { Text("采用") }
-                    TextButton(onClick = {
-                        if (runCatching { store.deleteCandidate(skill.name) }.getOrDefault(false)) {
-                            refresh()
-                        }
-                    }) { Text("删除") }
-                }
-                if (expanded == skill.name) {
-                    Text(skill.body, fontSize = 14.sp)
-                }
-            }
+        candidates.forEach { (_, versions) ->
+            versions.sortedByDescending { it.version }.forEach { card(it, isCandidate = true) }
         }
 
         Text("当前生效的技巧", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-        active.forEach { skill ->
-            ElderCard {
-                Text(skill.description, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Text(
-                    "${skill.name} · v${skill.version} · " +
-                        (if (skill.source == "learned") "模型生成" else "内置"),
-                    fontSize = 13.sp,
-                    color = Color.DarkGray,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    TextButton(onClick = {
-                        expanded = if (expanded == skill.name) null else skill.name
-                    }) { Text("查看") }
-                    if (skill.source == "learned") {
-                        TextButton(onClick = {
-                            if (runCatching { store.retire(skill.name) }.getOrDefault(false)) {
-                                Toast.makeText(context, "已回退，下一次任务不再加载它", Toast.LENGTH_SHORT).show()
-                                refresh()
-                            }
-                        }) { Text("回退") }
-                    }
-                }
-                if (expanded == skill.name) {
-                    Text(skill.body, fontSize = 14.sp)
-                }
-            }
+        active.forEach { (_, versions) ->
+            versions.sortedByDescending { it.version }.forEach { card(it, isCandidate = false) }
         }
     }
+}
+
+private fun skillApplicabilityLine(skill: Skill): String =
+    "适用：${skill.apps.joinToString("、").ifBlank { "通用" }} · 任务族 ${skill.goalFamily.ifBlank { "未定" }}"
+
+private fun skillFixLine(skill: Skill): String =
+    "它修好了：基线失败留档 ${skill.baselineRun.ifBlank { "无（还没有失败基线）" }}"
+
+private fun skillRegressionLine(skill: Skill): String = when {
+    skill.regressionResult == "fail" ->
+        "这条技巧会让 ${skill.regressionSet.joinToString("、").ifBlank { "旧任务" }} 变差，不能采用"
+    skill.regressionResult == "pass" ->
+        "旧任务回归 ${skill.regressionSet.joinToString("、").ifBlank { "无" }}：仍通过"
+    else -> "还没跑冻结任务集回归（不能自动启用）"
+}
+
+private fun skillEvidenceLine(skill: Skill): String =
+    "证据：成功留档 ${skill.evidenceRun.ifBlank { "无" }} · 独立验证 ${skill.verifiedRuns} 次"
+
+private fun skillSafetyLine(skill: Skill): String = buildString {
+    append("安全：禁做词 ${skill.forbidden.size} 个")
+    if (skill.forbidden.isNotEmpty()) append("（${skill.forbidden.joinToString("、")}）")
+    append(if (skill.falseDone == 0) " · 未出现谎报" else " · 出现过 ${skill.falseDone} 次谎报")
 }
 
 /**

@@ -51,7 +51,7 @@ class AgentSelfEvidenceTest {
         val loop = AgentLoop(
             planner { turn ->
                 if (turn == 0) {
-                    AgentStep.Calls(listOf(ToolInvocation("c1", "input_text", mapOf("target" to "e1", "text" to "4006"))))
+                    AgentStep.Calls(listOf(ToolInvocation("c1", "input_text", mapOf("target" to "e1", "text" to "4006", "expectedEffect" to "输入框显示 4006"))))
                 } else {
                     AgentStep.Final("取件码是4006")
                 }

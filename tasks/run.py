@@ -397,6 +397,31 @@ def append_result(row: dict[str, str]) -> None:
         writer.writerow({key: row.get(key, "") for key in COLUMNS})
 
 
+def update_result(run_id: str, fields: dict[str, str]) -> bool:
+    """Rewrite the truth columns of an already-recorded run.
+
+    The row is written before the truth is asked for, so that a run is never lost
+    when the operator cannot answer (no TTY, Ctrl-C, or a closed stdin).  This
+    fills in what they told us afterwards.
+    """
+    if not RESULTS_CSV.exists():
+        return False
+    with RESULTS_CSV.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    hit = False
+    for row in rows:
+        if row.get("run_id") == run_id:
+            row.update({key: fields.get(key, row.get(key, "")) for key in fields})
+            hit = True
+    if not hit:
+        return False
+    with RESULTS_CSV.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=COLUMNS)
+        writer.writeheader()
+        writer.writerows({key: row.get(key, "") for key in COLUMNS} for row in rows)
+    return True
+
+
 def load_tasks(path: Path = TASKS_CSV) -> list[dict[str, str]]:
     with path.open(encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
@@ -525,13 +550,9 @@ def main() -> int:
                 print(f"  自动真值：{truth}")
 
             real_outcome, understood, notes = "unknown", "", ""
-            if not args.yes:
-                answer = ask("  真实结果？[d]办成了 / [n]没办成 / [u]不清楚 / 回车=不清楚：", "u")
-                real_outcome = {"d": "done", "n": "not_done"}.get(answer.lower(), "unknown")
-                understood = ask("  老人是否看懂结果？[y/n/回车=不确定]：", "").lower()
-                notes = ask("  备注：", "")
-
-            false_done = parsed["system_status"] == "COMPLETED" and real_outcome == "not_done"
+            # Record the run BEFORE asking for the truth.  If the operator cannot
+            # answer — no TTY, a closed stdin, or Ctrl-C — the observation is still
+            # archived instead of being thrown away together with the answers.
             append_result({
                 "run_id": run_id,
                 "task_id": task["id"],
@@ -558,12 +579,28 @@ def main() -> int:
                 "handoffs": parsed["handoffs"],
                 "ground_truth_auto": truth,
                 "real_outcome": real_outcome,
-                "false_done": "yes" if false_done else "",
+                "false_done": "",
                 "elder_understood": understood,
                 "operator_notes": notes,
                 "log_file": str(log_path.relative_to(ROOT)),
             })
             print(f"  已记录 → {RESULTS_CSV.relative_to(ROOT)}  (log: {log_path.name})")
+
+            if not args.yes:
+                answer = ask("  真实结果？[d]办成了 / [n]没办成 / [u]不清楚 / 回车=不清楚：", "u")
+                real_outcome = {"d": "done", "n": "not_done"}.get(answer.lower(), "unknown")
+                understood = ask("  老人是否看懂结果？[y/n/回车=不确定]：", "").lower()
+                notes = ask("  备注：", "")
+                if real_outcome != "unknown" or understood or notes:
+                    updated = update_result(run_id, {
+                        "real_outcome": real_outcome,
+                        "false_done": "yes" if (
+                            parsed["system_status"] == "COMPLETED" and real_outcome == "not_done"
+                        ) else "",
+                        "elder_understood": understood,
+                        "operator_notes": notes,
+                    })
+                    print("  真值已回填" if updated else "  ! 真值回填失败，请手工核对")
 
             restore(task["id"], baseline)
             if not args.yes and task["reset"] and task["id"] not in AUTO_RESET:

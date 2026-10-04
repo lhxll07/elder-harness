@@ -1,19 +1,9 @@
 %%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
-flowchart TB
-  subgraph A[发起]
-    direction LR
-    A1[首页单圆钮] --- A2[随时插话打断] --- A3[随时叫停]
-  end
-  subgraph B[办事]
-    direction LR
-    B1[跨应用代操作] --- B2[追问澄清] --- B3[交还本人] --- B4[做不到就说明]
-  end
-  subgraph C[保障]
-    direction LR
-    C1[完成核验] --- C2[敏感页与词表拦截] --- C3[停滞检测] --- C4[技巧按需加载]
-  end
-  subgraph D[接力]
-    direction LR
-    D1[求助 handoff] --- D2[家人网页认领] --- D3[留言朗读] --- D4[心跳与失联提醒]
-  end
-  A --> B --> C --> D
+flowchart TD
+  P1[页面观察<br/>控件树与渲染文本] -->|来源 PAGE| L[证据账本<br/>按页面版本与步骤编号]
+  P2[本地工具事实<br/>例如系统时间] -->|来源 TOOL| L
+  P3[执行者自己输入的文字<br/>输入框会把它显示出来] -->|来源 SELF_TYPED| X[不参与背书]
+  L --> C{核验}
+  X -.->|不能为声明背书| C
+  C -->|同一字段在两个应用显示不同值| Q[判为待核对]
+  C -->|事实与本轮记录一致| OK[通过]

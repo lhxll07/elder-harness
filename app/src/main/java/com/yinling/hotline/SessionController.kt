@@ -3,15 +3,21 @@ package com.yinling.hotline
 import android.content.Intent
 import android.net.Uri
 import com.yinling.core.ActionApproval
+import com.yinling.core.ActionSignature
 import com.yinling.core.AgentHook
 import com.yinling.core.AgentLoop
 import com.yinling.core.AgentMessage
 import com.yinling.core.AgentOutcome
+import com.yinling.core.CandidateEvidence
+import com.yinling.core.CandidatePolicy
+import com.yinling.core.EvidenceLog
 import com.yinling.core.PauseReason
 import com.yinling.core.AgentStep
 import com.yinling.core.MechanicalFirstReviewer
+import com.yinling.core.RunEvidence
 import com.yinling.core.ScreenElement
 import com.yinling.core.ScreenSnapshot
+import com.yinling.core.SkillRevision
 import com.yinling.core.ToolCall
 import com.yinling.core.ToolInvocation
 import kotlinx.coroutines.CompletableDeferred
@@ -164,6 +170,16 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         askPlannerForText(instructions, prompt)
     }
 
+    /**
+     * Verdict of the most recent finished run. Only `Supported` may ever produce a candidate — a
+     * hallucinated success must not feed the skill loop.
+     */
+    private var lastVerdict: String = ""
+
+    /** Token totals for the current run, recorded in the local evidence ledger. */
+    private var runPromptTokens: Int = 0
+    private var runCompletionTokens: Int = 0
+
     /** Id of the task currently loaded, so its transcript can be saved and resumed. */
     private var sessionId: String = prefs.getString(KEY_CURRENT_SESSION, null)
         ?.takeIf { it.isNotBlank() }
@@ -231,6 +247,9 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         loop = null
         blindTapApproved = false
         screenshotDecided = false
+        lastVerdict = ""
+        runPromptTokens = 0
+        runCompletionTokens = 0
         mutableState.value = SessionState(goal.trim(), "正在看看当前页面。", TaskPhase.WORKING)
         launch(resume = false)
     }
@@ -518,6 +537,18 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
      * The elder confirms this result was real. Only now do we summarize the run into a candidate
      * skill; the model's own "done" is not enough, and the skill is not active until the family
      * adopts it in settings.
+     *
+     * Five rules are applied first, all of them deterministic and none of them costing a model call
+     * ([CandidatePolicy]):
+     *
+     *  1. the run's verdict must be `Supported` and the real outcome confirmed by the person;
+     *  2. the same `goal_family` must have at least one archived failure — a skill has to fix
+     *     something that actually failed;
+     *  3. matching `apps + goal_family + first three actions` produces a *revision* of the existing
+     *     id rather than a new one (this is what replaces the old `_2` suffix);
+     *  4. two independent successes in the family are required before Tier 2; a single trajectory
+     *     still produces a candidate but stays non-selectable;
+     *  5. Tier 0 lint runs before anything is stored, and redaction is inherited from `SkillWriter`.
      */
     fun confirmTaskSuccess() {
         if (state.value.phase != TaskPhase.COMPLETED || !state.value.awaitingSuccessConfirmation) return
@@ -529,16 +560,67 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             message = "正在把这次步骤记成候选技巧…",
         )
         skillJob = scope.launch {
-            val skill = runCatching {
-                skillWriter.draft(goal, lastScreenApp, running.conversation)
+            val family = SkillCatalog.familyOf(goal)
+            val evidence = app.skills.evidence()
+            val successes = EvidenceLog.successes(evidence, family).size
+            val failures = EvidenceLog.failures(evidence, family)
+            val signature = ActionSignature.of(
+                running.conversation
+                    .filter { it.role == AgentMessage.Role.ASSISTANT }
+                    .flatMap { message -> message.toolCalls.map { it.tool } },
+            )
+            val incumbent = SkillRevision.findExisting(
+                existing = app.skills.knownSkills(),
+                apps = lastScreenApp?.let { setOf(it) } ?: emptySet(),
+                goalFamily = family,
+                signature = signature,
+            )
+            val decision = CandidatePolicy.decide(
+                CandidateEvidence(
+                    goalFamily = family,
+                    verdict = lastVerdict,
+                    realOutcomeDone = true,
+                    sameFamilyFailures = failures.size,
+                    sameFamilySuccesses = successes,
+                    existingRevisionId = incumbent?.stableId,
+                ),
+            )
+            if (!decision.draft) {
+                LoopLog.event("[skill] 不生成候选：${decision.blockedBy}")
+                mutableState.value = state.value.copy(
+                    message = "这次没有记成技巧（${decision.blockedBy.firstOrNull().orEmpty()}），不影响刚才的结果。",
+                )
+                return@launch
+            }
+            val drafted = runCatching {
+                skillWriter.draft(
+                    goal = goal,
+                    appPackage = lastScreenApp,
+                    transcript = running.conversation,
+                    goalFamily = family,
+                    evidenceRun = startedSession,
+                    baselineRun = failures.lastOrNull()?.runId.orEmpty(),
+                )
             }.getOrNull()
             if (sessionId != startedSession) return@launch
-            val saved = skill != null && app.skills.saveCandidate(skill)
+            // A revision must keep the incumbent id, otherwise "the second version of the same method"
+            // becomes a second skill competing for the same situation.
+            val prepared = drafted?.copy(
+                id = decision.revisionOf ?: drafted.stableId,
+                verifiedRuns = successes,
+                regressionResult = "pending",
+            )
+            val report = prepared?.let { app.skills.lint(it) }
+            if (report?.rejected == true) {
+                LoopLog.event("[skill] 候选被 Tier0 拒绝：${report.codes}")
+            }
+            val saved = prepared != null && report?.rejected != true && app.skills.saveCandidate(prepared)
             mutableState.value = state.value.copy(
-                message = if (saved) {
-                    "已把这次步骤记成候选技巧，可在「家人设置 → 技巧」里查看。"
-                } else {
-                    "这次步骤没记下来，不影响刚才的结果。"
+                message = when {
+                    saved && !decision.eligibleForTier2 ->
+                        "已记成候选技巧，但只有 1 次成功验证，还不能自动启用；再办成一次才进回归测试。"
+                    saved -> "已把这次步骤记成候选技巧，可在「家人设置 → 技巧」里查看。"
+                    else -> "这次步骤没记下来，不影响刚才的结果。"
                 },
             )
         }
@@ -610,8 +692,14 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         hook = hook,
         renderScreen = { screen ->
             lastScreenApp = screen.app
-            com.yinling.core.PhoneToolCatalog.render(screen) +
-                SkillCatalog.hintFor(screen.app) +
+            // `requires` must be judged on the page the model is actually shown, with the non-page
+            // decorations stripped — the same expression Tier 1's shadow replay uses. The hint is
+            // appended *after* the observation is taken, so its own `提示：` line can never satisfy
+            // a skill's precondition (which is also why the observation is taken from the raw render).
+            val page = com.yinling.core.PhoneToolCatalog.render(screen)
+            val observation = com.yinling.core.SkillShadow.observationFor(page)
+            page +
+                SkillCatalog.hintFor(screen.app, SkillCatalog.familyOf(state.value.goal), observation) +
                 keyboardNote(screen)
         },
         logger = { LoopLog.event(it) },
@@ -829,6 +917,8 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         }
 
         override fun onUsage(promptTokens: Int, completionTokens: Int, cachedTokens: Int) {
+            runPromptTokens += promptTokens
+            runCompletionTokens += completionTokens
             val rate = if (promptTokens > 0) cachedTokens * 100 / promptTokens else 0
             lastUsage = "输入${promptTokens}（缓存${cachedTokens}，$rate%）/ 输出${completionTokens}"
             LoopLog.event("usage prompt=$promptTokens completion=$completionTokens cached=$cachedTokens rate=$rate%")
@@ -856,6 +946,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         LoopLog.transcript(running?.conversation.orEmpty())
         LoopLog.event("settle: ${outcome::class.simpleName} steps=$steps msg=${outcome.message}")
         LoopLog.saveScreenshot()
+        recordRunEvidence(outcome, steps)
         when (outcome) {
             is AgentOutcome.COMPLETED -> {
                 mutableState.value = state.value.copy(
@@ -910,6 +1001,44 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
 
         // Saved after the phase is updated, otherwise a finished task would be stored as paused.
         saveCurrentSession()
+    }
+
+    /**
+     * One line per finished run into the local ledger.
+     *
+     * `COMPLETED` is recorded as `pending`, not `done`: on this phone the *real* outcome is what the
+     * elder confirms by tapping 这次办成了, and that is what [confirmTaskSuccess] appends. Every other
+     * ending is a failure signal a later candidate can point at as its baseline.
+     */
+    private fun recordRunEvidence(outcome: AgentOutcome, steps: Int) {
+        val goal = state.value.goal
+        if (goal.isBlank()) return
+        val family = SkillCatalog.familyOf(goal)
+        val verdict = when {
+            outcome is AgentOutcome.COMPLETED -> "Supported"
+            outcome is AgentOutcome.PAUSED && outcome.reason == PauseReason.OUTCOME_UNVERIFIED -> "Unverified"
+            else -> "Unsupported"
+        }
+        lastVerdict = verdict
+        val status = when (outcome) {
+            is AgentOutcome.COMPLETED -> "pending"
+            is AgentOutcome.PAUSED, is AgentOutcome.STEP_LIMIT, is AgentOutcome.STUCK -> "unverified"
+            is AgentOutcome.NEEDS_PERSON -> "needs_person"
+            else -> "not_done"
+        }
+        app.skills.recordRun(
+            RunEvidence(
+                runId = sessionId,
+                goalFamily = family,
+                apps = setOfNotNull(lastScreenApp),
+                outcome = status,
+                verdict = verdict,
+                steps = steps,
+                tokens = runPromptTokens + runCompletionTokens,
+                at = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.ROOT)
+                    .format(java.util.Date()),
+            ),
+        )
     }
 
     fun answer(approved: Boolean) {

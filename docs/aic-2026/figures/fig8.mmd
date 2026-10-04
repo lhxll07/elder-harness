@@ -1,15 +1,14 @@
 %%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
-flowchart TD
-  S[今天要不要发声] --> G1{① 守望在运行?}
-  G1 -->|否| N[不判断、不报异常]
-  G1 -->|是| G2{② 今天用过手机?}
-  G2 -->|是| OK[报平安：每天一条]
-  G2 -->|否| G3{③ 有 ≥3 天基线?}
-  G3 -->|否| NB[只记录，不发声]
-  G3 -->|是| G4{④ 晚于平时 90 分钟?}
-  G4 -->|否| W[继续等待]
-  G4 -->|是| AL[提醒家人打个电话]
-  classDef calm fill:#eef4f3,stroke:#0f7b6c
-  classDef warn fill:#fdf3e3,stroke:#c9a227
-  class N,NB,W calm
-  class OK,AL warn
+flowchart LR
+  C["候选技能<br/>成功任务总结 / 家人示范"] --> T0{"Tier0 契约 lint<br/>无模型 · 小于 1 秒"}
+  T0 -->|字段 / 脱敏 / 坐标不合规| STOP0["停在候选<br/>不进入技巧库"]
+  T0 -->|通过| T1{"Tier1 反事实影子率 πm<br/>离线回放留档决策点"}
+  T1 -->|πm 大于 0、或 requires 为空<br/>或空验证、或暴露/本族低于 0.30| STOP1["停在候选"]
+  T1 -->|πm = 0 且 requires 非空<br/>且 apps 命中 ≥ 1 且 暴露/本族 ≥ 0.30| T2{"Tier2 冻结任务集真机回归<br/>准入的唯一裁判"}
+  T2 -->|六条判据任一不满足| STOP2["停在候选 / 回滚"]
+  T2 -->|target fail→pass ≥ 2/3、回归零退化<br/>false_done=0、越权=0、影子率=0<br/>步数与 token 不劣化超 30%| V["versions/id/vN.md<br/>不可变版本目录"]
+  V --> ACT["active/id.md 指针<br/>rollback(id, to?) 可直达 v1"]
+  classDef stop fill:#fdecea,stroke:#c0392b
+  classDef go fill:#eef4f3,stroke:#0f7b6c
+  class STOP0,STOP1,STOP2 stop
+  class C,T0,T1,T2,V,ACT go

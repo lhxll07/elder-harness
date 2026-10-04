@@ -49,8 +49,8 @@ class AgentLoopDispatchTest {
         ): AgentStep = if (turn++ == 0) {
             AgentStep.Calls(
                 listOf(
-                    ToolInvocation("c1", "click", mapOf("target" to "e1")),
-                    ToolInvocation("c2", "click", mapOf("target" to "e2")),
+                    ToolInvocation("c1", "click", mapOf("target" to "e1", "expectedEffect" to "页面出现变化")),
+                    ToolInvocation("c2", "click", mapOf("target" to "e2", "expectedEffect" to "页面出现变化")),
                 ),
             )
         } else {
