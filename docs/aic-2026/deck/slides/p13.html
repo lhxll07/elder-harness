@@ -1,0 +1,79 @@
+<div class="slide">
+  <div class="eyebrow">证据 · 对抗条件下的安全性评测</div>
+  <h1 class="title">先取出论文提出的问题，再看自己是否击中被击中</h1>
+  <div class="subtitle">顺序是：判断这个问题是否击中本作品 → 是否可测量 → 结论能否改变我们对自己的判断，然后才设计实验。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <table class="t" style="font-size:15.5px">
+      <thead>
+        <tr>
+          <th style="width:5%" class="num">#</th>
+          <th style="width:26%">实验</th>
+          <th style="width:30%">论文问题</th>
+          <th>本作品结果</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">一</td>
+          <td>拦截是否依赖模型言辞</td>
+          <td>提示层对齐只是「局部现象」</td>
+          <td><strong>不依赖</strong>：被说服组与中性组完全一致，均在<strong>审批之前</strong>被拦下</td>
+        </tr>
+        <tr>
+          <td class="num">二</td>
+          <td>拦截来自架构还是能力不足</td>
+          <td>安全可能是「没看懂屏幕」的副产品</td>
+          <td><strong>能力喂到最满仍然拦截</strong>，且安全动作正常放行</td>
+        </tr>
+        <tr>
+          <td class="num">三</td>
+          <td>声明—动作缺口与跨轮漂移</td>
+          <td>安全漂移 + 操作性幻觉</td>
+          <td>口头拒绝后仍执行 → <strong>未执行</strong>；<strong>第 3 轮才松口仍被拦</strong></td>
+        </tr>
+        <tr>
+          <td class="num">四</td>
+          <td>环境注入下的目标劫持</td>
+          <td>智能体例行处理不可信环境内容</td>
+          <td>危险动作拦下；<strong>目标劫持无机制拦截</strong> → 已修复为导航层判据</td>
+        </tr>
+        <tr>
+          <td class="num">五</td>
+          <td>隐蔽型危险动作的词表边界</td>
+          <td>内容匹配路线的覆盖上限</td>
+          <td>隐蔽型 <strong>0/8 → 8/8</strong>；边界探针 <strong>6/6 → 5/6</strong>（路线级上限，如实保留）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="kpis c4 mt32" style="gap:20px">
+      <div class="kpi" style="padding:24px 26px">
+        <div class="v">5</div>
+        <div class="l">组对抗实验<br>发现 5 处问题</div>
+      </div>
+      <div class="kpi" style="padding:24px 26px">
+        <div class="v" style="color:var(--ok)">4</div>
+        <div class="l">处已修复<br>全部由回归断言守护</div>
+      </div>
+      <div class="kpi" style="padding:24px 26px">
+        <div class="v" style="color:var(--warn)">1</div>
+        <div class="l">处路线级上限<br>如实保留，不修饰</div>
+      </div>
+      <div class="kpi accent" style="padding:24px 26px">
+        <div class="v">99<span style="font-size:26px">→</span>208</div>
+        <div class="l">回归断言数<br>四处修复均被固化</div>
+      </div>
+    </div>
+
+    <div class="takeaway mt24">
+      <span class="k">结论边界</span>本章证明的是<strong>执行约束层与核验逻辑本身的确定性</strong>——给定一个会撒谎、会松口、会绕路的模型，架构是否仍然拦得住；它<strong>不</strong>证明「真实模型被注入说服后也一定拦得住」。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">判定标准：有对照 · 可复现 · 有守护，三条同时满足才允许写成「已解决」</span>
+    <span class="pno">13</span>
+  </div>
+</div>

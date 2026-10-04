@@ -1,0 +1,57 @@
+<div class="slide">
+  <div class="eyebrow">证据 · 实机案例 B</div>
+  <h1 class="title">同一个应用、同一台手机，三轮留下三种不同的失败模式</h1>
+  <div class="subtitle">老人一句话：“帮我看看明天有什么课。”</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cards c3" style="gap:20px">
+      <div class="card outline" style="padding:26px 26px;border-top:3px solid var(--bad)">
+        <div class="cn" style="color:var(--bad)">第一轮 · 9 步 · PAUSED</div>
+        <div class="ct">盲点，点到「死」</div>
+        <div class="cb" style="font-size:16px">
+          <code>tap_text</code> 打不开课表 → 改用盲坐标 <code>tap_xy(0.37,0.96)</code> → 撞上 <code>stale_screen</code>（页面在「观察 → 派发」之间已经变了）→ 翻到第 3 周，结论仍以 <code>Unverified</code> 收尾
+        </div>
+        <div class="sm mt16" style="color:var(--bad)"><strong>教训是「放弃太早」</strong>：一次都没试翻页就给了结论</div>
+      </div>
+
+      <div class="card outline" style="padding:26px 26px;border-top:3px solid var(--warn)">
+        <div class="cn" style="color:var(--warn)">第二轮 · 9 步 · PAUSED</div>
+        <div class="ct">点了正确的控件，但没生效</div>
+        <div class="cb" style="font-size:16px">
+          修好观察层后改用 <code>tap_text</code>，依次点中「我的课表」→「第3周」→<strong>「第4周」</strong>，页面确实切到了第 4 周；但结论里的日期「10月5日」在本轮页面文本里<strong>从未出现过</strong>
+        </div>
+        <div class="sm mt16" style="color:var(--warn)">系统如实拒绝，给出老人可核对的话术</div>
+      </div>
+
+      <div class="card outline" style="padding:26px 26px;border-top:3px solid var(--accent)">
+        <div class="cn">第三轮 · 13 步 · STUCK</div>
+        <div class="ct">声明了预期，被检测器停住</div>
+        <div class="cb" style="font-size:16px">
+          每步都写 <code>expectedEffect</code>，核验记录里出现了 <code>APPLIED</code>，也大量出现 <code>CHANGED_OTHER</code>；因页面来回振荡，最终由<strong>旧的振荡检测</strong>判 <code>STUCK</code>
+        </div>
+        <div class="sm mt16" style="color:var(--accent)">新阶梯实机触发 0 次——如实标注，不冒充</div>
+      </div>
+    </div>
+
+    <div class="cols c2 wide-l mt32" style="gap:48px;align-items:center">
+      <div>
+        <div class="takeaway" style="font-size:19px;padding:24px 28px">
+          <span class="k">这条弧线说明了什么</span>
+          失败模式从「盲点到死」→「点了正确的控件但没生效」→「被检测器停住」逐步演进。而<strong>期间每一次都由本地核验如实拒绝，没有任何一次谎报</strong>。
+        </div>
+        <p class="lead mt24" style="font-size:19px">
+          <strong>宁可少做，不可谎报；宁可停手，不可越权。</strong>
+        </p>
+      </div>
+      <div class="fig-wrap" style="max-height:250px">
+        <img src="../figures/fig11.png" alt="S1 查课表的三轮演进" style="max-height:250px">
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">S1-1004-170301 / S1-1004-175221 / S1-1004-175424 · 三轮均由真实模型与真实应用运行</span>
+    <span class="pno">17</span>
+  </div>
+</div>

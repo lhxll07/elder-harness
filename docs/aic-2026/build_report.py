@@ -41,7 +41,7 @@ LOGO = HERE / "assets" / "aic-logo-header.png"   # 已按模板 srcRect 裁掉�
 HEADER_TEXT = "2026第八届全球校园人工智能算法精英大赛"
 S = {"一号": 26, "二号": 22, "三号": 16, "四号": 14, "小四": 12, "五号": 10.5, "小五": 9}
 H1, H2, H3, BODY = S["三号"], S["四号"], S["小四"], S["小四"]   # 正文小四(12pt)：大赛格式硬要求，不得为压页数下调
-TBL, NOTE = S["小五"], S["小五"]   # 表格用小五：全文 57 张表，表格字号是页数最大的单一杠杆
+TBL, NOTE = S["五号"], S["小五"]   # 表格用五号(10.5pt)：中文惯例“表格内文字比正文小一号”；正文小四(12pt)是大赛硬要求，不再下调。注解小字仍用小五
 
 # ---------------------------------------------------------------- 图表题注
 # 按文档中出现顺序一一对应；数量不符时脚本报错，避免编号错位。
@@ -63,18 +63,18 @@ TABLE_CAPTIONS = [
     "三条机制在相邻领域的先行工作与边界",
     "八项创新点及其差异与支撑证据",
     "四条执行期机制及其验证状态",
-    "技能影子率 πm 的留档回放实测（275 决策点 / 31 条运行）",
+    "技能跨任务误匹配率（πm）的运行归档回放实测（275 决策点 / 31 条运行）",
     "智能体可调用的工具目录",
     "五种任务收尾方式及其对老人的呈现",
     "典型任务全流程走查（美团点餐至结算交接）",
     "S1 查课表的三轮演进",
     "跨应用悬浮接线台的交互要素与工程细节",
-    "多应用适配路径与真机任务覆盖",
-    "真机问题驱动的开发迭代阶段",
+    "多应用适配路径与实机任务覆盖",
+    "实机问题驱动的开发迭代阶段",
     "开发阶段的时间节点与成员分工",
     "代码规模统计",
     "测试分层与覆盖内容",
-    "真机留档盘点（tasks/runs/results.csv，31 行）",
+    "实机运行归档盘点（tasks/runs/results.csv，31 行）",
     "测试发现问题与改进效果",
     "已修复的安全与可靠性问题",
     "待改进问题与计划",
@@ -95,9 +95,9 @@ TABLE_CAPTIONS = [
     "火车票四项答案与页面逐项核对",
     "坐标定位命中率：三个屏幕",
     "坐标定位命中率的空间分布",
-    "真机实验发现的三个新问题",
+    "实机实验发现的三个新问题",
     "典型应用场景与交接边界",
-    "如实披露的口径与局限（截至 2026-10-04）",
+    "如实披露的统计口径与局限（截至 2026-10-04）",
     "研发方向：问题、现状与验收方式",
     "插图清单与作图说明",
     "关键设计参数",
@@ -109,17 +109,17 @@ TABLE_CAPTIONS = [
 FIGURE_CAPTIONS = [
     "痛点四层因果闭环与四项机制的补位位置",
     "系统总体架构（四层）",
-    "单一执行入口与单调闸门链：模型发起的与循环自行发起的调用走同一条链",
+    "单一执行入口与单调执行约束层：模型发起的与循环自行发起的调用走同一层",
     "完成声明核验的两级串联：本机核验通过后才允许模型复核",
     "证据来源三分：哪一类事实可以为完成声明背书",
     "一个判据的三层复用：屏幕动作 / 业务动作 / 导航动作",
     "有界升级阶梯：click → swipe → tap_text → zoom → handoff 与排序依据",
-    "技能准入的三层门禁：Tier0 契约 lint → Tier1 反事实影子率 πm → Tier2 冻结任务集真机回归 → 不可变版本与回滚",
-    "功能架构：发起 / 办事 / 保障 / 接力",
+    "技能准入的三层判定：第一层契约 lint → 第二层反事实跨任务误匹配率（πm）→ 第三层冻结任务集实机回归 → 不可变版本与回滚",
+    "功能架构：发起 / 办事 / 保障 / 移交家人",
     "任务执行流程与五种收尾方式",
     "S1 查课表的三轮演进：盲点 → 点中正确控件 → 被检测器停住",
     "观察层的三条路径与自动切换",
-    "平安守望的判定状态机（含“绝不狼来了”的四道闸门）",
+    "平安守望的判定状态机（含避免误报的四道判定条件）",
 ]
 
 # ---------------------------------------------------------------- 参考文献
@@ -197,6 +197,7 @@ REFS = [
     ("a_liedoctor", "Sun, Y., Chen, C., Zhou, Z., et al. It Lied to a Doctor to Buy Poison Ingredients: Quantifying Real-World Misuse of Phone-use Agents. 2026. arXiv:2606.27944. https://arxiv.org/abs/2606.27944"),
     ("a_safeorincapable", "Tang, Z., Zhang, Y., Li, C., et al. Safe, or Simply Incapable? Rethinking Safety Evaluation for Phone-Use Agents. 2026. arXiv:2605.07630. https://arxiv.org/abs/2605.07630"),
     ("a_alignmentlocal", "An, H., Song, Y., Bai, Z., et al. Alignment Is Local: A Paired Diagnostic for GUI Agents under User-Side Persuasion. 2026. arXiv:2607.29199. https://arxiv.org/abs/2607.29199"),
+        ("a_skillguard", "Xiong W., Karanjai R., Lu Y., Shi W. Reachability-Based Capability Confinement for LLM Agents under Indirect Prompt Injection (论文中的系统名 SkillGuard). 2026-08. arXiv:2608.30041. https://arxiv.org/abs/2608.30041"),
     ("a_safetydrift", "Yu, S., Carroll, F., Bentley, B. L. Operational Hallucination and Safety Drift in AI Agents. IEEE ICAD 2026. arXiv:2607.18366. https://arxiv.org/abs/2607.18366"),
     ("a_oversightcapacity", "Turan, E. Oversight Has a Capacity: Calibrating Agent Guards to a Subjective, Fatiguing Human. 2026. arXiv:2606.08919. https://arxiv.org/abs/2606.08919"),
     ("a_knowingnotenough", "Fu, X., Ramasubbu, N., Galletta, D. Knowing Is Not Enough: Information Retrievability as a Precondition to Effective LLM Oversight. 2026. arXiv:2609.01976. https://arxiv.org/abs/2609.01976"),

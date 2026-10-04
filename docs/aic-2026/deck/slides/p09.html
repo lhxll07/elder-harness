@@ -1,0 +1,49 @@
+<div class="slide dense">
+  <div class="eyebrow">机制二 · 完成核验</div>
+  <h1 class="title">「是否办成」由本轮执行记录决定，不由模型自述决定</h1>
+  <div class="subtitle">实机上真实出现过这样的谎报：一轮只执行了「打开应用、等待、坐标点按、截图」，模型却说「已帮您把消息发出去了，发送成功」——它把老人在任务开始前发的消息算成了成果。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2 wide-l" style="gap:44px">
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">算法：对本轮执行日志的线性扫描 O(n)</div>
+        <table class="t">
+          <tbody>
+            <tr>
+              <td style="width:24%"><code>R0</code> 触发</td>
+              <td>只检查含「改变外部世界」说法的声明；泛指完成不检查，避免误伤只读任务</td>
+            </tr>
+            <tr>
+              <td><code>R1</code> 文字来源</td>
+              <td>引号内 2~40 字的引用，必须出现在本轮成功执行的输入类动作参数中</td>
+            </tr>
+            <tr>
+              <td><code>R2</code> 时间锚点</td>
+              <td>声明中的时刻若早于本轮开始时间（容差 1 分钟），判为「运行前就存在的内容」</td>
+            </tr>
+            <tr>
+              <td><code>R3</code> 动作存在</td>
+              <td>声明改变了什么，本轮就必须至少成功执行过一个可能改变状态的动作</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="sm mt16">
+          <strong>执行者自己写进去的字不算证据</strong>：输入框会显示我们刚敲进去的内容，这类事实被标记为「本方写入」而不参与背书。
+        </div>
+      </div>
+      <div class="fig-wrap" style="max-height:250px">
+        <img src="../figures/fig4.png" alt="完成声明核验的两级串联" style="max-height:250px">
+      </div>
+    </div>
+
+    <div class="takeaway mt24">
+      <span class="k">不通过时</span>任务<strong>不以「完成」收尾</strong>，而是明确告诉老人「我没法确认这件事真的办成了」，并给模型一次「真的去做、或说明做不到」的机会。<strong>本机拒绝是终局，模型无法把它翻回「完成」。</strong>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">适用范围：能否定「物理上不可能」的声明；挡不住「确实动了手却没做成」——后者需操作前后截图自动比对（拟研发）</span>
+    <span class="pno">09</span>
+  </div>
+</div>

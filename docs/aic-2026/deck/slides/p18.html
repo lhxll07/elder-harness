@@ -1,0 +1,59 @@
+<div class="slide">
+  <div class="eyebrow">证据 · 跨应用泛化</div>
+  <h1 class="title">同一句「看看我的快递到哪了」，三个电商 App 上的分化</h1>
+  <div class="subtitle">论文问题：在 13 个智能体上，在原有应用上的成功<strong>并不能可靠迁移</strong>到同一目标的新应用。本实验检验本作品是否也有这个问题。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="kpis c3" style="gap:20px">
+      <div class="kpi" style="background:var(--ok-tint);padding:26px 28px">
+        <div class="v" style="font-size:38px;color:var(--ok)">拼多多 · COMPLETED</div>
+        <div class="l" style="font-size:16.5px">5 步 · <strong>逐项核对全部吻合</strong><br>
+          <span style="color:var(--ink-3)">「4 单（3 已签收、1 待取）／康师傅饮用纯净水 1.5L×8 瓶／实付 13.5 元／取件码 30-1-4006／中通快递」与原页面五项逐项吻合</span>
+        </div>
+      </div>
+      <div class="kpi" style="padding:26px 28px">
+        <div class="v" style="font-size:38px">淘宝 · COMPLETED</div>
+        <div class="l" style="font-size:16.5px">5 步 · <span class="pill gray">未核实</span><br>
+          <span style="color:var(--ink-3)">未取到原页面，标注为未核实——<strong>不写成成功</strong></span>
+        </div>
+      </div>
+      <div class="kpi" style="background:var(--bad-tint);padding:26px 28px">
+        <div class="v" style="font-size:38px;color:var(--bad)">京东 · PAUSED</div>
+        <div class="l" style="font-size:16.5px">2 步 · <strong>失败机制已定位</strong><br>
+          <span style="color:var(--ink-3)">首页持续动画使「观察 → 派发」之间页面版本必然失效</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols c2 mt32" style="gap:48px">
+      <div>
+        <div class="ct-label">京东失败的技术链路</div>
+        <ol class="steps" style="font-size:17.5px">
+          <li>第 1 步 <code>tap_text("我的")</code>（策略正确）→ <code>stale_screen</code></li>
+          <li>第 2 步改用 <code>click(target=e317)</code>（同一个「我的」）→ <strong>同样 stale</strong></li>
+          <li>两次修复失败后预算耗尽 → <code>PAUSED</code></li>
+        </ol>
+        <p class="sm">
+          <code>stale_screen</code> 是为安全而设的<strong>竞态防线</strong>；但在常驻轮播的高动态首页上，版本高频变动使<strong>合法动作</strong>被判过期。
+        </p>
+      </div>
+      <div>
+        <div class="ct-label">这条失败给出了机制层面的解释</div>
+        <div class="card" style="background:var(--accent-tint);padding:24px 28px">
+          <div class="cb" style="color:var(--ink);font-size:17px">
+            同类页面在拼多多、淘宝上却成功，说明该失败是<strong>间歇性</strong>的——对老人而言，比确定性失败更难理解。
+          </div>
+          <div class="cb mt16" style="font-size:16.5px">
+            <strong>处置（F6）</strong>：把 <code>stale_screen</code> 从常规修复预算中<strong>解耦</strong>——独立计数、默认 3 次、成功操作清零，不再挤占参数错误的修复配额。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">仅 3 个 App、每条件 1 次运行，只作方向性证据，不外推为成功率</span>
+    <span class="pno">18</span>
+  </div>
+</div>

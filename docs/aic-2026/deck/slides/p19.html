@@ -1,0 +1,87 @@
+<div class="slide dense">
+  <div class="eyebrow">证据 · 对我们自己指标的证伪</div>
+  <h1 class="title">真实第三方页面上，坐标定位从 77—83% 掉到 44%</h1>
+  <div class="subtitle">用 <code>calibrate_tap</code> 对页面带文字的可点按控件要求视觉模型给出归一化坐标，与无障碍真实 bounds 比对——<strong>全程不执行任何点按</strong>。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2 wide-l" style="gap:44px">
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">按屏幕统计（每屏 1 次，合计 34 样本）</div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th style="width:34%">屏幕</th>
+              <th class="num">有效<br>样本</th>
+              <th class="num">命中</th>
+              <th class="num">命中率</th>
+              <th class="num">给不出<br>坐标</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>系统设置</td>
+              <td class="num">13</td><td class="num">10</td>
+              <td class="num">77%</td><td class="num">4</td>
+            </tr>
+            <tr>
+              <td>显示与亮度</td>
+              <td class="num">12</td><td class="num">10</td>
+              <td class="num">83%</td><td class="num">5</td>
+            </tr>
+            <tr style="background:var(--bad-tint)">
+              <td style="color:var(--bad);font-weight:700">拼多多首页（推广页）</td>
+              <td class="num">9</td><td class="num">4</td>
+              <td class="num" style="color:var(--bad);font-weight:700">44%</td>
+              <td class="num" style="color:var(--bad);font-weight:700">10</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="ct-label mt24" style="margin-bottom:12px">控件纵向位置 · 空间分布</div>
+        <table class="t">
+          <tbody>
+            <tr>
+              <td style="width:46%">上段 <code>y &lt; 0.33</code></td>
+              <td class="num" style="width:20%">16 样本</td>
+              <td class="num">62%</td>
+            </tr>
+            <tr style="background:var(--ok-tint)">
+              <td style="font-weight:700">中段 <code>0.33—0.67</code></td>
+              <td class="num">10 样本</td>
+              <td class="num" style="font-weight:700;color:var(--ok)">90%</td>
+            </tr>
+            <tr>
+              <td>下段 <code>y &gt; 0.67</code></td>
+              <td class="num">8 样本</td>
+              <td class="num">62%</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="sm mt16">与论文「定位盲区」结论<strong>方向一致</strong>：中段最好，上下两端明显掉点。</div>
+      </div>
+
+      <div>
+        <div class="panel bad">
+          <div class="ph">本节记录一次对自己指标的证伪</div>
+          <div style="font-size:16px;line-height:1.5;color:var(--ink-2)">
+            <strong>距离误差被指标设计放大</strong>：34 个命中样本中有 <strong>9 个横向偏差超过 200 像素</strong>（例如「字体」dx = −509 仍判命中）。原因是这类控件的 label 文字位于整行的一端，而基准是整个可点区域的中心——<strong>模型其实指对了文字位置</strong>。
+            <div class="mt16" style="color:var(--ink)"><strong>因此本报告不把 mean/p50 距离作为精度结论，只使用命中率。</strong></div>
+          </div>
+        </div>
+
+        <div class="ct-label mt24" style="margin-bottom:12px">这两件事同时成立</div>
+        <ul class="clean tight" style="font-size:16.5px">
+          <li>坐标路线在复杂页面上<strong>确实不可靠</strong>——这正是「吸附或拒绝」的理由</li>
+          <li>但它被指标<strong>夸大了</strong>——不加分辨地引用 mean 距离，会把自己说得比实际更差</li>
+          <li>「同屏重名控件」两次均未命中，反向支持「优先用编号而非文字」</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">方向性偏置不存在（全样本 meanDx = −11、中位 dx = 0）；每屏 1 次、34 个样本，只作方向性证据 · 完整数据图见方案书图 20</span>
+    <span class="pno">19</span>
+  </div>
+</div>

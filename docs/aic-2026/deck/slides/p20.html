@@ -1,0 +1,92 @@
+<div class="slide dense">
+  <div class="eyebrow">证据 · 如实披露</div>
+  <h1 class="title">没有做到、没有测到、或测到但不支持我们主张的部分</h1>
+  <div class="subtitle">可信性的主张要能被证据支撑，<strong>否则它本身就构成一种谎报</strong>。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2" style="gap:44px">
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">能力边界 · 路线级上限</div>
+        <div class="panel bad" style="padding:18px 22px">
+          <div class="ph">内容匹配路线的上限 · 边界探针 5/6 仍漏拦</div>
+          <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">
+            关闭查找手机 · 允许安装未知应用 · 开启开发者选项 · 更换手机号 · 关闭定位服务
+            <div class="mt16" style="color:var(--ink)">
+              只能覆盖被列举过的说法，<strong>无法判断「这个动作的后果是否可逆」</strong>。下一步方向是由模型给出业务后果分类，<strong>放行权始终留在本地执行约束层</strong>。
+            </div>
+          </div>
+        </div>
+
+        <div class="ct-label mt24" style="margin-bottom:12px">未实机验证的部分</div>
+        <table class="t">
+          <tbody>
+            <tr>
+              <td style="width:46%">有界升级阶梯</td>
+              <td>单元测试守护，<strong>实机触发 0 次</strong></td>
+            </tr>
+            <tr>
+              <td>收工前检查 / gap 分流</td>
+              <td>有 harness 场景，<strong>实机未验证</strong></td>
+            </tr>
+            <tr>
+              <td>技能准入第三层</td>
+              <td><strong>一次实机都没跑过</strong>（无设备授权）</td>
+            </tr>
+            <tr>
+              <td>家人移交链路</td>
+              <td><code>handoffs</code> 全为 0，<strong>实机从未跑过</strong></td>
+            </tr>
+            <tr>
+              <td>效果核验 L1/L2 与阈值</td>
+              <td>实机基本不生效；阈值<strong>未在测试机型上校准</strong></td>
+            </tr>
+            <tr>
+              <td>Android 层单元测试</td>
+              <td><code>ScreenAccessService</code> / <code>AndroidPhoneTools</code> <strong>无单测</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">证据强度 · 样本缺口</div>
+        <div class="cards" style="gap:11px">
+          <div class="card outline" style="padding:16px 20px">
+            <div class="cb" style="font-size:15.5px;line-height:1.45">
+              <strong>实机实验每条件仅 1 次</strong><br>
+              <span class="sm">只作方向性证据，不外推为成功率</span>
+            </div>
+          </div>
+          <div class="card outline" style="padding:16px 20px">
+            <div class="cb" style="font-size:15.5px;line-height:1.45">
+              <strong>对抗实验使用脚本化规划器</strong><br>
+              <span class="sm">检验判定与执行架构，不覆盖真实模型的行为分布</span>
+            </div>
+          </div>
+          <div class="card outline" style="padding:16px 20px">
+            <div class="cb" style="font-size:15.5px;line-height:1.45">
+              <strong>老年用户试用未开展</strong><br>
+              <span class="sm">尚无正式的老年用户试用数据与商业合作意向</span>
+            </div>
+          </div>
+          <div class="card outline" style="padding:16px 20px">
+            <div class="cb" style="font-size:15.5px;line-height:1.45">
+              <strong>页面文字会上云</strong><br>
+              <span class="sm">缺按应用排除与脱敏；试用阶段提示勿使用真实敏感信息</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway mt16" style="background:var(--accent-tint)">
+          <span class="k">我们修正了自己的指标口径</span>不使用「危险操作漏拦率 0」，也不把「模型本就没有能力」算作安全成绩——因为<strong>拦截成功可能是因为它没看懂屏幕</strong>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">完整不足清单见方案书第八部分（五）1，共 18 项；本页为其中影响面最大者</span>
+    <span class="pno">20</span>
+  </div>
+</div>

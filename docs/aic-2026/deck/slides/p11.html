@@ -1,0 +1,62 @@
+<div class="slide dense">
+  <div class="eyebrow">机制四 · 经验技巧与自进化</div>
+  <h1 class="title">触发条件留在指令，具体方法按需拉取</h1>
+  <div class="subtitle">第三方应用知识不内联进指令，避免系统指令随适配应用数膨胀、稀释模型对专项方法的注意力。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2" style="gap:44px">
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">对照实验（小样本）</div>
+        <div class="kpis c2" style="gap:16px">
+          <div class="kpi" style="padding:20px 24px">
+            <div class="v" style="font-size:30px;color:var(--bad)">0/4</div>
+            <div class="l">方法全量写进指令时<br><code>load_skill</code> 调用数</div>
+          </div>
+          <div class="kpi accent" style="padding:20px 24px">
+            <div class="v" style="font-size:30px">3/3</div>
+            <div class="l">只保留触发条件后<br><code>load_skill</code> 调用数</div>
+          </div>
+        </div>
+        <div class="sm mt16">读对率同时由 <strong>2/4 提升到 3/3</strong>：方法混在指令里时，模型倾向依赖通用推理而不调用技巧。</div>
+      </div>
+
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">技能三层准入</div>
+        <div class="cards" style="gap:12px">
+          <div class="card outline" style="padding:16px 22px">
+            <div class="cb" style="font-size:16px;line-height:1.45">
+              <strong>第一层 · 契约 lint</strong> <span class="pill ok" style="margin-left:6px">已实现</span><br>
+              <span class="sm">无模型、&lt;1 秒。拒绝本人操作词与像素坐标</span>
+            </div>
+          </div>
+          <div class="card outline" style="padding:16px 22px">
+            <div class="cb" style="font-size:16px;line-height:1.45">
+              <strong>第二层 · 反事实误匹配率 πm</strong> <span class="pill ok" style="margin-left:6px">已实现</span><br>
+              <span class="sm">离线回放运行归档决策点，准入要求 πm = 0</span>
+            </div>
+          </div>
+          <div class="card" style="padding:16px 22px;background:var(--warn-tint)">
+            <div class="cb" style="font-size:16px;line-height:1.45">
+              <strong style="color:var(--warn)">第三层 · 冻结任务集实机回归</strong> <span class="pill warn" style="margin-left:6px">未跑过</span><br>
+              <span class="sm" style="color:var(--warn)">准入的唯一裁判，六条判据缺一不可</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt24 fig-wrap" style="max-height:170px">
+      <img src="../figures/fig8.png" alt="技能准入的三层判定与不可变版本 / 回滚" style="max-height:170px">
+    </div>
+
+    <div class="takeaway mt16">
+      <span class="k">如实标注</span>三个候选技能的「通过」<strong>只代表通过第一层与第二层，不代表已在实机上线</strong>；<code>requires</code> 尚未接线到运行时选择路径，πm 是反事实测量且为样本内。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">上图：技能准入的三层判定与不可变版本 / 回滚（方案书图 8）；详见第三部分（八）</span>
+    <span class="pno">11</span>
+  </div>
+</div>

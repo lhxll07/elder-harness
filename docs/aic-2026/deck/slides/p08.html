@@ -1,0 +1,61 @@
+<div class="slide">
+  <div class="eyebrow">机制一 · 分级执行</div>
+  <h1 class="title">确认边界：从「有没有碰屏幕」改成「能不能撤销」</h1>
+  <div class="subtitle">早期版本把 9 类工具都设为「需确认」，一次 10 步任务要打扰老人 9~12 次，且每次都要老人做技术判断。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <table class="t">
+      <thead>
+        <tr>
+          <th style="width:42%">动作类别</th>
+          <th style="width:14%">分级</th>
+          <th>处理方式</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>有文字的普通动作<br><span class="sm">点按、输入、滚动、返回、打开应用</span></td>
+          <td><span class="pill ok">直接执行</span></td>
+          <td>执行层做内容检查，不打扰老人</td>
+        </tr>
+        <tr>
+          <td>坐标点按<br><span class="sm">页面读不到控件，无法做内容校验</span></td>
+          <td><span class="pill warn">单次确认</span></td>
+          <td>每次任务确认一次；落点吸附到真实控件后即进入内容校验范围</td>
+        </tr>
+        <tr>
+          <td><strong>付款、结算、下单、发送、验证码、密码、<br>身份认证、删除</strong></td>
+          <td><span class="pill bad">交还本人</span></td>
+          <td><strong>不由智能体执行</strong>，说清金额与要点按钮，由本人完成</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cols c2 mt32" style="gap:48px">
+      <div>
+        <div class="ct-label">「交还本人」的两条互补路径</div>
+        <ul class="clean tight">
+          <li>模型主动调用 <code>ask_person</code>，说清金额、地址和要点的按钮</li>
+          <li>模型去点危险控件时，被执行层按本人操作词表<strong>拒绝</strong>，界面自动展开提示</li>
+        </ul>
+      </div>
+      <div>
+        <div class="ct-label">验证是代码级的</div>
+        <ul class="clean tight">
+          <li><code>needed()</code> 只对 <code>tap_xy</code> 与 <code>screenshot</code> 返回真</li>
+          <li>harness 有「<strong>审批前执行数为 0</strong>」的硬断言</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="takeaway mt24">
+      <span class="k">诚实口径</span>本报告<strong>不把「打扰 0 次」当作实测指标</strong>：在 <code>auto_confirm = true</code> 的运行里审批层被绕过，这个数字是设置的产物，而不是机制的测量值。实机唯一一次逐步确认运行（<code>S4-1004-175636</code>）因等人工耗时约 114 s。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">确认策略的三组对照见第六部分（七）：分级执行 15/20 拦截 · 1 次打扰；固定词表 6/20</span>
+    <span class="pno">08</span>
+  </div>
+</div>

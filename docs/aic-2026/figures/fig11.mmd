@@ -10,7 +10,7 @@ flowchart LR
   end
   subgraph R3["第三轮 · 声明预期后被检测器停住（13 步 · STUCK）"]
     direction TB
-    C1["每步声明 expectedEffect"] --> C2["核验出现 APPLIED，<br/>也大量出现 CHANGED_OTHER"] --> C3["页面来回振荡"] --> C4["由旧的振荡检测判 STUCK<br/>新阶梯真机触发 0 次"]
+    C1["每步声明 expectedEffect"] --> C2["核验出现 APPLIED，<br/>也大量出现 CHANGED_OTHER"] --> C3["页面来回振荡"] --> C4["由旧的振荡检测判 STUCK<br/>新阶梯实机触发 0 次"]
   end
   R1 --> R2 --> R3
   N["三轮共同点：每一次都由本地核验如实拒绝，<br/>没有任何一次谎报"] -.-> R1

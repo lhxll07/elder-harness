@@ -1,0 +1,40 @@
+<div class="slide">
+  <div class="eyebrow">方案 · 系统架构</div>
+  <h1 class="title">四层架构：核心循环与 Android 完全解耦</h1>
+  <div class="subtitle">核心循环是纯 Kotlin，不依赖 Android，可在 JVM 上用模拟模型服务回归测试——这既是工程选择，也是安全要求。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="fig-wrap" style="max-height:330px">
+      <img src="../figures/fig2.png" alt="系统总体架构（四层）" style="max-height:330px">
+    </div>
+
+    <div class="cards c4 mt32" style="gap:18px">
+      <div class="card outline" style="padding:22px 24px">
+        <div class="cn">L1</div>
+        <div class="ct" style="font-size:18px">老人端交互层</div>
+        <div class="cb" style="font-size:15.5px">首页大圆钮 · 语音会话 · TTS 播报</div>
+      </div>
+      <div class="card is-accent" style="padding:22px 24px">
+        <div class="cn">L2</div>
+        <div class="ct" style="font-size:18px">智能体核心层</div>
+        <div class="cb" style="font-size:15.5px">执行循环 · 完成核验 · 停滞检测 · 工具目录</div>
+      </div>
+      <div class="card outline" style="padding:22px 24px">
+        <div class="cn">L3</div>
+        <div class="ct" style="font-size:18px">Android 执行层</div>
+        <div class="cb" style="font-size:15.5px">控件树+截图 · 风控执行约束层 · 经验技巧</div>
+      </div>
+      <div class="card outline" style="padding:22px 24px">
+        <div class="cn">L4</div>
+        <div class="ct" style="font-size:18px">云端服务层</div>
+        <div class="cb" style="font-size:15.5px">大模型 · 协作服务端 · 语音听写 · 家人网页</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">界面与原型的实机走查见方案书第四部分；模型可替换，规划器只依赖通用 tool calling 接口</span>
+    <span class="pno">07</span>
+  </div>
+</div>

@@ -1,0 +1,89 @@
+<div class="slide">
+  <div class="eyebrow">问题 → 设计目标</div>
+  <h1 class="title">把「老人要什么」翻译成可验证的设计目标</h1>
+  <div class="subtitle">需求来自三条相互印证的渠道：身边老年亲属的日常观察、实机逐状态可用性走查、政策文件对高频事项的界定。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <table class="t">
+      <thead>
+        <tr>
+          <th style="width:30%">老人的原话</th>
+          <th style="width:30%">设计目标</th>
+          <th style="width:28%">对应功能</th>
+          <th class="center" style="width:12%">状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>“我说一句话它就该懂”</td>
+          <td>零学习成本发起，不需要看说明书</td>
+          <td>首页单圆钮 + 持续语音会话</td>
+          <td class="center"><span class="pill ok">已实现</span></td>
+        </tr>
+        <tr>
+          <td>“别让我一步步都点确认”</td>
+          <td>在满足安全约束的前提下把打扰降到最低</td>
+          <td>以可逆性划分的确认边界</td>
+          <td class="center"><span class="pill ok">已实现</span></td>
+        </tr>
+        <tr>
+          <td><strong>“别替我花钱、别替我发出去”</strong></td>
+          <td><strong>不可逆操作绝不由智能体执行</strong></td>
+          <td>本人操作词表 + <code>ask_person</code> 交还路径</td>
+          <td class="center"><span class="pill ok">已实现</span></td>
+        </tr>
+        <tr>
+          <td><strong>“别骗我说办好了”</strong></td>
+          <td><strong>完成声明必须能被本轮记录支持</strong></td>
+          <td>机械层 + 文本证据层核验</td>
+          <td class="center"><span class="pill ok">已实现</span></td>
+        </tr>
+        <tr>
+          <td>“办不成了得有人管”</td>
+          <td>失败必须有明确去处，不能干等</td>
+          <td><code>handoff</code> 求助 + 家人在网页认领</td>
+          <td class="center"><span class="pill ok">已实现</span></td>
+        </tr>
+        <tr>
+          <td>“它不听话时我能叫停”</td>
+          <td>任何时候都能一键中止，包括模型请求在途时</td>
+          <td>圆钮即「停下来」；流式逐帧检查取消</td>
+          <td class="center"><span class="pill ok">已实现</span></td>
+        </tr>
+        <tr>
+          <td>“别让别人看见我的隐私”</td>
+          <td>最小化外发与本地留存</td>
+          <td>密钥 Keystore 加密、剪贴板随用随清、截图不落盘</td>
+          <td class="center"><span class="pill warn">部分实现</span></td>
+        </tr>
+        <tr>
+          <td>“应用改版了它还得管用”</td>
+          <td>不依赖固定屏幕坐标</td>
+          <td>语义技巧 + 按需加载</td>
+          <td class="center"><span class="pill ok">已实现</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cards c3 mt32" style="gap:20px">
+      <div class="card outline" style="padding:22px 26px">
+        <div class="ct" style="font-size:18px">一屏一件事</div>
+        <div class="cb" style="font-size:16px">任何时刻老人只需要做一个决定</div>
+      </div>
+      <div class="card outline" style="padding:22px 26px">
+        <div class="ct" style="font-size:18px">可逆性边界</div>
+        <div class="cb" style="font-size:16px">安全约束不因「嫌麻烦」而放宽</div>
+      </div>
+      <div class="card outline" style="padding:22px 26px">
+        <div class="ct" style="font-size:18px">不做远程控制</div>
+        <div class="cb" style="font-size:16px">从产品形态上堵死诈骗最常用的通道</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">贯穿全部需求的三条设计约束 · 方案书第一部分（三）需求清单</span>
+    <span class="pno">05</span>
+  </div>
+</div>

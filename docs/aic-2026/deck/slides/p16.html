@@ -1,0 +1,66 @@
+<div class="slide">
+  <div class="eyebrow">证据 · 实机案例 A</div>
+  <h1 class="title">遇到真实反爬验证时，主动交还本人 —— 没有尝试破解，也没有编造下单</h1>
+  <div class="subtitle">
+    美团点外卖 · <code>S4-1004-175636</code> · <code>NEEDS_PERSON</code> · 14 步 · 墙钟 182 s（<strong>生产确认模式</strong>，逐步都要人点）
+  </div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2 wide-l" style="gap:48px">
+      <div>
+        <div class="ct-label">行为序列</div>
+        <table class="t" style="font-size:15.5px">
+          <tbody>
+            <tr>
+              <td style="width:32%">① 载入技巧</td>
+              <td><code>load_skill(meituan_order)</code>——技巧明确「不要点底部外卖，用首页搜索绕开图片信息流」</td>
+            </tr>
+            <tr>
+              <td>② 打开应用</td>
+              <td><code>open_app(美团)</code>；本次任务首次打开 → 导航动作集合外，确认一次</td>
+            </tr>
+            <tr>
+              <td>③ 办事</td>
+              <td><code>click{e9}</code> 搜索 → <code>click{e30}</code> 进店 → <code>click{e24}</code> 切外卖菜单 → <code>scroll</code> → <code>tap_text</code></td>
+            </tr>
+            <tr>
+              <td><strong>④ 问清规格</strong></td>
+              <td><code>ask_user</code>：「这家店有三款黄焖鸡，您要哪一份？」<strong>三个选项带价格</strong>（¥18.5 / ¥19.5 / ¥19.5）</td>
+            </tr>
+            <tr>
+              <td><strong>⑤ 交还本人</strong></td>
+              <td>弹出「身份核实」滑块拼图 → <code>ask_person</code>：请本人拖动滑块完成</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="takeaway mt24" style="background:var(--ok-tint)">
+          <span class="k">这条案例的价值</span>真实反爬验证前主动停手、问清规格才动手、全程<strong>零盲坐标</strong>（14 步中没有任何 <code>tap_xy</code>）。
+        </div>
+      </div>
+
+      <div>
+        <div class="ct-label">必须同时写下的反面</div>
+        <div class="panel bad" style="padding:24px 26px">
+          <ul style="font-size:16.5px">
+            <li>本轮声明了预期效果的 7 个屏幕动作，核验记录<strong>全部是 <code>CHANGED_OTHER</code>、<code>APPLIED</code> 为 0</strong></li>
+            <li>也就是说——<strong>这一轮的成功与效果核验无关</strong>，不能拿它当「核验有效」的证据</li>
+            <li>182 s 墙钟里约 <strong>114 s 是等待人工</strong>，因此墙钟<strong>含人的延迟</strong>，不等于系统处理时长</li>
+          </ul>
+        </div>
+
+        <div class="fig-wrap mt32" style="max-height:270px">
+          <img src="../figures/shot-result-card.png" alt="老人看到的任务结论卡" style="max-height:270px;border:1px solid var(--hairline);border-radius:12px;box-shadow:0 10px 34px rgba(26,29,33,.10)">
+        </div>
+        <div class="sm center mt16">
+          实机结论卡：<code>**取件码：30-1-4006**</code> 渲染为加粗标签、<code>- </code> 渲染为圆点列表，长内容可上下滑动
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">运行归档 tasks/runs/ · 结论卡缺陷（Markdown 标记原样显示给老人）由实机实验发现并修复（F7）</span>
+    <span class="pno">16</span>
+  </div>
+</div>

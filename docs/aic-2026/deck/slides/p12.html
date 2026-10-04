@@ -1,0 +1,65 @@
+<div class="slide dense">
+  <div class="eyebrow">机制 · 执行期四条</div>
+  <h1 class="title">把既有判据，接到动作发生的那一刻</h1>
+  <div class="subtitle">动作之前声明预期，动作之后本地核验，落点必须落在真实控件上，收工之前必须承认「还有没试过的操作」。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <table class="t">
+      <thead>
+        <tr>
+          <th style="width:26%">机制</th>
+          <th style="width:37%">做法</th>
+          <th style="width:19%">实机状态</th>
+          <th>证据</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>① 坐标落地</strong><br><span class="sm">吸附或拒绝</span></td>
+          <td>落点在已知控件内 → 改写为 <code>click</code>；容差内 → 吸附；空白 → <strong>拒绝执行</strong></td>
+          <td><span class="pill ok">已实现</span></td>
+          <td>S4 与 S1 后两轮<strong>零盲坐标</strong></td>
+        </tr>
+        <tr>
+          <td><strong>② 动作前声明预期</strong><br><span class="sm">+ 本地核验</span></td>
+          <td>9 个改状态工具必填 <code>expectedEffect</code>；四路判定（SSIM / 像素差 / 关键词 / 页面版本）</td>
+          <td><span class="pill warn">部分降级</span></td>
+          <td>L1/L2 实机不生效；L3 系统性误判；<strong>仅 L3+L4 真正生效</strong></td>
+        </tr>
+        <tr>
+          <td><strong>③ 有界升级阶梯</strong><br><span class="sm">+ <code>zoom</code> 工具</span></td>
+          <td>同锚点第二次无效果即拒，强制升级：<code>click → swipe → tap_text → zoom → handoff</code></td>
+          <td><span class="pill bad">实机触发 0 次</span></td>
+          <td>9 条单元测试守护；S1 第三轮由<strong>旧振荡检测</strong>判停</td>
+        </tr>
+        <tr>
+          <td><strong>④ 收工前检查</strong><br><span class="sm">+ gap 分流</span></td>
+          <td>枚举从未作为目标的控件，给一次有界重试；按 <code>EvidenceGap</code> 分流</td>
+          <td><span class="pill warn">实机未验证</span></td>
+          <td>动机是 S1 第一轮<strong>「一次都没试翻页就给了结论」</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cols c2 mt32" style="gap:44px">
+      <div>
+        <div class="ct-label">① 的一个副作用，值得记录</div>
+        <p class="lead" style="font-size:17.5px">
+          吸附后动作的 <code>target</code> 变成<strong>真实控件 id</strong>，于是本人操作词表作用在「它真正点到的那个控件」上，而不是「点了个坐标、词表无从判定」。坐标动作由此第一次进入内容校验的覆盖范围。
+        </p>
+      </div>
+      <div>
+        <div class="ct-label">为什么手势排在文字标签之前</div>
+        <p class="lead" style="font-size:17.5px">
+          实机精确点按命中率：第三方推广页 <strong>44%</strong>，设置类页面 77—83%。手势目标是容器/区域，<strong>不依赖像素级落点</strong>。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">四条机制的三级实现状态表见方案书表 16；本页不改功能，只把判据前移到动作时刻</span>
+    <span class="pno">12</span>
+  </div>
+</div>

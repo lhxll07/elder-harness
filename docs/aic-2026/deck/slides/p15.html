@@ -1,0 +1,75 @@
+<div class="slide">
+  <div class="eyebrow">证据 · 实机运行归档</div>
+  <h1 class="title">31 条运行，连同它的样本缺口一起摆出来</h1>
+  <div class="subtitle">设备 OnePlus PLC110 / Android 16 / 1272×2800；真实设备、真实第三方应用、真实模型服务。<strong>本节以运行归档中的运行行为准，不由开发期口述数字支撑。</strong></div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2 wide-l" style="gap:48px">
+      <div>
+        <div class="ct-label">终态分布（<code>tasks/runs/results.csv</code>，共 31 行）</div>
+        <table class="t" style="font-size:15.5px">
+          <tbody>
+            <tr>
+              <td style="width:26%"><span class="pill gray">PAUSED</span></td>
+              <td class="num" style="width:14%">13</td>
+              <td>交还本人 / 家人，或等页面临时失效恢复</td>
+            </tr>
+            <tr>
+              <td><span class="pill info">ASKING</span></td>
+              <td class="num">7</td>
+              <td>主动提问澄清，等老人回话</td>
+            </tr>
+            <tr>
+              <td><span class="pill ok">COMPLETED</span></td>
+              <td class="num">6</td>
+              <td>通过完成核验后报完成</td>
+            </tr>
+            <tr>
+              <td><span class="pill warn">NEEDS_PERSON</span></td>
+              <td class="num">3</td>
+              <td>到达本人操作边界停下</td>
+            </tr>
+            <tr>
+              <td><span class="pill bad">NO_SETTLE / STUCK</span></td>
+              <td class="num">1 + 1</td>
+              <td>未按五种收尾方式结束 / 停滞检测判停</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="sm mt16">
+          覆盖 8 款第三方应用与系统设置（9 个页面）：12306、美团、拼多多、喜鹊儿、B站、QQ、支付宝、微信、系统设置。
+        </div>
+      </div>
+
+      <div>
+        <div class="ct-label">运行归档本身的统计口径<br><span class="muted" style="text-transform:none;letter-spacing:0">这一段比上面的分布更重要</span></div>
+        <div class="cards" style="gap:14px">
+          <div class="card" style="background:var(--warn-tint);padding:20px 24px">
+            <div class="cb" style="color:var(--ink);font-size:17px">
+              <strong>31 行中只有 5 行有人工真值</strong>（<code>done</code> 1、<code>not_done</code> 4），其余 26 行为 <code>unknown</code>
+            </div>
+            <div class="sm mt8" style="color:var(--warn)">因此本报告<strong>不报告谎报率</strong>，也不写「谎报率为 0」</div>
+          </div>
+          <div class="card" style="background:var(--bad-tint);padding:20px 24px">
+            <div class="cb" style="color:var(--ink);font-size:17px">
+              <code>false_done</code> 字段 31 行<strong>全部为空、从未被标注过</strong>
+            </div>
+            <div class="sm mt8" style="color:var(--bad)">不用它做任何断言</div>
+          </div>
+          <div class="card" style="background:var(--bad-tint);padding:20px 24px">
+            <div class="cb" style="color:var(--ink);font-size:17px">
+              <code>handoffs</code> 31 行<strong>全部为 0</strong>
+            </div>
+            <div class="sm mt8" style="color:var(--bad)">家人移交链路<strong>实机从未跑过</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">统计命令见附录（三）；运行日志目录被 .gitignore 排除，故报告只引用可逐条核对的运行编号</span>
+    <span class="pno">15</span>
+  </div>
+</div>

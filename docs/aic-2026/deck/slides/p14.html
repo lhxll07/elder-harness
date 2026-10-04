@@ -1,0 +1,95 @@
+<div class="slide dense">
+  <div class="eyebrow">证据 · 两组关键对照</div>
+  <h1 class="title">只报拦截率，评委会问「那是不是因为一律要问」</h1>
+  <div class="subtitle">因此两组对照都同时报<strong>收益</strong>与<strong>代价</strong>——识别了多少，误伤了多少。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2" style="gap:44px">
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">谁来确认 · 执行约束三组对照</div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th style="width:40%">组</th>
+              <th class="num">拦住<br>危险动作</th>
+              <th class="num">误拦<br>安全动作</th>
+              <th class="num">确认次数<br>/10 步</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>逐步确认（每步交人）</td>
+              <td class="num">0/20<span class="sm"> *</span></td>
+              <td class="num">0</td>
+              <td class="num" style="color:var(--bad);font-weight:700">10 次</td>
+            </tr>
+            <tr>
+              <td>固定词表（修复前）</td>
+              <td class="num">6/20</td>
+              <td class="num">0</td>
+              <td class="num">1 次</td>
+            </tr>
+            <tr style="background:var(--accent-tint)">
+              <td style="color:var(--accent-deep);font-weight:700">分级执行（本作品）</td>
+              <td class="num" style="color:var(--accent-deep);font-weight:700">15/20</td>
+              <td class="num" style="color:var(--accent-deep);font-weight:700">0</td>
+              <td class="num" style="color:var(--accent-deep);font-weight:700">1 次</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="sm mt8">
+          <span style="color:var(--bad)">*</span> 逐步确认的漏拦为 0，但<strong>不计入安全能力</strong>——它并非识别出危险，而是什么都交给人的混淆。
+        </div>
+        <div class="mt16 fig-wrap" style="max-height:165px">
+          <img src="../figures/chart-constraint.png" alt="执行约束三组对照" style="max-height:165px">
+        </div>
+      </div>
+
+      <div>
+        <div class="ct-label" style="margin-bottom:12px">凭什么确认 · 完成核验三组对照</div>
+        <table class="t">
+          <thead>
+            <tr>
+              <th style="width:46%">组</th>
+              <th class="num">阻止错误结论<br>（共 22 项）</th>
+              <th class="num">误伤真办成<br>（共 10 项）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>无核验（采信自述）</td>
+              <td class="num">0/22</td>
+              <td class="num">0/10</td>
+            </tr>
+            <tr>
+              <td>机械核验</td>
+              <td class="num">12/22</td>
+              <td class="num">0/10</td>
+            </tr>
+            <tr style="background:var(--accent-tint)">
+              <td style="color:var(--accent-deep);font-weight:700">机械核验 + 文本证据核验</td>
+              <td class="num" style="color:var(--accent-deep);font-weight:700">22/22</td>
+              <td class="num" style="color:var(--accent-deep);font-weight:700">1/10</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="sm mt8">
+          机械核验漏掉的那一类，正是<strong>只读结论与汇总数字</strong>——按设计不核验只读声明，否则会误伤诚实的只读回答。
+        </div>
+        <div class="mt16 fig-wrap" style="max-height:165px">
+          <img src="../figures/chart-verify.png" alt="完成核验的分层收益与代价" style="max-height:165px">
+        </div>
+      </div>
+    </div>
+
+    <div class="takeaway mt24">
+      <span class="k">口径</span>两组均在 <strong>离线 harness</strong> 上运行，样本为构造的声明而非实机运行；它证明判定逻辑的确定性，生产路径上的实机复核日志另见附录。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">全部数字可由 ELDERHARNESS_OFFLINE=1 bash harness/run.sh 复现；完整数据图见方案书图 18、图 19</span>
+    <span class="pno">14</span>
+  </div>
+</div>

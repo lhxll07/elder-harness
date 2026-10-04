@@ -1,0 +1,56 @@
+<div class="slide">
+  <div class="eyebrow">机制三 · 双通道观察</div>
+  <h1 class="title">控件树与截图互补，按页面能力自动切换</h1>
+  <div class="subtitle">仅控件树则在盲页面失效，仅截图则精度低、开销大。三条观察路径共用同一套风险约束与完成核验。</div>
+  <div class="head-rule"></div>
+
+  <div class="body">
+    <div class="cols c2 wide-l" style="gap:52px">
+      <div>
+        <table class="t" style="font-size:15.5px">
+          <thead>
+            <tr>
+              <th style="width:34%">路径</th>
+              <th>适用与做法</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>路径一</strong><br><span class="sm">树里有目标文字</span></td>
+              <td>控件树提供精确的文字与位置，模型<strong>按编号操作</strong></td>
+            </tr>
+            <tr>
+              <td><strong>路径二</strong><br><span class="sm">树不完整</span></td>
+              <td>补充<strong>无标签叶子控件</strong>及其位置；输入法窗口按键独立编号</td>
+            </tr>
+            <tr>
+              <td><strong>路径三</strong><br><span class="sm">树完全不可用</span></td>
+              <td>微信、银行类应用降级为<strong>截图 + 10%/5% 双层比例网格</strong>点按</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="takeaway mt28">
+          <span class="k">实测</span>无标签叶子控件补充展示后，喜鹊儿页面的模型可见控件<strong>从 26 个增加到 38 个</strong>；纯图课表 3 步 / 7 秒读对。
+        </div>
+      </div>
+
+      <div>
+        <div class="ct-label">为什么叠加的是比例刻度，而不是区域编号</div>
+        <ul class="clean tight" style="font-size:17.5px">
+          <li>本场景要输出的是<strong>精确坐标</strong>，不是元素引用——这与 Set-of-Mark 的用途不同</li>
+          <li>带文字的节点没有丢失；有标签控件走编号精确定位，盲页面走比例网格</li>
+          <li>把「点得准不准」变成<strong>可测量的量</strong>，而不是靠感觉描述</li>
+        </ul>
+        <p class="sm mt16">
+          界面标签的缺失是普遍现象：10,408 个 Android 应用中<strong>超过 77% 的图标按钮缺少自然语言标签</strong>。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="src">观察层审计见方案书第三部分（三）3；坐标定位的实机退化见第七部分（三）</span>
+    <span class="pno">10</span>
+  </div>
+</div>
