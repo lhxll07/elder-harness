@@ -21,6 +21,21 @@ android {
         buildConfig = true
     }
 
+    buildTypes {
+        // The phone that goes to an elder's home must not carry a debug build: `debuggable=true`
+        // lets anything with USB access read `files/sessions/*.json` through `adb run-as`, and those
+        // files hold months of page text, typed drafts and delivery codes.
+        //
+        // Minification stays off until the app has been exercised once in this configuration; R8
+        // breakage in a prototype is a worse risk than a larger APK. The signed debug key is a
+        // stand-in: shipping needs its own keystore.
+        release {
+            isMinifyEnabled = false
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

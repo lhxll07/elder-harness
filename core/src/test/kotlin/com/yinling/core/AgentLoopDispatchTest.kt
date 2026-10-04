@@ -6,12 +6,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The revision a call carries must belong to the observation taken immediately before that call,
- * not to the one the whole batch was planned from.
- *
- * A batch such as "tap the input box, then paste the text" changes the page in between. The Android
- * layer rejects a call whose revision no longer matches the page (stale_screen), so a revision bound
- * once per batch made the second call of such a batch fail every time.
+ * Unchanged targets can survive unrelated page updates. Their dispatch revision must be fresh,
+ * while their identity must still match the observation from which the batch was planned.
  */
 class AgentLoopDispatchTest {
 

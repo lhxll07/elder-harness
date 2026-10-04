@@ -21,7 +21,7 @@ object DebugCommand {
     /** Keys declared as booleans; every other key is read as a string. */
     private val BOOLEAN_EXTRAS = setOf(
         EXTRA_ENABLE, EXTRA_VISION, EXTRA_START, EXTRA_CLEAR_LOG, EXTRA_RESTORE,
-        EXTRA_CENSUS, EXTRA_CALIBRATE_TAP, EXTRA_PAIR, EXTRA_CHECK_IN, EXTRA_VOICE_TEST,
+        EXTRA_CENSUS, EXTRA_CALIBRATE_TAP, EXTRA_PAIR, EXTRA_CHECK_IN, EXTRA_VOICE_TEST, EXTRA_STOP,
     )
 
     /**
@@ -53,6 +53,12 @@ object DebugCommand {
     const val EXTRA_GOAL = "goal"
     const val EXTRA_START = "start"
     const val EXTRA_CLEAR_LOG = "clear_log"
+
+    /**
+     * Stops the running task from adb. The task runners must not use `am force-stop`: on some ROMs
+     * that detaches the accessibility service, and every later task then reads an empty page.
+     */
+    const val EXTRA_STOP = "stop"
 
     /** Answers a pending question, as if the person typed it. */
     const val EXTRA_ANSWER = "answer"
@@ -178,6 +184,14 @@ object DebugCommand {
 
         val goal = (extras.value(EXTRA_GOAL) as? String)?.trim().orEmpty()
         val start = extras.value(EXTRA_START) != false
+
+        // A clean stop, so an automated run never has to force-stop the app.
+        if (extras.value(EXTRA_STOP) == true) {
+            LoopLog.event("[debug] stop requested")
+            session.stop()
+            return true
+        }
+
         if (goal.isNotBlank() && start) session.start(goal)
 
         if (extras.value(EXTRA_CENSUS) == true) {

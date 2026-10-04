@@ -6,6 +6,7 @@ violation comes back as HTTP 400 with a diagnostic, so an invalid transcript can
 """
 import json
 import os, sys
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from collections import Counter
 
@@ -64,6 +65,39 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_sse(self, msg, usage=None):
+        """The same reply as an event stream, fragmented the way a real provider fragments it.
+
+        Content arrives two characters at a time and tool-call arguments three at a time, so the
+        client has to accumulate across frames. A client that reassembles only the first fragment, or
+        that keys calls by position instead of by index, fails here instead of on a real phone.
+        """
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.end_headers()
+
+        def frame(delta, finish=None):
+            obj = {"choices": [{"delta": delta, "index": 0, "finish_reason": finish}]}
+            self.wfile.write(("data: " + json.dumps(obj, ensure_ascii=False) + "\n\n").encode())
+            self.wfile.flush()
+
+        content = msg.get("content") or ""
+        for i in range(0, len(content), 2):
+            frame({"content": content[i:i + 2]})
+        for index, tc in enumerate(msg.get("tool_calls") or []):
+            fn = tc.get("function") or {}
+            frame({"tool_calls": [{"index": index, "id": tc.get("id"), "type": "function",
+                                   "function": {"name": fn.get("name")}}]})
+            args = fn.get("arguments") or "{}"
+            for i in range(0, len(args), 3):
+                frame({"tool_calls": [{"index": index, "function": {"arguments": args[i:i + 3]}}]})
+        frame({}, finish="tool_calls" if msg.get("tool_calls") else "stop")
+        if usage is not None:
+            self.wfile.write(("data: " + json.dumps({"choices": [], "usage": usage}) + "\n\n").encode())
+        self.wfile.write(b"data: [DONE]\n\n")
+        self.wfile.flush()
+
     def do_POST(self):
         mode = self.headers.get("X-Mode", "normal")
         length = int(self.headers.get("Content-Length", 0))
@@ -93,12 +127,41 @@ class Handler(BaseHTTPRequestHandler):
             print(f"[server] SYSTEM chars={len(sys_txt)} head={sys_txt[:90]!r}", flush=True)
             sizes.append(1)
 
+        # The client asks for a stream; answering as one is how the streaming path gets exercised by
+        # real scenarios rather than by a scenario that exists only to test streaming. The "claim"
+        # mode deliberately answers in one piece instead, so the buffered fallback — the path a
+        # proxy that swallows the stream leaves us with — stays in the regression suite too. Without
+        # that split, enabling streaming would silently retire the fallback from all coverage.
+        streaming = bool(payload.get("stream")) and mode != "claim"
+
+        def reply(msg, usage=None):
+            if streaming:
+                self.send_sse(msg, usage)
+            else:
+                out = {"choices": [{"message": msg}]}
+                if usage is not None:
+                    out["usage"] = usage
+                self.send_json(200, out)
+
         turns = sum(1 for m in messages if m.get("role") == "assistant")
         # Fail only the first attempt so the client's retry can be observed succeeding.
         seen[mode] = seen.get(mode, 0) + 1
         if mode == "retry" and seen[mode] == 1:
             print(f"[server] returning 503 for attempt {seen[mode]}", flush=True)
             self.send_json(503, {"error": {"message": "temporary"}})
+            return
+
+        if mode == "stall":
+            # A provider that accepts the request and then goes quiet. Cancelling this is the case a
+            # blocking read cannot handle on its own: the socket stays open and the client keeps
+            # waiting (and paying) unless something closes the connection for it.
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.end_headers()
+            self.wfile.write(("data: " + json.dumps(
+                {"choices": [{"delta": {"content": "我先"}, "index": 0, "finish_reason": None}]}) + "\n\n").encode())
+            self.wfile.flush()
+            time.sleep(60)
             return
 
         if mode == "claim":
@@ -111,8 +174,7 @@ class Handler(BaseHTTPRequestHandler):
                 msg = {"role": "assistant",
                        "content": "已帮您把消息发出去了：聊天里已经有一条您发出的「我到家了」，"
                                   "时间是 00:01，发送成功。"}
-            self.send_json(200, {"choices": [{"message": msg}],
-                                 "usage": {"prompt_tokens": 10, "completion_tokens": 5}})
+            reply(msg, {"prompt_tokens": 10, "completion_tokens": 5})
             return
 
         if turns == 0:
@@ -124,7 +186,7 @@ class Handler(BaseHTTPRequestHandler):
                                   call("c3", "scroll", target="0.5", argument="down")]}
         else:
             msg = {"role": "assistant", "content": "办好了，页面已经到第二步。"}
-        self.send_json(200, {"choices": [{"message": msg}], "usage": {"prompt_tokens": 10, "completion_tokens": 5}})
+        reply(msg, {"prompt_tokens": 10, "completion_tokens": 5})
 
 if __name__ == "__main__":
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8731

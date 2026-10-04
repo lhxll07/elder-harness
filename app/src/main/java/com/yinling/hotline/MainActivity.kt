@@ -264,6 +264,7 @@ class MainActivity : ComponentActivity() {
                             },
                             onDismissCircleMessage = session::dismissCircleMessage,
                             onConfirmSuccess = session::confirmTaskSuccess,
+                            onConfirmReviewed = session::confirmReviewedResult,
                         )
                     }
                 }
@@ -331,6 +332,7 @@ private fun HomePage(
     onRestore: (String) -> Unit,
     onDismissCircleMessage: () -> Unit,
     onConfirmSuccess: () -> Unit,
+    onConfirmReviewed: () -> Unit,
     answer: String,
     onAnswerChange: (String) -> Unit,
     onAnswer: (String) -> Unit,
@@ -342,7 +344,7 @@ private fun HomePage(
     // family outranks the task, because it is short and was sent by a person waiting for a reply.
     val statusLine = when {
         circleMessage != null -> "家人有话说"
-        state.outcomeUnverified -> "结果无法核实"
+        state.awaitingReview -> "结果待您确认"
         else -> statusText(state.phase)
     }
     val tone = if (circleMessage != null) Elder.brand else statusTone(state.phase)
@@ -369,10 +371,10 @@ private fun HomePage(
             // The circle always means "the one obvious thing to do now". It used to be a dead
             // control whenever a task was paused: tapping it opened an input that was only rendered
             // when no task existed, so the biggest button on the screen did nothing.
-            val resumable = !state.outcomeUnverified && (state.phase == TaskPhase.PAUSED ||
+            val resumable = state.phase == TaskPhase.PAUSED ||
                 state.phase == TaskPhase.NEEDS_PERSON ||
                 state.phase == TaskPhase.NEEDS_FAMILY ||
-                state.phase == TaskPhase.CANNOT)
+                state.phase == TaskPhase.CANNOT
             val circleCaption = when {
                 circleMessage != null -> "知道了"
                 speaking -> "我在说…"
@@ -380,7 +382,7 @@ private fun HomePage(
                 listening -> "正在听…"
                 busy -> "暂停办理"
                 state.phase == TaskPhase.COMPLETED -> "知道了"
-                state.outcomeUnverified -> "结束这件事"
+                state.awaitingReview -> "我确认办好了"
                 resumable -> "接着办"
                 canListen || voiceAvailable -> "说给接线员听"
                 else -> "打字或说话"
@@ -392,7 +394,7 @@ private fun HomePage(
                 listening -> "说完就停，或再点一下"
                 busy -> "正在办事，点一下就停"
                 state.phase == TaskPhase.COMPLETED -> "这件事办好了"
-                state.outcomeUnverified -> "结果未核实，点一下结束任务"
+                state.awaitingReview -> "结果没自动核实，点一下表示您确认办好了"
                 resumable -> "上次这件事还没办完"
                 canListen -> "点一下开始说话"
                 voiceAvailable -> "点一下，说出您要办的事"
@@ -410,7 +412,7 @@ private fun HomePage(
                     busy -> Icons.Default.Close
                     listening || transcribing -> Icons.Default.Mic
                     state.phase == TaskPhase.COMPLETED -> Icons.Default.Check
-                    state.outcomeUnverified -> Icons.Default.Close
+                    state.awaitingReview -> Icons.Default.Check
                     resumable -> Icons.AutoMirrored.Filled.KeyboardArrowRight
                     canListen || voiceAvailable -> Icons.Default.Mic
                     else -> Icons.Default.Edit
@@ -422,7 +424,7 @@ private fun HomePage(
                         transcribing -> Unit
                         busy -> onStop()
                         state.phase == TaskPhase.COMPLETED -> onFinish()
-                        state.outcomeUnverified -> onFinish()
+                        state.awaitingReview -> onConfirmReviewed()
                         resumable -> onResumeTask()
                         canListen -> onListen()
                         voiceAvailable -> onVoice()
@@ -486,9 +488,11 @@ private fun HomePage(
                     ElderPrimaryButton("回答", { onAnswer(answer) }, enabled = answer.isNotBlank())
                 }
 
-                state.outcomeUnverified -> ElderCard {
-                    Text("结果无法核实", fontSize = Elder.heading, fontWeight = FontWeight.SemiBold)
+                state.awaitingReview -> ElderCard {
+                    Text("结果请您看一眼", fontSize = Elder.heading, fontWeight = FontWeight.SemiBold)
                     Text(markdownAnnotated(state.message), fontSize = Elder.body)
+                    ElderPrimaryButton("我确认办好了", onConfirmReviewed)
+                    ElderSecondaryButton("还没办完，接着办", onResumeTask)
                     ElderSecondaryButton("结束这件事", onFinish)
                 }
 
@@ -977,12 +981,28 @@ private fun ServerSection() {
 
         if (server.pairCode.isNotBlank()) {
             val familyUrl = server.familyUrl()
-            Text("配对码", fontSize = 16.sp)
+            Text("邀请码", fontSize = 16.sp)
             Text(server.pairCode, fontSize = 34.sp, fontWeight = FontWeight.Bold)
             Text(
-                "让家人在手机浏览器打开 $familyUrl，输入这个配对码，选自己的身份（家人/社区/邻居）。",
+                "让 TA 在浏览器打开 $familyUrl 输入这个码。身份由你在这里决定，加入的人改不了。",
                 fontSize = 15.sp,
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ServerClient.ROLE_NAMES.forEach { (role, label) ->
+                    OutlinedButton(
+                        onClick = {
+                            server.baseUrl = address
+                            busy = true
+                            scope.launch {
+                                runCatching { server.invite(role) }
+                                busy = false
+                                tick++
+                            }
+                        },
+                        enabled = !busy,
+                    ) { Text("邀请$label", fontSize = 15.sp) }
+                }
+            }
             if (familyUrl.contains("127.0.0.1") || familyUrl.contains("localhost") || familyUrl.contains("::1")) {
                 Text(
                     "这个地址只适合本机联调；家人远程打开网页，请改成服务器电脑可被访问的 HTTPS 地址。",

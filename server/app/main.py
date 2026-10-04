@@ -43,6 +43,29 @@ HEARTBEAT_SECONDS = int(os.environ.get("HOTLINE_HEARTBEAT_SECONDS", "300"))
 SILENCE_SECONDS = int(os.environ.get("HOTLINE_SILENCE_SECONDS", str(watch.DEFAULT_SILENCE_SECONDS)))
 WATCH_TOKEN = os.environ.get("HOTLINE_WATCH_TOKEN", "").strip()
 
+# A pairing code is a setup secret that anyone who can reach this page may try to guess. Its length
+# is handled in ``db.new_pair_code``; this is the other half — a guesser gets a few tries, not an
+# hour of them. The counter is in-process, which matches the single-process deployment this server
+# is designed for; a multi-worker deployment would have to keep it in the database.
+JOIN_WINDOW_SECONDS = int(os.environ.get("HOTLINE_JOIN_WINDOW_SECONDS", "600"))
+JOIN_MAX_FAILURES = int(os.environ.get("HOTLINE_JOIN_MAX_FAILURES", "5"))
+_join_failures: dict[str, list[float]] = {}
+
+
+def recent_join_failures(ip: str) -> list[float]:
+    now = time.time()
+    recent = [at for at in _join_failures.get(ip, []) if now - at < JOIN_WINDOW_SECONDS]
+    if recent:
+        _join_failures[ip] = recent
+    else:
+        _join_failures.pop(ip, None)
+    return recent
+
+
+def note_join_failure(ip: str) -> None:
+    _join_failures.setdefault(ip, []).append(time.time())
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -86,7 +109,31 @@ def pair(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         "device_id": device["id"],
         "token": device["token"],
         "pair_code": device["pair_code"],
+        "pair_code_role": "family",
         "heartbeat_seconds": HEARTBEAT_SECONDS,
+    }
+
+
+@app.post("/api/device/invite")
+def invite(
+    payload: dict[str, Any] = Body(default={}),
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    """Issue a fresh invite bound to one role, invalidating the phone's previous code.
+
+    Called by the phone when the person wants to add someone to the circle. The role travels with
+    the code, so a joiner cannot choose to be 家人; see [join].
+    """
+    device = device_from_auth(authorization)
+    role = str(payload.get("role", "family"))
+    if role not in web.ROLE_LABEL:
+        raise HTTPException(status_code=400, detail="身份只能是 family / community / neighbor")
+    rotated = db.rotate_pair_code(device["id"], role)
+    log.info("[invite] device=%s role=%s", device["id"], role)
+    return {
+        "pair_code": rotated["pair_code"],
+        "pair_code_role": role,
+        "expires_in": db.PAIR_CODE_TTL_SECONDS,
     }
 
 
@@ -215,11 +262,27 @@ def join(
     pair_code: str = Form(...),
     name: str = Form(...),
     phone: str = Form(default=""),
-    role: str = Form(default="family"),
 ):
+    ip = request.client.host if request.client else "unknown"
+    if len(recent_join_failures(ip)) >= JOIN_MAX_FAILURES:
+        log.warning("[join] throttled ip=%s", ip)
+        return HTMLResponse(
+            web.join_page("尝试的次数太多了，请过一会儿再试。"), status_code=429
+        )
+
     device = db.device_by_pair_code(pair_code)
     if not device:
-        return HTMLResponse(web.join_page("配对码不对，或者老人手机上还没配对成功。", pair_code), status_code=400)
+        note_join_failure(ip)
+        return HTMLResponse(
+            web.join_page("配对码不对，或者老人手机上还没配对成功。"), status_code=400
+        )
+    _join_failures.pop(ip, None)
+
+    # The role is decided by whoever handed out the code, and travels with it. It is deliberately
+    # not read from the form: letting a joiner pick "家人" meant that anyone who guessed a code
+    # could read the elder's private context and leave a message the phone reads aloud as
+    # "家人留言" — which is exactly the channel phone fraud needs.
+    role = str(device.get("pair_code_role") or "family")
     if role not in web.ROLE_LABEL:
         role = "family"
     clean_name = name.strip()[:24] or "家人"

@@ -9,7 +9,8 @@ data class TextInputTarget(
 )
 
 object ManualActionPolicy {
-    val textTools = setOf("type_text", "paste_text", "input_text")
+    /** Tool identity comes from [PhoneTool]; see that file for why it is declared in one place. */
+    val textTools = PhoneTool.textTools
 
     /**
      * 资金与承诺类：一旦发生就会产生对外效果或资金流出（支付、发送、提交…）。
@@ -44,13 +45,10 @@ object ManualActionPolicy {
     /** 全部本人操作词：两族取并集。Android 层复用同一份列表，避免两处实现漂移。 */
     val manualActionWords = commitmentWords + irreversibleWords
 
-    private val screenTools = setOf(
-        "click", "tap_text", "tap_xy", "tap", "long_press", "input_text", "paste_text", "type_text",
-        "scroll", "swipe", "screenshot", "set_slider",
-    )
+    private val screenTools = PhoneTool.screenTools
 
     /** Actions that press a specific control: the control's own label decides if it is person-only. */
-    private val tapTools = setOf("tap_text", "click", "tap", "long_press")
+    private val tapTools = PhoneTool.tapTools
 
     fun textHit(text: String): String? = manualActionWords.firstOrNull(text::contains)
 
@@ -109,13 +107,7 @@ object ManualActionPolicy {
         screen: ScreenSnapshot,
         words: List<String> = manualActionWords,
     ): ToolResult? {
-        if (screen.sensitive && invocation.tool in screenTools) {
-            return ToolResult(
-                false,
-                "当前页面涉及身份或支付验证，请您自己操作，完成后按继续。",
-                "requires_user",
-            )
-        }
+        checkSensitiveScreen(invocation.tool, screen)?.let { return it }
         if (invocation.tool !in tapTools) return null
         val hit = targetTexts(invocation, screen)
             .firstNotNullOfOrNull { text -> words.firstOrNull(text::contains) } ?: return null
@@ -125,6 +117,12 @@ object ManualActionPolicy {
             "requires_user",
         )
     }
+
+    /** Page sensitivity can be checked before a revision-local target id has been rebound. */
+    fun checkSensitiveScreen(tool: String, screen: ScreenSnapshot): ToolResult? =
+        if (screen.sensitive && tool in screenTools) {
+            ToolResult(false, "当前页面涉及身份或支付验证，请您自己操作，完成后按继续。", "requires_user")
+        } else null
 
     fun checkFocusedInput(screen: ScreenSnapshot, target: TextInputTarget?): ToolResult? {
         if (screen.sensitive || screen.app == null || target == null || target.app != screen.app ||

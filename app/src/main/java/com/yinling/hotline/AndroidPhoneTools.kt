@@ -4,6 +4,7 @@ import com.yinling.core.ManualActionPolicy
 import com.yinling.core.AgentTools
 import com.yinling.core.AgentToolSpec
 import com.yinling.core.PhoneToolCatalog
+import com.yinling.core.PhoneTool
 import com.yinling.core.ScreenSnapshot
 import com.yinling.core.ToolCall
 import com.yinling.core.ToolResult
@@ -34,8 +35,13 @@ class AndroidPhoneTools(private val app: HotlineApp) : AgentTools {
     }
 
     private companion object {
-        /** Tools that need an accessibility node, which a blind page does not provide. */
-        val NODE_BASED_TOOLS = setOf("click", "tap_text", "long_press", "input_text", "scroll")
+        /**
+         * "Wait for the page to settle" after an action: at most [SETTLE_ROUNDS] extra looks, and at
+         * most [SETTLE_BUDGET_MS] in total. A live page (Meituan animates continuously) never settles,
+         * so without a budget the loop took six full-tree snapshots — around 16 seconds per tap.
+         */
+        const val SETTLE_ROUNDS = 5
+        const val SETTLE_BUDGET_MS = 5_000L
     }
 
     override val catalog: List<AgentToolSpec>
@@ -117,8 +123,9 @@ class AndroidPhoneTools(private val app: HotlineApp) : AgentTools {
 
         // WeChat and similar apps expose no accessibility tree. Tools that look a control up by id
         // or by label cannot work there at all, so say so once instead of burning retries on them.
+        // `PhoneTool.targeted` is the registry's name for exactly those tools.
         val observedBefore = service.snapshot()
-        if (observedBefore.elements.isEmpty() && call.name in NODE_BASED_TOOLS) {
+        if (observedBefore.elements.isEmpty() && call.name in PhoneTool.targeted) {
             return@withContext ToolResult(
                 false,
                 "这个页面读不到任何控件（微信等会屏蔽），click/tap_text 无法使用。请改用 tap_xy 按截图位置点按。",
@@ -133,10 +140,13 @@ class AndroidPhoneTools(private val app: HotlineApp) : AgentTools {
             val before = service.snapshot()
             val result = service.perform(call)
             if (!result.success) return@withContext result
-            // Observe until stable (bounded); accepting an Android action is not task completion.
+            // Observe until stable, but never past the budget; accepting an Android action is not
+            // task completion, and a page that keeps moving is not a reason to keep looking.
             delay(250)
+            val settleDeadline = System.currentTimeMillis() + SETTLE_BUDGET_MS
             var after = service.snapshot()
-            for (attempt in 0 until 5) {
+            for (attempt in 0 until SETTLE_ROUNDS) {
+                if (System.currentTimeMillis() >= settleDeadline) break
                 delay(150)
                 val next = service.snapshot()
                 if (next.revision == after.revision) break

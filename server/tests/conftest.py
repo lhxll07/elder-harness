@@ -17,6 +17,9 @@ from app import main  # noqa: E402
 @pytest.fixture()
 def client(tmp_path):
     db.init(str(tmp_path / "test.db"))
+    # The join throttle is process-local state on purpose (single-process deployment), so it has to
+    # be cleared per test; otherwise one test's failed guesses would lock out the next test.
+    main._join_failures.clear()
     # No `with`: the lifespan's background watcher is not wanted in tests; silence is checked
     # explicitly through app.watch.check_silence().
     return TestClient(main.app)

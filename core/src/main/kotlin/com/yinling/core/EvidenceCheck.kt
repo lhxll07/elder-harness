@@ -1,102 +1,236 @@
 package com.yinling.core
 
 /**
- * 证据层核验：声明里"可核对的内容"，必须能在**本轮实际看到过的页面**上找到。
+ * One thing the run actually saw, with where it came from.
  *
- * 它补的是 [OutcomeCheck] 够不着的那一类：只读结论没有执行记录可查。
- * 例如页面上写着"共 5 个包裹、2 个已签收"，模型却回答"一共 4 单，其中 3 单已签收"——
- * 这一轮只调用了截图，没有任何动作可以核对，机械核验只能放行。
+ * Evidence is kept as observations rather than a single final page for the reason the device
+ * showed: a task legitimately reads a value on one screen ("中号" in the font page) and finishes on
+ * another (the display list), and a claim about the first is not a lie just because the run has
+ * since navigated away. Provenance is what keeps that from becoming "any number ever seen": a fact
+ * is tied to the app, the revision and the step that produced it.
+ */
+/**
+ * Where one observation came from.
  *
- * 与机械核验的分工：
- * - [OutcomeCheck] 管"**有没有做**"——查本轮自己的执行记录，是下限；
- * - 本对象管"**读到的对不对**"——查本轮实际看过的页面文字。
- * 两者都是本地确定性判定，模型的说辞无法说服任何一方。
+ * The distinction that matters is whether a fact says something about the world. Text the run typed
+ * itself does not: an input box shows whatever we just put in it, so a run that writes "4006" into
+ * a search field and then reads it back has produced its own evidence. Sensitive pages are dropped
+ * for the same kind of reason — the run was not allowed to read them in the first place.
+ */
+enum class EvidenceSource(val aboutTheWorld: Boolean) {
+    /** Read from the accessibility tree. */
+    PAGE(true),
+
+    /** Produced by a local tool rather than the screen (the clock). */
+    TOOL(true),
+
+    /** Text this run typed into the phone; the page is only echoing it back. */
+    SELF_TYPED(false),
+}
+
+data class Observation(
+    val app: String? = null,
+    val revision: String = "",
+    val step: Int = 0,
+    /** A sensitive page contributes nothing: we deliberately do not keep its content. */
+    val sensitive: Boolean = false,
+    val texts: List<String> = emptyList(),
+    /** Set when the evidence came from a local tool (the clock) rather than the screen. */
+    val tool: String? = null,
+    /**
+     * Explicit provenance. Left null where the origin follows from the observation itself, so an
+     * observation that names a [tool] does not have to repeat that it is tool-produced.
+     */
+    val source: EvidenceSource? = null,
+) {
+    /** The effective origin of this observation. */
+    val origin: EvidenceSource
+        get() = source ?: if (tool != null) EvidenceSource.TOOL else EvidenceSource.PAGE
+}
+
+/**
+ * Every observation of one task, oldest first.
  *
- * ## 两类可核对内容的规则不同，这是刻意的
+ * The ledger is bounded by the loop that fills it; it is the whole basis of the evidence audit, so
+ * anything not observed here cannot substantiate a completion.
+ */
+data class EvidenceLedger(val observations: List<Observation> = emptyList()) {
+    /** True when nothing readable was ever observed, so "I could not see" is not "you lied". */
+    val blind: Boolean get() = observations.none { !it.sensitive && it.texts.isNotEmpty() }
+
+    fun plus(observation: Observation): EvidenceLedger =
+        if (observation.texts.isEmpty()) this
+        else EvidenceLedger((observations + observation).takeLast(MAX_OBSERVATIONS))
+
+    companion object {
+        val EMPTY = EvidenceLedger()
+
+        /** Enough to cover a long task without letting the audit grow without bound. */
+        const val MAX_OBSERVATIONS = 60
+    }
+}
+
+/**
+ * The evidence half of the completion check: does anything the run observed carry the facts the
+ * message asserts?
  *
- * **引号内文字**：既然加引号，就是声称"页面上这么写的"，因此必须在页面上找到，找不到即降级。
- *
- * **数字**：不能要求字面出现。真实场景里大量结论是**数出来的**——
- * "一共 4 单，其中 3 单已签收"对应页面上四行包裹记录，数字本身并不印在屏幕上；
- * 若要求字面出现，就会把这类**诚实的汇总结论**一并降级（这正是原型 2/4 代价的来源）。
- * 因此数字的规则是"字面出现，**或**不超过页面条目数"：
- * 数出来的数不可能比页面上的东西还多。上例中页面只有两行、却声称四单，
- * `4 > 2` 说明它不可能是数出来的，于是被拒。
- *
- * ## 拿不到页面文字时不判
- *
- * 无障碍树读不到内容的"盲页面"、以及敏感页面，本轮本来就没有可核对的文字。
- * 此时返回 Supported——**"我没看见"不等于"你在撒谎"**，把读不到的页面一律降级，
- * 只会重演《Safe, or Simply Incapable?》批评的那种混淆：把"更保守"当成"更安全"。
+ * The rules are symmetric with the claim parser — a number is evidence only for the field and unit
+ * it is bound to, a time is compared as minutes of day rather than as text, and a value that the
+ * page has since changed stops vouching for the old one.
  */
 object EvidenceCheck {
 
-    /** 引号内的引用文字；中英文引号都算。 */
-    private val QUOTED = Regex("[\u201C\u201D\"]([^\u201C\u201D\"]{1,60})[\u201C\u201D\"]")
+    /** One numeric fact read off an observation, with what binds it and where it came from. */
+    private data class Fact(
+        val kind: ValueKind,
+        val value: String,
+        val raw: String,
+        val unit: String?,
+        val field: String?,
+        val total: Boolean,
+        val observation: Int,
+        val app: String?,
+    )
 
-    private val NUMBER = Regex("\\d+")
+    private val NEGATION_CHARS = setOf('未', '没', '不', '无', '非', '待', '欠', '否', '反', '拒', '免')
 
-    /**
-     * "一共／共／总共 N" —— 页面上**印出来的总数**。
-     *
-     * 总数是印在屏幕上、不是数出来的，所以它可以直接比对；而"页面上有几个条目"只能给出
-     * 一个宽松上限，单靠它判不动（五条包裹记录声称"四单"时，4 ≤ 5 就放过去了）。
-     */
-    private val STATED_TOTAL = Regex("(?:一共|共|总共)\\s*(\\d+)")
-
-    /**
-     * @param claim 模型给出的完成声明。
-     * @param postScreen 本轮实际看到过的页面文字（标签与元素文本）。
-     * @param screenReadable 本轮是否真的读到过页面文字；盲页面或敏感页面为 false。
-     */
-    fun check(
-        claim: String,
-        postScreen: List<String>,
-        screenReadable: Boolean,
-    ): OutcomeVerdict {
-        if (!screenReadable) return OutcomeVerdict.Supported
-
-        val haystack = postScreen.joinToString(" ")
-        // 条目数：页面上非空行的数量，作为"数得出来"的上限。
-        val itemCount = postScreen.count { it.isNotBlank() }
-
-        QUOTED.findAll(claim).forEach { m ->
-            val cited = m.groupValues[1].trim()
-            // 单双引号成对时，正则可能把前一个引号的开引号与后一个引号的闭引号配错，
-            // 取到的内容会带上标点；去掉首尾标点后再比对，避免假降级。
-            val core = cited.trim('，', '。', '、', '：', '；', ',', '.', ':', ';', ' ')
-            if (core.isNotEmpty() && core !in haystack) {
-                return OutcomeVerdict.Unsupported(
-                    "声明里引用的内容“$core”没有出现在本轮看到的页面上",
-                )
-            }
+    fun check(claim: Claim, ledger: EvidenceLedger): OutcomeVerdict {
+        if (!claim.evidenceCheckable) return OutcomeVerdict.Supported
+        // Only observations that are about the world can vouch for a claim. A page the run was not
+        // allowed to read, and text the run typed itself, are both excluded by provenance rather
+        // than by whatever they happen to contain.
+        val readable = ledger.observations.withIndex()
+            .filter { !it.value.sensitive && it.value.origin.aboutTheWorld }
+        val typed = ledger.observations.withIndex()
+            .filter { it.value.origin == EvidenceSource.SELF_TYPED }
+            .flatMap { (index, observation) -> observation.texts.flatMap { factsIn(it, index, observation.app) } }
+        val facts = readable.flatMap { (index, observation) ->
+            observation.texts.flatMap { factsIn(it, index, observation.app) }
         }
-
-        NUMBER.findAll(claim).forEach { m ->
-            val n = m.value
-            if (n in haystack) return@forEach
-            // 字面没出现：只有当它可能"数得出来"时才放行。
-            val value = n.toIntOrNull()
-            if (value == null || value > itemCount) {
-                return OutcomeVerdict.Unsupported(
-                    "声明里的数字 $n 既不在本轮看到的页面上，也超过页面上能数出来的条目数（$itemCount）",
-                )
-            }
+        val sources = readable.flatMap { it.value.texts }
+        if (sources.isEmpty()) return OutcomeVerdict.Unverified("这一轮没有读到可供核对的页面文字")
+        for (quantity in claim.quantities.filter { it.pageCheckable }) {
+            checkQuantity(quantity, facts, typed)?.let { return it }
         }
-
-        // 页面上印出来的总数与声明里的总数必须一致。
-        // 这是本核验里最硬的一条：总数是印在屏幕上的，不是数出来的，因此没有"可能算错"的余地。
-        val pageTotals = STATED_TOTAL.findAll(haystack).map { it.groupValues[1] }.toSet()
-        if (pageTotals.isNotEmpty()) {
-            STATED_TOTAL.findAll(claim).forEach { m ->
-                val claimed = m.groupValues[1]
-                if (claimed !in pageTotals) {
-                    return OutcomeVerdict.Unsupported(
-                        "声明说“共 $claimed”，但本轮看到的页面上写的是“共 ${pageTotals.first()}”",
-                    )
-                }
-            }
+        for (quote in claim.citations) {
+            checkQuote(quote, facts, sources, typed)?.let { return it }
         }
         return OutcomeVerdict.Supported
+    }
+
+    /**
+     * A fact the run supplied itself, said out loud.
+     *
+     * This is the difference between "I never saw it" and "I wrote it there myself", and the person
+     * deserves to be told which one happened — the second is the run proving its own claim.
+     */
+    private fun selfSupplied(value: String, typed: List<Fact>): Boolean =
+        typed.any { it.value == value || it.raw == value }
+
+    /**
+     * Facts from different apps must not vouch for each other.
+     *
+     * A page can show the same field name in two apps with two different values, and picking the
+     * newest one silently asserts that the two mean the same thing. When the apps disagree, the run
+     * does not know either, so it asks the person. Blank apps (a caller that did not record one)
+     * are treated as a single unidentified source, which is the behaviour that existed before.
+     */
+    private fun crossAppDisagreement(candidates: List<Fact>): Boolean {
+        val perApp = candidates.groupBy { it.app }.values.map { newestValues(it) }
+        return perApp.size > 1 && perApp.distinct().size > 1
+    }
+
+    private fun checkQuantity(quantity: Quantity, facts: List<Fact>, typed: List<Fact>): OutcomeVerdict? {
+        if (quantity.total) {
+            val candidates = facts.filter { it.total && it.unit == quantity.unit }
+            if (candidates.isEmpty()) {
+                return if (selfSupplied(quantity.value, typed)) selfTypedVerdict(quantity)
+                else OutcomeVerdict.Unverified("结论中的汇总数量缺少同单位的总数依据")
+            }
+            val newest = newestValues(candidates)
+            if (newest.size > 1 || crossAppDisagreement(candidates)) {
+                return OutcomeVerdict.Unverified("页面上同单位的总数不止一个，无法据此确认汇总数量")
+            }
+            return if (quantity.value in newest) null
+            else OutcomeVerdict.Unsupported("结论中的总数与页面显示的同类总数不一致")
+        }
+        if (quantity.field != null) {
+            val bound = facts.filter { it.field == quantity.field || it.field?.contains(quantity.field) == true }
+            if (bound.isNotEmpty()) {
+                if (crossAppDisagreement(bound)) {
+                    return OutcomeVerdict.Unverified("不同应用里「${quantity.field}」显示的值不一样，请您核对")
+                }
+                return if (quantity.value in newestValues(bound)) null
+                else OutcomeVerdict.Unverified("结论中「${quantity.field}」的值与页面看到的不一致，或页面已经变化")
+            }
+        }
+        val sameKind = facts.filter { it.kind == quantity.kind }
+        if (sameKind.isNotEmpty()) {
+            val byUnit = if (quantity.unit != null) sameKind.filter { it.unit == quantity.unit } else sameKind
+            val pool = byUnit.ifEmpty { sameKind }
+            if (!crossAppDisagreement(pool) && quantity.value in newestValues(pool)) return null
+        }
+        if (selfSupplied(quantity.value, typed)) return selfTypedVerdict(quantity)
+        val what = when (quantity.kind) {
+            ValueKind.TIME -> "时间"
+            ValueKind.DATE -> "日期"
+            ValueKind.NUMBER -> "数字"
+        }
+        return OutcomeVerdict.Unverified("结论中的$what「${quantity.raw}」还没有在这一轮看到过")
+    }
+
+    /** The person is told the difference between "not seen" and "you typed it yourself". */
+    private fun selfTypedVerdict(quantity: Quantity): OutcomeVerdict = OutcomeVerdict.Unverified(
+        "结论里的「${quantity.raw}」是执行助手自己输入到手机里的文字，页面上并没有看到这个事实",
+    )
+
+    private fun checkQuote(quote: Quote, facts: List<Fact>, sources: List<String>, typed: List<Fact>): OutcomeVerdict? {
+        if (quote.role == QuoteRole.VALUE && quote.field != null) {
+            val canonical = Lexicon.valuesIn(quote.text).map { it.canonical }.toSet()
+            val bound = facts.any { fact ->
+                (fact.field == quote.field || fact.field?.contains(quote.field) == true) &&
+                    (canonical.isEmpty() || fact.value in canonical || fact.raw == quote.text)
+            }
+            return if (bound) null
+            else if (selfSupplied(quote.text, typed)) {
+                OutcomeVerdict.Unverified("结论中的「${quote.text}」是执行助手自己输入的文字，不是页面上的内容")
+            } else {
+                OutcomeVerdict.Unverified("结论中「${quote.text}」没有绑定到页面上的「${quote.field}」")
+            }
+        }
+        return if (sources.any { containsCitation(it, quote.text) }) null
+        else if (selfSupplied(quote.text, typed)) {
+            OutcomeVerdict.Unverified("结论中的引用文字「${quote.text}」是执行助手自己输入的文字，不是页面上的内容")
+        } else {
+            OutcomeVerdict.Unverified("结论中的引用文字「${quote.text}」还没有在这一轮看到过")
+        }
+    }
+
+    private fun factsIn(line: String, observation: Int, app: String?): List<Fact> =
+        Lexicon.valuesIn(line).map { token ->
+            Fact(token.kind, token.canonical, token.raw, token.unit, token.field, token.total, observation, app)
+        }
+
+    /** The value the run saw most recently among candidates: an older value cannot vouch for it. */
+    private fun newestValues(candidates: List<Fact>): Set<String> {
+        val newest = candidates.maxOf { it.observation }
+        return candidates.filter { it.observation == newest }.map { it.value }.toSet()
+    }
+
+    /**
+     * A citation has to appear as the page wrote it, not as the tail of a longer word that reverses
+     * it: a page saying "未签收" must not vouch for a claim that it says "签收". A numeric citation
+     * has to be the page's own number, not a digit buried inside a date or a code.
+     */
+    private fun containsCitation(node: String, citation: String): Boolean {
+        if (citation.all(Char::isDigit)) {
+            return Lexicon.NUMBER.findAll(node).any { it.value == citation }
+        }
+        var index = node.indexOf(citation)
+        while (index >= 0) {
+            if (index == 0 || node[index - 1] !in NEGATION_CHARS) return true
+            index = node.indexOf(citation, index + 1)
+        }
+        return false
     }
 }

@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
@@ -55,6 +56,9 @@ class ScreenAccessService : AccessibilityService() {
 
         /** Above this, upload time matters more than fine detail; fall back to lossy. */
         private const val MODEL_IMAGE_MAX_BYTES = 700_000
+
+        /** Sampled colour buckets above which a page is treated as photographic rather than flat UI. */
+        private const val PHOTO_COLOR_LIMIT = 256
 
         /** Throttle so accessibility traffic does not turn into a prefs write storm. */
         private const val ACTIVITY_NOTE_INTERVAL_MS = 60_000L
@@ -230,6 +234,7 @@ class ScreenAccessService : AccessibilityService() {
         var invisible = 0
         var filteredNoText = 0
         var filteredWithText = 0
+        var hiddenUnderInvisible = 0
         val droppedRoles = HashMap<String, Int>()
 
         /**
@@ -238,16 +243,20 @@ class ScreenAccessService : AccessibilityService() {
          * and it moves whenever the app inserts a node. The parent map keeps the ability to walk
          * up to a clickable ancestor. Ids are only meaningful for one revision.
          */
-        fun visit(node: AccessibilityNodeInfo, id: String, parent: String?, depth: Int, fromKeyboard: Boolean = false) {
+        fun visit(node: AccessibilityNodeInfo, id: String, parent: String?, depth: Int, fromKeyboard: Boolean = false, underInvisible: Boolean = false) {
             if (depth > 24 || nodes.size >= 800) { node.recycle(); return }
             visited++
             nodes[id] = node
             if (parent != null) parents[id] = parent
-            val bounds = Rect().also(node::getBoundsInScreen)
-            // Keyboard nodes live in a window that is not the active one, so the system often reports
-            // them as not visible even while they are on screen. Their bounds are still real, so
-            // accept them there; on the app's own window keep insisting on visibility.
-            val shown = !bounds.isEmpty && (node.isVisibleToUser || fromKeyboard)
+            // Visibility is asked first: a node that is not on screen needs neither its bounds nor any
+            // of its text, and reading those properties is what made one snapshot take ~3 seconds on a
+            // busy page. Only the *structure* is still walked, because a visible control under an
+            // invisible container does happen — pruning the subtree would drop real elements.
+            // The keyboard is the one window the system reports as invisible while it is on screen, so
+            // its nodes are taken as visible outright.
+            val visibleToUser = fromKeyboard || node.isVisibleToUser
+            val bounds = if (visibleToUser) Rect().also(node::getBoundsInScreen) else Rect()
+            val shown = visibleToUser && !bounds.isEmpty
             if (shown) {
                 if (node.isPassword && !fromKeyboard) {
                     sensitiveReason = "密码框 role=${node.className?.toString()?.substringAfterLast('.')}"
@@ -268,6 +277,9 @@ class ScreenAccessService : AccessibilityService() {
                     if (text.isNotBlank() || description.isNotBlank()) filteredWithText++ else filteredNoText++
                 }
                 if (interesting) {
+                    // Measured, not assumed: a control that is itself visible but hangs under an
+                    // invisible parent is the only thing pruning invisible subtrees would lose.
+                    if (underInvisible) hiddenUnderInvisible++
                     elements += ScreenElement(id, text, description,
                         if (fromKeyboard) KEYBOARD_ROLE
                         else node.className?.toString().orEmpty().substringAfterLast('.'),
@@ -279,13 +291,15 @@ class ScreenAccessService : AccessibilityService() {
                 }
             } else {
                 invisible++
+                // Nothing below an invisible leaf can be shown, so the walk stops here.
+                if (node.childCount == 0) return
             }
             for (i in 0 until node.childCount) {
                 // Keep the keyboard's own prefix and flag all the way down: children used to come
                 // back as ordinary page elements (and were then checked for sensitive words), so the
                 // candidate row the model needed was never listed as a keyboard control at all.
                 val prefix = if (fromKeyboard) "k" else "e"
-                node.getChild(i)?.let { visit(it, "$prefix${nodes.size}", id, depth + 1, fromKeyboard) }
+                node.getChild(i)?.let { visit(it, "$prefix${nodes.size}", id, depth + 1, fromKeyboard, underInvisible || !shown) }
             }
         }
         visit(root, "e0", null, 0)
@@ -330,12 +344,14 @@ class ScreenAccessService : AccessibilityService() {
         val topDropped = droppedRoles.entries.sortedByDescending { it.value }.take(4)
             .joinToString(",") { "${it.key}:${it.value}" }
         lastTreeCensus = "visited=$visited invisible=$invisible collected=${elements.size} " +
+            "underInvisible=$hiddenUnderInvisible " +
             "filteredNoText=$filteredNoText filteredWithText=$filteredWithText dropped=[$topDropped]"
         val signature = "${root.windowId}:${root.packageName}:$width:$height:$sensitive:$elements"
         val revision = MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
             .joinToString("") { "%02x".format(it) }
         return Page(ScreenSnapshot(root.packageName?.toString(), labels.take(200), revision = revision,
-            elements = elements.take(250), width = width, height = height, sensitive = sensitive), nodes, parents)
+            elements = elements.take(250), width = width, height = height, sensitive = sensitive,
+            windowId = root.windowId), nodes, parents)
     }
 
     fun snapshot(): ScreenSnapshot = readPage().use { it.screen }
@@ -343,9 +359,9 @@ class ScreenAccessService : AccessibilityService() {
     private fun failure(code: String, message: String) = ToolResult(false, message, code)
 
     /** Re-observe immediately before dispatch. Approval never authorizes a different page. */
-    suspend fun perform(call: ToolCall): ToolResult = readPage().use { page ->
+    suspend fun perform(proposed: ToolCall): ToolResult = readPage().use { page ->
         val screen = page.screen
-        val staleRevision = call.revision.isBlank() || call.revision != screen.revision
+        var call = proposed
         if (call.name in setOf("back", "home", "recents")) {
             val action = when (call.name) {
                 "home" -> GLOBAL_ACTION_HOME
@@ -367,11 +383,8 @@ class ScreenAccessService : AccessibilityService() {
                 },
             )
         }
-        if (call.name in setOf("tap", "swipe", "click", "tap_text", "long_press", "input_text", "set_slider") &&
-            staleRevision
-        ) {
-            return failure("stale_screen", "页面已变化，请重新观察后再操作。")
-        }
+        call = com.yinling.core.ScreenActionGuard.rebind(call, screen)
+            ?: return failure("stale_screen", "操作目标已变化，请重新观察后再操作。")
         // Coordinate tapping exists for pages that expose no accessibility tree (WeChat and
         // friends), where there is nothing to look up by node at all.
         if (call.name == "tap") {
@@ -705,6 +718,65 @@ class ScreenAccessService : AccessibilityService() {
     }
 
     /**
+     * Whether the page is photographic rather than flat UI.
+     *
+     * Flat UI uses a few dozen colours; a photograph uses thousands. Knowing this before encoding is
+     * what allows one encode instead of two: a photo-heavy page can never fit the lossless budget, so
+     * trying costs a full-size lossless pass and then a full-size JPEG pass on top of it.
+     */
+    private fun looksPhotographic(bitmap: Bitmap): Boolean {
+        val stepX = (bitmap.width / 32).coerceAtLeast(1)
+        val stepY = (bitmap.height / 32).coerceAtLeast(1)
+        val seen = HashSet<Int>()
+        var y = 0
+        while (y < bitmap.height) {
+            var x = 0
+            while (x < bitmap.width) {
+                val pixel = bitmap.getPixel(x, y)
+                // 4 bits per channel: close enough to call two shades the same, far from confusing a
+                // photo with a settings page.
+                seen.add(
+                    ((Color.red(pixel) shr 4) shl 8) or
+                        ((Color.green(pixel) shr 4) shl 4) or
+                        (Color.blue(pixel) shr 4),
+                )
+                if (seen.size > PHOTO_COLOR_LIMIT) return true
+                x += stepX
+            }
+            y += stepY
+        }
+        return false
+    }
+
+    /**
+     * Whether this frame is a blank capture of a page that forbids screenshots (`FLAG_SECURE`).
+     *
+     * A protected window comes back flat black: the page is visible to the person but no capture API
+     * may see it. The middle band is sampled so the (unprotected) status bar cannot hide the fact; a
+     * genuinely dark page still has text and icons, so it does not trip this.
+     */
+    private fun looksCaptureProtected(bitmap: Bitmap): Boolean {
+        val top = (bitmap.height * 0.25f).toInt()
+        val bottom = (bitmap.height * 0.75f).toInt()
+        val stepX = (bitmap.width / 24).coerceAtLeast(1)
+        val stepY = ((bottom - top) / 24).coerceAtLeast(1)
+        var samples = 0
+        var dark = 0
+        var y = top
+        while (y < bottom) {
+            var x = 0
+            while (x < bitmap.width) {
+                val pixel = bitmap.getPixel(x, y)
+                samples++
+                if (Color.red(pixel) + Color.green(pixel) + Color.blue(pixel) < 45) dark++
+                x += stepX
+            }
+            y += stepY
+        }
+        return samples > 0 && dark * 100 / samples >= 99
+    }
+
+    /**
      * Scaling, compression and base64 for one screenshot. CPU-bound: call it off the main thread.
      * Requires API 30 for WEBP_LOSSLESS; its only caller, [screenshot], returns early below API 30.
      */
@@ -715,15 +787,42 @@ class ScreenAccessService : AccessibilityService() {
         // copy can be immutable. Painting straight onto them threw and failed the whole screenshot.
         val target = if (scaled.isMutable) scaled else scaled.copy(Bitmap.Config.ARGB_8888, true) ?: scaled
         try {
+            // Sample the page *before* the coordinate grid is drawn: the grid adds bright pixels and
+            // would mask a frame that is black because the page forbids capture.
+            val protected = looksCaptureProtected(target)
+            // How photographic the page is decides the codec *once*. Trying lossless first on a
+            // photo-heavy page (a takeout listing full of dish pictures) produced megabytes, blew the
+            // budget, and forced a second full-size JPEG encode: 27 seconds of work per screenshot.
+            val photographic = looksPhotographic(target)
             drawGrid(target)
-            // Lossless first: JPEG's chroma subsampling is what destroys small coloured text, not
-            // the resolution alone. Phone UI is flat colour, so this is often smaller than JPEG.
+            var encoded = target
+            var mime: String
+            if (photographic) {
+                // Straight to JPEG at a size that is still readable on a phone: one encode, small.
+                encoded = scaleForModel(target, MODEL_IMAGE_MAX_WIDTH / 2)
+                mime = "image/jpeg"
+                val bytes = ByteArrayOutputStream().also {
+                    encoded.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it)
+                }.toByteArray()
+                if (encoded !== target) encoded.recycle()
+                lastScreenshot = bytes
+                lastScreenshotSize = target.width to target.height
+                return ToolResult(
+                    true,
+                    "已读取屏幕图像（${target.width}x${target.height}，图上有 10% 主刻度 + 5% 辅助网格，坐标按屏幕比例给出）。",
+                    image = ScreenImage(
+                        Base64.encodeToString(bytes, Base64.NO_WRAP), screen.revision, mime, protected,
+                    ),
+                )
+            }
+            // Flat UI: lossless keeps small coloured text exact, which is what reading a timetable or
+            // a label depends on, and it is cheap when the page has few colours.
             var bytes = ByteArrayOutputStream().also {
                 target.compress(Bitmap.CompressFormat.WEBP_LOSSLESS, 100, it)
             }.toByteArray()
-            var mime = "image/webp"
+            mime = "image/webp"
             if (bytes.size > MODEL_IMAGE_MAX_BYTES) {
-                // Photo-heavy screens do not compress losslessly; trade detail here.
+                // Only flat pages that still came out too large fall back, and that is rare.
                 val smaller = scaleForModel(target, MODEL_IMAGE_MAX_WIDTH / 2)
                 bytes = ByteArrayOutputStream().also {
                     smaller.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it)
@@ -736,7 +835,7 @@ class ScreenAccessService : AccessibilityService() {
             return ToolResult(
                 true,
                 "已读取屏幕图像（${target.width}x${target.height}，图上有 10% 主刻度 + 5% 辅助网格，坐标按屏幕比例给出）。",
-                image = ScreenImage(Base64.encodeToString(bytes, Base64.NO_WRAP), screen.revision, mime),
+                image = ScreenImage(Base64.encodeToString(bytes, Base64.NO_WRAP), screen.revision, mime, protected),
             )
         } finally {
             if (target !== scaled) target.recycle()

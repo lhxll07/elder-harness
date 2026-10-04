@@ -93,21 +93,16 @@ def join_page(error: str = "", code: str = "") -> str:
 <form method="post" action="/join">
   <div class="card">
     <label>配对码</label>
-    <input name="pair_code" value="{escape(code)}" maxlength="6" autocapitalize="characters" required>
+    <input name="pair_code" value="{escape(code)}" maxlength="8" autocapitalize="characters" required>
     <label>你的称呼（老人看到的名字）</label>
     <input name="name" placeholder="例如：大女儿 / 张网格员" required>
     <label>手机号（用于有事时通知你）</label>
     <input name="phone" inputmode="tel" placeholder="选填，但建议填">
-    <label>身份</label>
-    <select name="role">
-      <option value="family">家人（能看到全部情况）</option>
-      <option value="community">社区（看到求助与异常）</option>
-      <option value="neighbor">邻居（只在需要人上门时看到）</option>
-    </select>
     <button type="submit">加入</button>
   </div>
 </form>
-<p class="muted">只有拿到配对码的人才能加入，所以请只让真正可信的人看这个码。</p>
+<p class="muted">你的身份由发给你配对码的人决定：码是「家人」就是家人，是「社区」就只能看到求助与异常。
+请只让真正可信的人看到这个码。</p>
 """
     return page("加入可信的人", body)
 

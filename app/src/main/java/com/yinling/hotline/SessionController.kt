@@ -9,6 +9,7 @@ import com.yinling.core.AgentMessage
 import com.yinling.core.AgentOutcome
 import com.yinling.core.PauseReason
 import com.yinling.core.AgentStep
+import com.yinling.core.MechanicalFirstReviewer
 import com.yinling.core.ScreenElement
 import com.yinling.core.ScreenSnapshot
 import com.yinling.core.ToolCall
@@ -38,8 +39,11 @@ data class SessionState(
     val hasPendingApproval: Boolean = false,
     /** The agent stopped because this step has to be done by the person themselves. */
     val needsPersonStep: Boolean = false,
-    /** The person reported an action, but the phone could not verify its external result. */
-    val outcomeUnverified: Boolean = false,
+    /**
+     * The local check could not confirm the result. The task is neither finished nor failed: the
+     * person can confirm what they see on the screen, or ask the assistant to continue.
+     */
+    val awaitingReview: Boolean = false,
     /** A message from the trusted circle, shown as a big card and read aloud. */
     val circleMessage: PendingMessage? = null,
     /** The task passed the local completion check; waiting for the elder to say "this worked". */
@@ -171,6 +175,16 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
 
     /** Once the person allows a coordinate tap in this run, do not ask again. */
     private var blindTapApproved = false
+
+    /**
+     * Whether the person has already answered "may I send a screenshot to the vision model?".
+     *
+     * Asked once per run, and the answer is remembered either way — a refusal must not turn into the
+     * same question on every unreadable page. This is what makes `screenshot`'s declared
+     * `needsApproval` real: the loop photographs blind pages on its own, and that image leaves the
+     * phone.
+     */
+    private var screenshotDecided = false
     private var pendingApprovalPrompt: String? = null
 
     private fun initialState(): SessionState {
@@ -189,12 +203,12 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         return SessionState(
             goal = if (resumable) goal else "",
             message = when {
-                saved?.outcomeUnverified == true -> "上次的结果无法核实。请查看原页面，或结束这件事。"
+                saved?.awaitingReview == true -> "上次的结果没能自动核实。您看一眼原页面，确认办好了，或让我接着办。"
                 resumable -> "上次的事还可以接着办。"
                 else -> "说出要办的事，我来帮您看下一步。"
             },
             phase = if (resumable) TaskPhase.PAUSED else TaskPhase.IDLE,
-            outcomeUnverified = resumable && saved?.outcomeUnverified == true,
+            awaitingReview = resumable && saved?.awaitingReview == true,
         )
     }
 
@@ -216,6 +230,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             .apply()
         loop = null
         blindTapApproved = false
+        screenshotDecided = false
         mutableState.value = SessionState(goal.trim(), "正在看看当前页面。", TaskPhase.WORKING)
         launch(resume = false)
     }
@@ -224,7 +239,9 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
     fun restore(id: String) {
         val saved = sessions.load(id) ?: return
         val running = buildLoop()
-        if (!running.restore(saved.messages, saved.steps)) return
+        // Keep the task's own start time when it was saved, so a resumed run does not treat its
+        // earlier work as history that predates the task.
+        if (!running.restore(saved.messages, saved.steps, saved.startedAt.takeIf { it > 0 } ?: System.currentTimeMillis())) return
         job?.cancel()
         skillJob?.cancel()
         skillJob = null
@@ -236,13 +253,13 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             .apply()
         mutableState.value = SessionState(
             goal = saved.goal,
-            message = if (saved.outcomeUnverified) "上次的结果无法核实。请查看原页面，或结束这件事。" else "接着上次没办完的事。",
+            message = if (saved.awaitingReview) "上次的结果没能自动核实。您看一眼原页面，确认办好了，或让我接着办。" else "接着上次没办完的事。",
             phase = TaskPhase.PAUSED,
             step = saved.steps,
-            outcomeUnverified = saved.outcomeUnverified,
+            awaitingReview = saved.awaitingReview,
         )
         LoopLog.event("[session] restore id=$id goal=${saved.goal.take(30)} messages=${saved.messages.size} cached prefix reused")
-        if (!saved.outcomeUnverified) launch(resume = true)
+        if (!saved.awaitingReview) launch(resume = true)
     }
 
     fun history(): List<SavedSession> = sessions.list()
@@ -268,18 +285,24 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 id = sessionId,
                 goal = state.value.goal,
                 updatedAt = System.currentTimeMillis(),
-                status = when (state.value.phase) {
-                    TaskPhase.COMPLETED -> "done"
-                    else -> if (state.value.outcomeUnverified) "unverified" else "paused"
+                status = when {
+                    state.value.phase == TaskPhase.COMPLETED -> "done"
+                    state.value.awaitingReview -> "review"
+                    else -> "paused"
                 },
                 steps = running.stepCount,
                 messages = conversation,
+                startedAt = running.startedAt,
             ),
         )
     }
 
+    /**
+     * Continues a task. A result that is awaiting review is resumable too: "I could not confirm it"
+     * means the person may ask for more work, not that the task is closed.
+     */
     fun resume() {
-        if (state.value.goal.isBlank() || state.value.outcomeUnverified ||
+        if (state.value.goal.isBlank() ||
             state.value.phase !in setOf(TaskPhase.PAUSED, TaskPhase.NEEDS_PERSON, TaskPhase.NEEDS_FAMILY, TaskPhase.CANNOT)
         ) return
         launch(resume = true)
@@ -528,7 +551,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             phase = TaskPhase.WORKING,
             hasPendingApproval = false,
             needsPersonStep = false,
-            outcomeUnverified = false,
+            awaitingReview = false,
         )
         job = scope.launch {
             try {
@@ -551,7 +574,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                     }
                     sessionId = saved.id
                     prefs.edit().putString(KEY_CURRENT_SESSION, sessionId).apply()
-                    if (running.restore(saved.messages, saved.steps)) {
+                    if (running.restore(saved.messages, saved.steps, saved.startedAt.takeIf { it > 0 } ?: System.currentTimeMillis())) {
                         LoopLog.event("[session] restored from disk id=$sessionId messages=${saved.messages.size}")
                     }
                 }
@@ -573,11 +596,13 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
 
     private fun buildLoop(): AgentLoop {
         val hook = hook()
+        val config = ModelConfig(endpoint, model, apiKey, visionEnabled)
         return AgentLoop(
         planner = CloudPlanner(
-            config = ModelConfig(endpoint, model, apiKey, visionEnabled),
+            config = config,
             log = ::logPlanner,
             onUsage = { prompt, completion, cached -> hook.onUsage(prompt, completion, cached) },
+            onDelta = deltaTicker(),
         ),
         tools = phoneTools,
         approval = approval(),
@@ -590,6 +615,12 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 keyboardNote(screen)
         },
         logger = { LoopLog.event(it) },
+        // Completion is judged in two stages. The local rules run first: they can see that the claim
+        // contradicts this run's own action log (no payment was made, yet the model reports one).
+        // Only if they pass is the separate model call asked, and it sees only the claim and the
+        // run's own evidence, never the acting model's reasoning. Any failure degrades to asking
+        // the person, never to a silent "done".
+        reviewer = MechanicalFirstReviewer(CloudReviewer(config, log = { LoopLog.event(it) })),
         )
     }
 
@@ -616,6 +647,25 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
     }
 
     private fun logPlanner(message: String) = LoopLog.event("[planner] $message")
+
+    /**
+     * Streaming leaves no trace on a device unless something records it.
+     *
+     * One line per second is enough to confirm the stream really is arriving and to see when it
+     * stalls; one line per token would bury the log the developer needs to read.
+     */
+    private fun deltaTicker(): (String) -> Unit {
+        var lastLoggedAt = 0L
+        var characters = 0
+        return { piece ->
+            characters += piece.length
+            val now = System.currentTimeMillis()
+            if (now - lastLoggedAt >= 1_000) {
+                lastLoggedAt = now
+                LoopLog.event("[planner] 流式接收中… 已收到 ${characters} 字")
+            }
+        }
+    }
 
     /** A one-off text completion for the skill writer, using the same model as the task. */
     private suspend fun askPlannerForText(instructions: String, prompt: String): String? {
@@ -650,6 +700,9 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             if (autoConfirm) return false
             val ask = when (invocation.tool) {
                 "tap_xy" -> !blindTapApproved
+                // The screen leaves the phone: it goes to the configured vision model. That is a
+                // different decision from "use vision at all", so it is asked once per run.
+                "screenshot" -> !screenshotDecided
                 else -> false
             }
             LoopLog.event(if (ask) "[approval] 需要老人确认 ${invocation.tool}" else "[approval] 直接执行 ${invocation.tool}")
@@ -669,6 +722,9 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 message = when {
                     invocation.tool == "tap_xy" ->
                         "这一页读不到控件，我要直接点屏幕上的位置。可以吗？（同意后这次不再多问）"
+                    invocation.tool == "screenshot" ->
+                        "这一页读不到文字，我需要截一张屏幕图像，发给已配置的视觉模型来看。" +
+                            "可以吗？（同意后这次不再多问）"
                     else -> pendingApprovalPrompt ?: "确认进行这一步操作吗？"
                 },
                 phase = TaskPhase.CONFIRMING,
@@ -676,6 +732,9 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             )
             return try {
                 val approved = answer.await()
+                // Remembered either way: a refusal must not become the same question on every
+                // unreadable page for the rest of the run.
+                if (invocation.tool == "screenshot") screenshotDecided = true
                 if (approved) {
                     if (invocation.tool == "tap_xy") blindTapApproved = true
                     mutableState.value = state.value.copy(
@@ -756,6 +815,19 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             app.speaker.say(display)
         }
 
+        /**
+         * The model is thinking.
+         *
+         * No speech: the person does not need to hear "thinking" out loud on every step, and the
+         * screen already carries a message from the previous action. What this fixes is the silence
+         * on screen for the whole request, which on a slow model is tens of seconds of no change at
+         * all — indistinguishable from a phone that has stopped working.
+         */
+        override fun onThinking() {
+            if (state.value.phase != TaskPhase.WORKING) return
+            mutableState.value = state.value.copy(message = "正在想办法…")
+        }
+
         override fun onUsage(promptTokens: Int, completionTokens: Int, cachedTokens: Int) {
             val rate = if (promptTokens > 0) cachedTokens * 100 / promptTokens else 0
             lastUsage = "输入${promptTokens}（缓存${cachedTokens}，$rate%）/ 输出${completionTokens}"
@@ -789,46 +861,47 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 mutableState.value = state.value.copy(
                     message = outcome.message, phase = TaskPhase.COMPLETED,
                     step = steps, hasPendingApproval = false, awaitingSuccessConfirmation = true,
+                    awaitingReview = false,
                 )
             }
             is AgentOutcome.PAUSED -> mutableState.value = state.value.copy(
                 message = outcome.message, phase = TaskPhase.PAUSED,
                 step = steps, hasPendingApproval = false, needsPersonStep = outcome.needsPerson,
-                outcomeUnverified = outcome.reason == PauseReason.OUTCOME_UNVERIFIED,
+                awaitingReview = outcome.reason == PauseReason.OUTCOME_UNVERIFIED,
             )
             is AgentOutcome.STUCK -> mutableState.value = state.value.copy(
                 message = outcome.message, phase = TaskPhase.PAUSED,
                 step = steps, hasPendingApproval = false, needsPersonStep = false,
-                outcomeUnverified = false,
+                awaitingReview = false,
             )
             is AgentOutcome.STEP_LIMIT -> mutableState.value = state.value.copy(
                 message = outcome.message, phase = TaskPhase.PAUSED,
                 step = steps, hasPendingApproval = false, needsPersonStep = false,
-                outcomeUnverified = false,
+                awaitingReview = false,
             )
             is AgentOutcome.FAMILY -> mutableState.value = state.value.copy(
                 message = outcome.message, phase = TaskPhase.NEEDS_FAMILY,
                 step = steps, hasPendingApproval = false, needsPersonStep = false,
-                outcomeUnverified = false,
+                awaitingReview = false,
             )
             // Reported as its own state: the task was not achieved, and showing "已完成" here
             // would be the most damaging kind of wrong answer for the person relying on it.
             is AgentOutcome.IMPOSSIBLE -> mutableState.value = state.value.copy(
                 message = outcome.message, phase = TaskPhase.CANNOT,
                 step = steps, hasPendingApproval = false, needsPersonStep = false,
-                outcomeUnverified = false,
+                awaitingReview = false,
             )
             // The person does this step themselves; the family is not involved.
             is AgentOutcome.NEEDS_PERSON -> mutableState.value = state.value.copy(
                 message = outcome.message, phase = TaskPhase.NEEDS_PERSON,
                 step = steps, hasPendingApproval = false, needsPersonStep = true,
-                outcomeUnverified = false,
+                awaitingReview = false,
             )
             // Waiting for an answer: the task is not finished, it is blocked on information.
             is AgentOutcome.ASKING -> mutableState.value = state.value.copy(
                 message = outcome.message, phase = TaskPhase.ASKING,
                 step = steps, hasPendingApproval = false, options = outcome.options,
-                needsPersonStep = false, outcomeUnverified = false,
+                needsPersonStep = false, awaitingReview = false,
             )
         }
         // Every ending is read out loud: the conclusion, the question, and the refusal alike. These
@@ -846,14 +919,31 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
     fun stop() {
         job?.cancel()
         confirmation?.cancel()
-        if (state.value.outcomeUnverified || state.value.goal.isBlank()) return
+        if (state.value.goal.isBlank()) return
         mutableState.value = state.value.copy(
             message = "已停下。需要时可以接着办。",
             phase = TaskPhase.PAUSED,
             hasPendingApproval = false,
             needsPersonStep = false,
-            outcomeUnverified = false,
+            awaitingReview = false,
         )
+        saveCurrentSession()
+    }
+
+    /**
+     * The elder looked at the screen and says the result is real. The task becomes done, but it does
+     * **not** become a candidate skill: only a result the local check could confirm is worth
+     * learning from, otherwise a hallucinated success would feed the skill loop.
+     */
+    fun confirmReviewedResult() {
+        if (!state.value.awaitingReview) return
+        mutableState.value = state.value.copy(
+            phase = TaskPhase.COMPLETED,
+            message = "好，这件事就按办好了记。",
+            awaitingReview = false,
+            awaitingSuccessConfirmation = false,
+        )
+        app.speaker.say("好，那就按您看到的为准。")
         saveCurrentSession()
     }
 

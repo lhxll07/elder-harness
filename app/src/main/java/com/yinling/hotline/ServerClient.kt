@@ -183,8 +183,30 @@ class ServerClient(private val app: HotlineApp) {
         pairCode = json.optString("pair_code")
         heartbeatSeconds = json.optInt("heartbeat_seconds", 300)
         lastResult = "已配对（配对码 ${pairCode}）"
-        LoopLog.event("[server] 配对成功 code=$pairCode")
+        // The code itself never goes to the log: it is a setup secret, and logcat is readable by
+        // anything the person plugs into the phone.
+        LoopLog.event("[server] 配对成功")
         pairCode
+    }
+
+    /**
+     * Issue a fresh invite code for one role, replacing the phone's previous code.
+     *
+     * The role travels with the code, so whoever the person hands it to joins as that role and
+     * cannot promote themselves to 家人 on the join page. This is what keeps "只有家人能留话" true
+     * once the circle is bigger than the household.
+     */
+    suspend fun invite(role: String): String = withContext(Dispatchers.IO) {
+        val body = JSONObject().put("role", role).toString()
+        val json = request("POST", "/api/device/invite", body, token)
+            ?: throw ServerError(lastResult.ifBlank { "邀请码生成失败：服务器没有回应。" })
+        pairCode = json.optString("pair_code")
+        lastResult = "已生成${ROLE_NAMES[role] ?: role}邀请码"
+        pairCode
+    }
+
+    companion object {
+        val ROLE_NAMES = mapOf("family" to "家人", "community" to "社区", "neighbor" to "邻居")
     }
 
     /** Proof of life, and the inbox: whoever is running is also who gets told things. */

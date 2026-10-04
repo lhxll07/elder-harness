@@ -40,6 +40,7 @@ data class ScreenSnapshot(
     val width: Int = 0,
     val height: Int = 0,
     val sensitive: Boolean = false,
+    val windowId: Int? = null,
 )
 
 data class ToolCall(
@@ -56,9 +57,20 @@ data class ToolCall(
     val revision: String = "",
     /** Identity captured from the observation; used to reject stale ids after a page change. */
     val expected: String = "",
+    /** Local observation that justified the action; never populated from model arguments. */
+    val observedScreen: ScreenSnapshot? = null,
 )
 
-data class ScreenImage(val base64: String, val revision: String, val mimeType: String = "image/png")
+data class ScreenImage(
+    val base64: String,
+    val revision: String,
+    val mimeType: String = "image/png",
+    /**
+     * True when the frame came back blank because the page forbids capture (FLAG_SECURE). The pixels
+     * carry no information, so a protected frame is never evidence and never reaches the reviewer.
+     */
+    val protected: Boolean = false,
+)
 
 data class ToolResult(
     val success: Boolean,
@@ -188,7 +200,7 @@ object PhoneToolCatalog {
         specs.filter { visionEnabled || it.name !in VISION_ONLY }
 
     /** Tools that only make sense with a screenshot, i.e. on pages without an accessibility tree. */
-    private val VISION_ONLY = setOf("screenshot", "tap_xy", "type_text", "paste_text")
+    private val VISION_ONLY = PhoneTool.visionOnly
 
     /**
      * Renders a page as compact text for the model.
@@ -237,7 +249,7 @@ object PhoneToolCatalog {
         ) {
             append("这一页有 ").append(unnamedLeaves(screen))
             append(" 个没有文字的控件，内容多半在图像里（表格、图表、图片文字）。")
-            append("请直接用 screenshot 读图，不要逐个点进去探索：点进去会离开这一页，回来时常常已经不是同一页。\n")
+            append("要读就直接读图；要操作就用 tap_xy 按图上的 5% 网格点（给到 0.01 精度），点完会自动给你新截图。\n")
             append('\n')
         } else if (screen.elements.none { it.clickable || it.editable || it.longClickable || it.isSlider }) {
             // A page full of text with nothing to operate (often a WebView) invites blind tapping.

@@ -10,14 +10,24 @@ from urllib.parse import unquote
 
 import pytest
 
-from app import db, notify, watch
+from app import db, main, notify, watch
 from conftest import auth
 
 
+def invite(client, device, role="family"):
+    """Rotate the phone's invite code to one role. The role travels with the code."""
+    response = client.post("/api/device/invite", json={"role": role}, headers=auth(device))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["pair_code_role"] == role
+    return body["pair_code"]
+
+
 def join(client, device, name="大女儿", phone="13800000001", role="family"):
+    """Join the circle. There is no role field on the form: the invite already carries it."""
     response = client.post(
         "/join",
-        data={"pair_code": device["pair_code"], "name": name, "phone": phone, "role": role},
+        data={"pair_code": invite(client, device, role), "name": name, "phone": phone},
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -27,7 +37,7 @@ def join(client, device, name="大女儿", phone="13800000001", role="family"):
 def test_pairing_returns_a_token_and_code(client):
     response = client.post("/api/device/pair", json={"elder_name": "妈妈"})
     body = response.json()
-    assert body["token"] and len(body["pair_code"]) == 6
+    assert body["token"] and len(body["pair_code"]) == 8
     assert body["heartbeat_seconds"] > 0
 
 
@@ -47,10 +57,48 @@ def test_heartbeat_records_life_and_returns_the_inbox(client, device):
 def test_wrong_pair_code_is_refused(client, device):
     response = client.post(
         "/join",
-        data={"pair_code": "ZZZZZZ", "name": "陌生人", "phone": "139", "role": "family"},
+        data={"pair_code": "ZZZZZZZZ", "name": "陌生人", "phone": "139"},
     )
     assert response.status_code == 400
     assert db.circle_of(device["device_id"]) == []
+
+
+def test_a_joiner_cannot_pick_their_own_role(client, device):
+    """The old form let anyone who held a code choose 家人. The role now travels with the invite."""
+    code = invite(client, device, "neighbor")
+    response = client.post(
+        "/join",
+        data={"pair_code": code, "name": "陌生人", "phone": "139", "role": "family"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    assert [member["role"] for member in db.circle_of(device["device_id"])] == ["neighbor"]
+
+
+def test_repeated_wrong_codes_are_throttled(client, device):
+    for _ in range(main.JOIN_MAX_FAILURES):
+        response = client.post("/join", data={"pair_code": "ZZZZZZZZ", "name": "陌生人", "phone": "139"})
+        assert response.status_code == 400
+
+    blocked = client.post("/join", data={"pair_code": "ZZZZZZZZ", "name": "陌生人", "phone": "139"})
+    assert blocked.status_code == 429
+    # A correct code does not get through either while the throttle is on: a guesser learns nothing
+    # from the difference between "wrong" and "right but throttled".
+    known = client.post(
+        "/join",
+        data={"pair_code": invite(client, device, "family"), "name": "大女儿", "phone": "13800000001"},
+    )
+    assert known.status_code == 429
+
+
+def test_invite_needs_the_device_token_and_a_known_role(client, device):
+    assert client.post("/api/device/invite", json={"role": "family"}).status_code == 401
+    assert client.post(
+        "/api/device/invite", json={"role": "family"}, headers=auth(device)
+    ).status_code == 200
+    assert client.post(
+        "/api/device/invite", json={"role": "root"}, headers=auth(device)
+    ).status_code == 400
 
 
 def test_family_sees_the_elder_and_the_timeline(client, device):
@@ -209,7 +257,7 @@ def test_community_sees_that_help_is_needed_but_not_the_context(client, device):
 
     other = client.post(
         "/join",
-        data={"pair_code": device["pair_code"], "name": "张网格员", "phone": "13800000002", "role": "community"},
+        data={"pair_code": invite(client, device, "community"), "name": "张网格员", "phone": "13800000002"},
         follow_redirects=False,
     )
     community = _CookieClient(other.cookies)
@@ -283,7 +331,7 @@ def test_summary_shape_is_stable(client, device):
     body = client.get(f"/api/devices/{device['device_id']}/summary").json()
     assert body["elder_name"] == "妈妈"
     assert [member["role"] for member in body["circle"]] == ["family"]
-    assert re.fullmatch(r"[A-HJ-NP-Z2-9]{6}", device["pair_code"])  # no I/O/0/1 look-alikes
+    assert re.fullmatch(r"[A-HJ-NP-Z2-9]{8}", device["pair_code"])  # no I/O/0/1 look-alikes
 
 
 

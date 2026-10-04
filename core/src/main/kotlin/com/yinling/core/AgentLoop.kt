@@ -39,6 +39,12 @@ object ToolCallId {
  * One entry of the running transcript. It is never rebuilt from scratch: every step appends to
  * it, and an approval pause resumes from it unchanged.
  */
+/**
+ * What a TOOL message learned from the platform. It rides on the transcript because the transcript
+ * is the one record that survives a restart, and the completion audit has to stay honest across one.
+ */
+data class ToolOutcome(val success: Boolean, val screenChanged: Boolean? = null)
+
 data class AgentMessage(
     val role: Role,
     /** Assistant prose, or the observation handed back for a tool call. */
@@ -48,6 +54,8 @@ data class AgentMessage(
     val toolCallId: String? = null,
     /** A screenshot the next planning step may attach. Never persisted. */
     val image: ScreenImage? = null,
+    /** For role TOOL: the platform's verdict. Never sent to the provider. */
+    val outcome: ToolOutcome? = null,
 ) {
     enum class Role { SYSTEM, USER, ASSISTANT, TOOL }
 }
@@ -131,6 +139,14 @@ interface AgentHook {
 
     /** A confirmation prompt is about to be shown; [display] is the plain-language question. */
     fun onApprovalRequest(display: String) = Unit
+
+    /**
+     * One model request has started.
+     *
+     * Called once per request, before the first attempt, so the person is told that something is
+     * happening instead of watching a screen that has not changed since the last step.
+     */
+    fun onThinking() = Unit
 }
 
 object NoHook : AgentHook
@@ -190,6 +206,7 @@ enum class PauseReason {
     GENERAL,
     PERSON_ACTION,
     OUTCOME_UNVERIFIED,
+    OUTCOME_NOT_DONE,
 }
 
 /** One generation plus the local execution of whatever it asked for. */
@@ -236,25 +253,76 @@ class AgentLoop(
     private val renderScreen: (ScreenSnapshot) -> String = { "" },
     /** Optional diagnostics, e.g. Log.d on Android. Never used for control flow. */
     private val logger: (String) -> Unit = {},
+    private val maxStaleRefreshes: Int = 3,
+    /**
+     * Decides whether a completion claim is supported. The product passes a model reviewer; the
+     * default is the deterministic one, which keeps the loop offline-testable and gives the
+     * evaluation a rule-based baseline to compare the model against.
+     */
+    private val reviewer: CompletionReviewer = RuleReviewer,
+    /**
+     * Room for one request, in tokens. Folding old page renders starts at
+     * [COMPACT_AT_RATIO] of this and keeps the newest [RETAIN_RATIO] worth of messages.
+     * Set to 0 to disable folding entirely.
+     */
+    private val contextBudgetTokens: Int = MAX_CONTEXT_TOKENS,
 ) {
     private val transcript = mutableListOf<AgentMessage>()
 
     /**
-     * Every tool call this run executed, in order. Kept so a completion claim can be checked
-     * against what actually happened (see [OutcomeCheck]).
+     * Everything this task observed, for the evidence audit (see [EvidenceCheck]). The action half
+     * of the evidence is read back off the transcript instead of kept here, so the two cannot drift.
      */
-    private val executedCalls = mutableListOf<ExecutedCall>()
+    private var ledger = EvidenceLedger.EMPTY
 
-    /** Wall clock when this run started: evidence older than this cannot be this run's work. */
-    private var runStartedAt = System.currentTimeMillis()
+    /**
+     * The newest screenshots of this task, so the completion reviewer can check facts that exist
+     * only in pixels (a stored photo, a drawn timetable). Bounded: a task must not accumulate images.
+     */
+    private val recentShots = ArrayDeque<ScreenImage>()
 
-    /** Calls proposed but not yet executed, in order. Non-empty means a resume continues them. */
-    private var pending: List<ToolInvocation> = emptyList()
+    /**
+     * Wall clock when this task started. Set once per task and deliberately untouched by pause,
+     * resume or restore, so a time the message mentions is compared with the task, not the process.
+     */
+    private var taskStartedAt = System.currentTimeMillis()
+
+    /**
+     * Text this run typed into the phone itself.
+     *
+     * The observation layer reads whatever the accessibility tree shows, and a text field shows what
+     * we just put in it. Without this, anything the run types — a search term, a draft message, a
+     * number it wants to "find" — comes back on the next step as if the page had said it, and can
+     * then be used to prove its own completion claim ("取件码是4006" typed, then confirmed by the
+     * page). Facts we produced are not evidence about the world.
+     */
+    private val writtenText = mutableSetOf<String>()
 
     private var step = 0
     /** Start of the current step budget; explicit resume grants another bounded window. */
     private var budgetStart = 0
     private var repairs = 0
+
+    /**
+     * The last few steps, each marked by whether the page moved under the action *and* whether any
+     * screen action succeeded.
+     *
+     * The two are read together on purpose. A stale step on its own is ordinary on a live page
+     * (Meituan animates, so the control moves between planning and dispatch) and the run keeps going;
+     * what must stop is a run that repeatedly cannot touch anything at all. Going round in circles is
+     * a different failure, caught by the page-oscillation check.
+     */
+    private val recentStale = ArrayDeque<Boolean>()
+    private val recentProgress = ArrayDeque<Boolean>()
+
+    /**
+     * The distinct pages this run has moved between, with a repetition flag. A live-preview page
+     * (font size) reflows on every visit, so page *revisions* cannot reveal an oscillation; the
+     * geometry-free page key can.
+     */
+    private val recentPages = ArrayDeque<String>()
+    private var pageOscillation = false
+    private var plannedScreen: ScreenSnapshot? = null
 
     /** Last page text handed to the model, so an unchanged page is not repeated every step. */
     private var lastRenderedPage: String? = null
@@ -266,22 +334,25 @@ class AgentLoop(
     private var lastScreenWasBlind = false
 
     /**
-     * Page text this run actually saw, for the evidence layer ([EvidenceCheck]).
-     *
-     * Accumulated across the whole run rather than taken from the last observation alone: a claim
-     * may legitimately refer to something read several steps earlier, and keeping only the final
-     * screen would manufacture downgrades for honest answers.
+     * True when the last observation had no window at all (no package, no nodes). That is an app
+     * transition, not a blind app: the loop waits for it instead of declaring it unreadable.
      */
-    private val seenScreenText = mutableListOf<String>()
+    private var lastScreenUnresolved = false
 
-    /** True once any observation in this run yielded readable page text. */
-    private var screenWasReadable = false
+    /** Whether the "the page has not loaded yet, wait" notice was already given. */
+    private var unresolvedNoticeGiven = false
 
     /** True when the page has a tree but its content is drawn (table, chart, web canvas). */
     private var lastScreenWasGraphical = false
 
-    /** Revision the graphical screenshot was already attached for, so it happens once per page. */
-    private var graphicalShotRevision: String? = null
+    /**
+     * Revision the automatic screenshot was already taken for, so one page is photographed once.
+     *
+     * Both branches need this. A graphical page would otherwise be re-captured whenever the loop
+     * came back to it, and a blind page — whose tree never changes — was re-captured on every single
+     * step, because the guard only covered the graphical branch.
+     */
+    private var autoShotRevision: String? = null
 
     /** Budget for repeated-action cycles. Page text/revision changes are too noisy to use here. */
     private var cycleNotices = 0
@@ -301,6 +372,15 @@ class AgentLoop(
 
     /** Apps the person already agreed to open in this task, so the question is asked once each. */
     private val approvedNewApps = mutableSetOf<String>()
+
+    /**
+     * Call ids the person has already been asked about for the batch in flight.
+     *
+     * The batch asks once for all of its approval-needing calls before running any of them, which is
+     * better than interrupting between two taps. This records those answers so [refuse] can tell
+     * "already asked" apart from "the loop is starting this call itself" — the second case must ask.
+     */
+    private val preApprovedCalls = mutableSetOf<String>()
 
     /** Information the run has already fetched; asking twice is pointless. */
     private val fetched = HashSet<String>()
@@ -332,12 +412,15 @@ class AgentLoop(
 
     val conversation: List<AgentMessage> get() = transcript.toList()
     val stepCount: Int get() = step
-    val awaitingApproval: Boolean get() = pending.isNotEmpty()
+
+    /** When this task began, so a caller can persist it and restore the same window later. */
+    val startedAt: Long get() = taskStartedAt
 
     suspend fun start(goal: String): AgentOutcome {
         if (goal.isBlank()) return AgentOutcome.PAUSED("请先说要办的事。")
         transcript.clear()
         transcript += AgentMessage(AgentMessage.Role.USER, content = goal.trim())
+        taskStartedAt = System.currentTimeMillis()
         reset()
         return loop()
     }
@@ -348,25 +431,34 @@ class AgentLoop(
      * The restored messages are byte-for-byte the ones the provider saw, so the request prefix is
      * unchanged and the provider's prefix cache keeps hitting (measured ~67-89% on this loop).
      * Screenshots are deliberately not persisted; a fresh observation is injected on the next step.
+     *
+     * @param startedAt when the task originally began, when the caller persisted it. Keeping the
+     *   original start is what stops a resumed task from treating its own earlier work as history.
      */
-    fun restore(conversation: List<AgentMessage>, atStep: Int): Boolean {
+    fun restore(conversation: List<AgentMessage>, atStep: Int, startedAt: Long = taskStartedAt): Boolean {
         if (conversation.isEmpty()) return false
         transcript.clear()
         transcript += conversation
+        taskStartedAt = startedAt
         reset()
         step = atStep.coerceAtLeast(0)
         return true
     }
 
     private fun reset() {
-        pending = emptyList()
         step = 0
         budgetStart = 0
         repairs = 0
+        recentStale.clear()
+        recentProgress.clear()
+        recentPages.clear()
+        pageOscillation = false
+        plannedScreen = null
         cycleNotices = 0
         recentActions.clear()
         repeatSignature = null
         repeatCount = 0
+        writtenText.clear()
         visitedApps.clear()
         approvedNewApps.clear()
         fetched.clear()
@@ -375,12 +467,12 @@ class AgentLoop(
         lastRenderedPage = null
         lastPageFingerprint = null
         lastScreenWasBlind = false
+        lastScreenUnresolved = false
+        unresolvedNoticeGiven = false
         lastScreenWasGraphical = false
-        seenScreenText.clear()
-        screenWasReadable = false
-        graphicalShotRevision = null
-        executedCalls.clear()
-        runStartedAt = System.currentTimeMillis()
+        autoShotRevision = null
+        ledger = EvidenceLedger.EMPTY
+        recentShots.clear()
     }
 
     /** Continues a paused run from the same transcript. */
@@ -389,17 +481,16 @@ class AgentLoop(
         // The step budget is a safety stop, not a permanent death sentence. A person explicitly
         // choosing "continue" grants one more bounded budget; it does not make the budget infinite.
         if (step - budgetStart >= maxSteps) budgetStart = step
+        recentStale.clear()
+        recentProgress.clear()
+        recentPages.clear()
+        pageOscillation = false
         return loop()
     }
 
     private suspend fun loop(): AgentOutcome {
         while (true) {
             currentCoroutineContext().ensureActive()
-
-            // A resume continues the calls that were proposed before the pause.
-            if (pending.isNotEmpty()) {
-                execute(transcript.lastIndex, pending)?.let { return it }
-            }
 
             if (step - budgetStart >= maxSteps) {
                 return AgentOutcome.STEP_LIMIT(
@@ -415,7 +506,11 @@ class AgentLoop(
     /** One planning turn. Returns non-null when the run must stop. */
     private suspend fun plan(): AgentOutcome? {
         observeIntoScreen()
-        captureWhenBlind()
+        if (pageOscillation) {
+            return AgentOutcome.STUCK("它一直在两个页面之间来回，没有进展，我已经停了。")
+        }
+        captureWhenBlind()?.let { return it }
+        compactIfNeeded()
         val generated = generate()
         currentCoroutineContext().ensureActive()
         // Whatever image the request carried has been sent; never repeat it on later steps.
@@ -431,42 +526,64 @@ class AgentLoop(
                 this.step += 1
                 logger("step=${this.step} final")
                 val text = step.message.ifBlank { "这件事办完了。" }
-                // "Done" is a claim about the world, and it is the one claim we can partly check
-                // without asking anyone: a run that typed nothing cannot have sent the text it
-                // quotes, and a time from before the run cannot be its own work.
-                //
-                // Two layers, both local and deterministic, neither of which a confident sentence
-                // can talk out of:
-                //   mechanical ([OutcomeCheck]) — does this run's own action log allow the claim?
-                //   evidence   ([EvidenceCheck]) — is what it says it read actually on a page it saw?
-                // The second is asked only when the first passes, and it is skipped entirely when
-                // nothing readable was ever observed, because "I could not see" is not "you lied".
-                val rejected = OutcomeCheck.check(text, executedCalls, runStartedAt)
-                    as? OutcomeVerdict.Unsupported
-                    ?: (EvidenceCheck.check(text, seenScreenText, screenWasReadable)
-                        as? OutcomeVerdict.Unsupported)
-                if (rejected != null) {
-                    val honest = OutcomeCheck.explain(rejected)
-                    logger("outcome rejected: ${rejected.reason}")
-                    transcript += assistant(honest)
-                    transcript += AgentMessage(
-                        AgentMessage.Role.USER,
-                        content = "（系统提示：刚才的收尾被驳回，因为 ${rejected.reason}。" +
-                            "如果要继续，请真的把这一步做出来，再说明结果；做不到就如实讲。）",
-                    )
-                    hook.onMessage(honest)
-                    return AgentOutcome.PAUSED(
-                        honest,
-                        needsPerson = false,
-                        reason = PauseReason.OUTCOME_UNVERIFIED,
-                    )
+                val request = ReviewRequest(
+                    claim = text,
+                    actions = actionLedger(),
+                    observations = ledger.observations,
+                    images = recentShots.toList(),
+                    window = RunWindow(taskStartedAt, System.currentTimeMillis()),
+                )
+                // A reviewer that throws must degrade to "ask the person", never to a silent "done".
+                val verdict = try {
+                    reviewer.review(request)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    logger("reviewer failed: ${error.javaClass.simpleName} ${error.message}")
+                    OutcomeVerdict.Unverified("核验没有完成，请您自己看一眼")
                 }
-                transcript += assistant(text)
-                hook.onMessage(text)
-                return AgentOutcome.COMPLETED(text)
+                if (verdict is OutcomeVerdict.Supported) {
+                    transcript += assistant(text)
+                    hook.onMessage(text)
+                    return AgentOutcome.COMPLETED(text)
+                }
+                if (verdict is OutcomeVerdict.NotDone) {
+                    // The run itself says the task was not achieved. That is an honest ending, but it
+                    // is not a completion, so it must not take the completion path or feed a skill.
+                    logger("outcome not done")
+                    transcript += assistant(text)
+                    hook.onMessage(text)
+                    return AgentOutcome.PAUSED(text, reason = PauseReason.OUTCOME_NOT_DONE)
+                }
+                val honest = OutcomeCheck.explain(verdict)
+                logger("outcome needs review: ${verdict::class.simpleName}")
+                transcript += assistant(honest)
+                transcript += AgentMessage(
+                    AgentMessage.Role.USER,
+                    content = "（系统提示：结果尚未核实，已暂停。不得通过重复发送、付款或提交来验证结果；" +
+                        "可以说明卡在哪里，或请老人自己核对。）",
+                )
+                hook.onMessage(honest)
+                return AgentOutcome.PAUSED(
+                    honest,
+                    needsPerson = false,
+                    reason = PauseReason.OUTCOME_UNVERIFIED,
+                )
             }
 
             is AgentStep.Calls -> {
+                if (step.invocations.isEmpty()) {
+                    // A call batch with no calls is not a step. The old code wrote the assistant
+                    // message first and then asserted inside the executor, so the contract slip
+                    // became a crash ("接线员出错了") that also threw away the model's own words.
+                    logger("empty call batch; treating as a protocol error")
+                    repairs += 1
+                    if (step.text.isNotBlank()) hook.onMessage(step.text)
+                    if (repairs >= maxRepairs) {
+                        return AgentOutcome.PAUSED("模型连续给出了空的操作请求，已经停下。请重新说要办的事。")
+                    }
+                    return null
+                }
                 this.step += 1
                 logger("step=${this.step} calls=" + step.invocations.joinToString { it.tool + it.arguments })
                 transcript += assistant(step.text, step.invocations)
@@ -477,12 +594,32 @@ class AgentLoop(
     }
 
     /**
-     * Some apps expose no accessibility tree at all. When the page has
-     * nothing to act on, the model cannot even know what to look for, so it would never think to
-     * ask for a screenshot. Attach one automatically instead.
+     * Some apps expose no accessibility tree at all, and some pages forbid capture entirely
+     * (`FLAG_SECURE`, common on payment and mini-program pages).
+     *
+     * When the page has nothing to act on, a screenshot is attached unasked so the model is not
+     * guessing blind. When capture itself is forbidden — no labels *and* a black frame — the run
+     * cannot observe the page at all, so the step goes back to the person instead of tapping at
+     * coordinates on a page nobody can see.
+     *
+     * @return non-null when the run must stop here.
      */
-    private suspend fun captureWhenBlind() {
-        if (!lastScreenWasBlind && !lastScreenWasGraphical) return
+    private suspend fun captureWhenBlind(): AgentOutcome? {
+        if (lastScreenUnresolved) {
+            // Nothing to photograph and nothing to judge. Tell the model to wait — once — rather than
+            // let it conclude the task is impossible or hand it to the family.
+            if (!unresolvedNoticeGiven) {
+                unresolvedNoticeGiven = true
+                transcript += AgentMessage(
+                    AgentMessage.Role.USER,
+                    content = "（系统提示：页面还没有加载出来，还没有可读内容。先 wait 再观察；" +
+                        "不要按猜测的位置点按，也不要急着下结论。）",
+                )
+                logger("window still unresolved: told the model to wait")
+            }
+            return null
+        }
+        if (!lastScreenWasBlind && !lastScreenWasGraphical) return null
         if (tools.catalog.none { it.name == "screenshot" }) {
             // No accessibility content and no screenshots means the run has no way to observe
             // anything. Say that once instead of letting the model guess for dozens of steps.
@@ -495,16 +632,32 @@ class AgentLoop(
                 )
                 logger("blind page without vision: told the model it cannot observe")
             }
-            return
+            return null
         }
-        if (screenshotFailures >= SCREENSHOT_FAILURE_LIMIT) return
+        if (screenshotFailures >= SCREENSHOT_FAILURE_LIMIT) return null
 
         val observed = tools.observe()
-        if (observed.sensitive) return
-        // A drawn page looks usable in the tree but holds none of the content; attaching the picture
-        // unasked removes the incentive to open cells one by one just to find out what they say.
-        if (!lastScreenWasBlind && observed.revision == graphicalShotRevision) return
-        val shot = tools.execute(ToolCall(name = "screenshot", revision = observed.revision))
+        if (observed.sensitive) return null
+        // One automatic screenshot per page revision. A blind page's tree does not change, so
+        // without this the run photographed and re-uploaded the very same screen on every step; the
+        // graphical branch had a guard and the blind branch did not.
+        if (observed.revision == autoShotRevision) return null
+        val shotSpec = spec("screenshot") ?: return null
+        // Through the same gate as everything else: this is what makes the screenshot's declared
+        // `needsApproval` real instead of advisory.
+        val shot = dispatch(
+            ToolInvocation("auto_${step}_screenshot", "screenshot", emptyMap()),
+            shotSpec,
+            observed,
+        )
+        if (shot.code == "denied_by_user") {
+            // The person said no to sending the screen away. Do not ask again for this task, and do
+            // not keep trying to observe a page we are not allowed to photograph.
+            autoShotRevision = observed.revision
+            logger("automatic screenshot refused by the person")
+            return null
+        }
+        autoShotRevision = observed.revision
         if (!shot.success || shot.image == null) {
             screenshotFailures += 1
             logger("blind page, screenshot failed (${shot.code}) attempt=$screenshotFailures")
@@ -517,8 +670,17 @@ class AgentLoop(
                 )
                 hook.onWarning("看不了这个页面，请家人帮忙。")
             }
-            return
+            return null
         }
+        if (shot.image.protected) {
+            // No labels in the tree and a black frame from the display: the run has no way to see
+            // this page. Guessing coordinates here is exactly the wrong move, so hand it back.
+            logger("screen is capture-protected: handed the step back to the person")
+            val message = "这一页系统不允许截屏，我读不到上面的内容。请您自己操作，完成之后按继续。"
+            hook.onMessage(message)
+            return AgentOutcome.PAUSED(message, needsPerson = true, reason = PauseReason.PERSON_ACTION)
+        }
+        rememberShot(shot.image)
         if (lastScreenWasBlind) {
             transcript += AgentMessage(
                 AgentMessage.Role.USER,
@@ -527,15 +689,16 @@ class AgentLoop(
             )
             logger("blind page, attached screenshot ${shot.image.base64.length / 1024}KB")
         } else {
-            graphicalShotRevision = observed.revision
             transcript += AgentMessage(
                 AgentMessage.Role.USER,
-                content = "（系统提示：这一页的文字里没有内容，内容在图像里。已附上截图，请直接读图回答；" +
-                    "不要靠逐个点进去查看——那会离开这一页，而且回来时常常已经不是同一页。）",
+                content = "（系统提示：这一页的文字里没有内容，内容在图像里。已附上截图：" +
+                    "只要读就直接读图；需要操作就用 tap_xy 按图上的 5% 网格点（给到 0.01 精度），" +
+                    "点完会自动给你新的截图。）",
                 image = shot.image,
             )
             logger("graphical page, attached screenshot ${shot.image.base64.length / 1024}KB")
         }
+        return null
     }
 
     /**
@@ -543,22 +706,75 @@ class AgentLoop(
      * between controls it cannot see, which is how a loop ends up doing nothing.
      */
     private suspend fun observeIntoScreen() {
-        val screen = tools.observe()
-        if (screen.sensitive) clearImages()
-        // Evidence for the outcome check: what this run can honestly claim to have "read".
-        // A sensitive page contributes nothing — we deliberately do not keep its content.
-        if (!screen.sensitive) {
-            val read = screen.labels + screen.elements.mapNotNull { it.text.takeIf(String::isNotBlank) }
-            if (read.isNotEmpty()) {
-                seenScreenText += read
-                screenWasReadable = true
-            }
+        var screen = tools.observe()
+        // A window that has not attached yet — no package, no nodes — is an app transition, not a
+        // blind app. Waiting for it is what stops a cold-starting app from being reported to the
+        // model as "you cannot see" and pushed to hand the task to the family.
+        var waited = 0
+        while (unresolved(screen) && waited < UNRESOLVED_RETRIES) {
+            waited++
+            delay(UNRESOLVED_DELAY_MS)
+            screen = tools.observe()
         }
+        lastScreenUnresolved = unresolved(screen)
+        if (!lastScreenUnresolved) unresolvedNoticeGiven = false
+        if (waited > 0) logger("window unresolved, waited ${waited}x")
+        plannedScreen = screen
+        recordPage(screen)
+        if (screen.sensitive) clearImages()
+        // Facts this run produced itself are not observations about the world: an input box shows
+        // whatever we just typed into it. They are dropped from both the raw node texts and the
+        // rendered page, otherwise the run can prove its own claim with its own input.
+        //
+        // Two characters is the floor: filtering on a single character would delete half the page
+        // for no gain. The bias is deliberately towards dropping too much — a missing fact makes a
+        // result "待核对", while a self-supplied fact makes a false "办好了" possible.
+        val selfTyped = writtenText.filter { it.length >= 2 }
+        val ours: (String) -> Boolean = { text -> selfTyped.any(text::contains) }
+        val read = if (screen.sensitive) {
+            emptyList()
+        } else {
+            val nodes = if (screen.elements.isEmpty()) screen.labels else screen.elements
+                .filter { it.role != PhoneToolCatalog.KEYBOARD_ROLE }
+                .flatMap { listOf(it.text, it.description) }
+            nodes.map(String::trim).filter(String::isNotEmpty).distinct()
+        }
+        val observed = read.filterNot(ours)
         val rendered = if (screen.sensitive) PhoneToolCatalog.render(screen) else renderScreen(screen)
+        // The reviewer checks what the model was actually shown, so the rendered page travels with
+        // the raw node texts: the render is where derived facts live (a slider's "第3/5 档").
+        val evidence = if (screen.sensitive) {
+            emptyList()
+        } else {
+            val kept = rendered.lineSequence().filterNot(ours).joinToString("\n").trim()
+            (observed + listOfNotNull(kept.takeIf { it.isNotBlank() })).distinct()
+        }
+        ledger = ledger.plus(
+            Observation(
+                app = screen.app,
+                revision = screen.revision,
+                step = step,
+                sensitive = screen.sensitive,
+                texts = evidence,
+            ),
+        )
+        // The text we produced is kept too, but marked as ours. It cannot vouch for anything; it is
+        // what lets the audit say "this is what you typed" instead of "I never saw this", which is
+        // the difference between a confusing pause and an honest explanation.
+        ledger = ledger.plus(
+            Observation(
+                app = screen.app,
+                revision = screen.revision,
+                step = step,
+                source = EvidenceSource.SELF_TYPED,
+                texts = read.filter(ours),
+            ),
+        )
         if (rendered.isBlank()) return
         lastScreenWasBlind = screen.elements.none { it.clickable || it.editable || it.scrollable }
         lastScreenWasGraphical =
-            PhoneToolCatalog.unnamedLeaves(screen) >= PhoneToolCatalog.GRAPHICAL_LEAF_THRESHOLD
+            PhoneToolCatalog.unnamedLeaves(screen) >= PhoneToolCatalog.GRAPHICAL_LEAF_THRESHOLD ||
+                contentOnlyInPixels(screen)
         lastPageFingerprint = rendered.hashCode().toString(16)
         // A screenshot taken by an explicit tool call sits on a TOOL message; unless it is moved
         // onto the newest observation the planner never sees it, because only the last message's
@@ -582,19 +798,69 @@ class AgentLoop(
     }
 
     /** True when the tail of [signatures] repeats with period 2 or 3. */
-    private fun isCyclic(signatures: List<String>): Boolean {
+    /** True when the sequence ends in at least three full repeats of a period of 2 or 3. */
+    private fun hasRepeatingPeriod(sequence: List<String>): Boolean {
         // Three full repeats, not two: legitimate work often repeats a two-step pattern twice
         // (fill this field, then the next one) without being a loop.
         for (period in 2..3) {
             val needed = period * 3
-            if (signatures.size < needed) continue
-            val tail = signatures.takeLast(needed)
+            if (sequence.size < needed) continue
+            val tail = sequence.takeLast(needed)
             // A constant sequence also satisfies every period, but repeating one action is allowed
-            // (holding backspace, paging down), so require at least two distinct actions.
+            // (holding backspace, paging down), so require at least two distinct entries.
             if (tail.distinct().size < 2) continue
             if ((0 until needed).all { tail[it] == tail[it % period] }) return true
         }
         return false
+    }
+
+    /**
+     * Remembers the page the run is on, as a key that ignores revisions and geometry.
+     *
+     * A live-preview settings page reflows on every visit, so `(app, revision)` sees a brand-new page
+     * each time and cannot reveal an oscillation. What is stable is the set of labels a person can
+     * act on, which is what [pageKey] keeps; a page entered repeatedly then shows up as the same
+     * key, and "A, B, A, B, A, B" becomes visible.
+     */
+    private fun recordPage(screen: ScreenSnapshot) {
+        val key = pageKey(screen)
+        if (key == recentPages.lastOrNull()) return
+        recentPages.addLast(key)
+        while (recentPages.size > PAGE_WINDOW) recentPages.removeFirst()
+        pageOscillation = isOscillating(recentPages)
+    }
+
+    private fun pageKey(screen: ScreenSnapshot): String {
+        val labels = screen.elements
+            .filter { it.clickable || it.editable || it.longClickable || it.scrollable || it.isSlider }
+            .map { it.text.ifBlank { it.description }.trim() }
+            .filter(String::isNotEmpty)
+            .distinct()
+            .sorted()
+        return (screen.app ?: "?") + "|" + (screen.windowId ?: -1) + "|" + labels.joinToString(",")
+    }
+
+    /** True when the page keys end in at least three full A/B (or A/B/C) repeats. */
+    private fun isOscillating(pages: List<String>): Boolean = hasRepeatingPeriod(pages)
+
+    /** A window that has not attached yet: no package and no nodes. */
+    private fun unresolved(screen: ScreenSnapshot): Boolean =
+        screen.app == null && screen.elements.isEmpty()
+
+    /**
+     * A page with controls but not one readable label. The text is drawn rather than exposed — common
+     * in WebView and mini-program pages — so a screenshot is the only way to read it. Without this,
+     * such a page looks "usable" (its containers are clickable) and no picture is ever taken.
+     */
+    private fun contentOnlyInPixels(screen: ScreenSnapshot): Boolean =
+        screen.elements.none { it.text.isNotBlank() || it.description.isNotBlank() } &&
+            screen.elements.any { it.clickable || it.editable || it.longClickable || it.scrollable }
+
+    /** Keeps the newest screenshots only: the reviewer needs the recent picture, not the whole film. */
+    private fun rememberShot(image: ScreenImage?) {
+        if (image == null || image.protected) return
+        recentShots.addLast(image)
+        while (recentShots.size > MAX_REVIEW_IMAGES) recentShots.removeFirst()
     }
 
     /** Drops every screenshot from the transcript; called once an image has been sent. */
@@ -606,6 +872,8 @@ class AgentLoop(
 
     /** Calls the planner, retrying provider failures inside the policy budget. */
     private suspend fun generate(): AgentStep {
+        // Once per request, not per attempt: a retry is still the same wait from where the person sits.
+        hook.onThinking()
         var failures = 0
         while (true) {
             currentCoroutineContext().ensureActive()
@@ -640,15 +908,16 @@ class AgentLoop(
      * @param assistantIndex transcript index of the assistant message that proposed [invocations].
      */
     private suspend fun execute(assistantIndex: Int, invocations: List<ToolInvocation>): AgentOutcome? {
-        pending = invocations
+        preApprovedCalls.clear()
 
         val safetyScreen = tools.observe()
         val failures = invocations.map { invocation ->
-            ManualActionPolicy.checkText(invocation) ?: ManualActionPolicy.checkScreen(invocation, safetyScreen)
+            ManualActionPolicy.checkText(invocation)
+                ?: ManualActionPolicy.checkScreen(invocation, plannedScreen ?: safetyScreen)
+                ?: ManualActionPolicy.checkSensitiveScreen(invocation.tool, safetyScreen)
         }
         val safetyFailure = failures.firstOrNull { it != null }
         if (safetyFailure != null) {
-            pending = emptyList()
             appendResults(invocations, failures.map { failure ->
                 failure ?: ToolResult(false, "同一批次包含需要本人完成的操作，本批次未执行。", "blocked_by_safety")
             })
@@ -658,15 +927,13 @@ class AgentLoop(
         // Goal consistency. The current foreground app belongs to the task by definition; a
         // *different* app is a navigation the loop cannot judge, and an injected page can ask for it.
         safetyScreen.app?.let { visitedApps += it }
-        val opening = invocations.firstOrNull { it.tool == OPEN_APP_TOOL }
-        if (opening != null) {
-            val app = opening.arguments["argument"].orEmpty()
+        for (opening in invocations.filter { it.tool == OPEN_APP_TOOL || it.tool == "open_settings" }) {
+            val app = if (opening.tool == "open_settings") "设置" else opening.arguments["argument"].orEmpty()
             if (app.isNotBlank() && app !in visitedApps && app !in approvedNewApps) {
                 hook.onApprovalRequest("要打开「$app」吗？它不在这件事已经用到的应用里。")
                 if (approval.confirmNewApp(app, opening)) {
                     approvedNewApps += app
                 } else {
-                    pending = emptyList()
                     val refused = ToolResult(false, "老人没有同意打开「$app」，这一步没有执行。", "denied_by_user")
                     appendResults(invocations, invocations.map { refused })
                     return AgentOutcome.PAUSED(refused.detail)
@@ -674,10 +941,18 @@ class AgentLoop(
             }
         }
 
-        val needsAnswer = invocations.filter { spec(it.tool)?.needsApproval == true }
+        // Only calls that would actually run are worth asking about: a malformed or person-only call
+        // is refused by the dispatcher anyway, and asking about it would be a pointless interruption.
+        val needsAnswer = invocations.filter { invocation ->
+            val toolSpec = spec(invocation.tool)
+            toolSpec?.needsApproval == true && staticRefusal(invocation, toolSpec, safetyScreen) == null
+        }
         if (needsAnswer.isNotEmpty()) {
             var denied = false
             for (invocation in needsAnswer) {
+                // Recorded before asking: the answer (including "this one needs no consent") belongs
+                // to this call, so the dispatcher does not ask a second time.
+                preApprovedCalls += invocation.id
                 if (!approval.needed(invocation)) continue
                 hook.onApprovalRequest(approvalQuestion(invocation))
                 if (!approval.confirm(invocation)) {
@@ -686,7 +961,6 @@ class AgentLoop(
                 }
             }
             if (denied) {
-                pending = emptyList()
                 // The transcript must stay well formed: every tool call needs an answer.
                 appendResults(invocations, invocations.map {
                     ToolResult(false, "老人拒绝了这个操作。", "denied_by_user")
@@ -700,6 +974,7 @@ class AgentLoop(
         // one spot six times hoping it is the send button. Execute each distinct call once, but
         // answer every call: a tool_call without a result makes the next request invalid.
         val alreadyRun = HashMap<String, ToolResult>()
+        var hardFailure: String? = null
         var handoffReason: String? = null
         var impossibleReason: String? = null
         var needsPersonReason: String? = null
@@ -708,6 +983,10 @@ class AgentLoop(
         try {
             for (invocation in invocations) {
                 currentCoroutineContext().ensureActive()
+                if (handoffReason != null || impossibleReason != null || needsPersonReason != null || question != null) {
+                    executed += invocation to ToolResult(false, "正在等待人工处理，本批剩余操作未执行。", "skipped_handoff")
+                    continue
+                }
 
                 // The model asking to hand over is a legitimate decision, not a failure.
                 if (invocation.tool == HANDOFF_TOOL) {
@@ -768,44 +1047,59 @@ class AgentLoop(
                 }
                 val repeated = alreadyRun[key]
                 if (repeated != null) {
+                    // Carry `screenChanged` across. Dropping it made a batch of six identical calls
+                    // look like six successful actions, which silenced every stall detector at once:
+                    // the repair budget stayed at zero, `noEffect` came out false, and the repeating
+                    // period check could not see a cycle. That is the cheapest shape of "the model
+                    // is just busy", and it was the only shape nothing caught.
                     executed += invocation to ToolResult(
                         repeated.success,
                         "同一个操作已经在这次请求里做过，跳过重复。",
                         "duplicate_skipped",
+                        screenChanged = repeated.screenChanged,
                     )
                     continue
                 }
-                val invalid = validate(spec, invocation)
-                val result = if (invalid != null) {
-                    ToolResult(false, "参数无效：$invalid，请根据工具目录修正。", invalid)
-                } else {
-                    hook.onAction(describe(invocation))
-                    // Re-observe immediately before dispatch, so the revision and the target identity
-                    // describe the page this call is really sent to. Resolving once for the whole
-                    // batch made the second call fail as stale_screen after the first one changed the
-                    // page (tap the input box, then paste the text).
-                    val dispatchScreen = tools.observe()
-                    ManualActionPolicy.checkScreen(invocation, dispatchScreen) ?: run {
-                        val call = resolveCoordinates(invocation, dispatchScreen)
-                        tools.execute(call)
-                    }
+                val result = try {
+                    dispatch(invocation, spec, safetyScreen)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Throwable) {
+                    // The platform layer (accessibility service, gesture dispatch, screenshot) threw
+                    // something we cannot classify. We do not know whether the action landed, so it
+                    // must never be retried: a second tap on "确认支付" is not recoverable.
+                    logger("tool failed: ${error.javaClass.simpleName}: ${error.message}")
+                    hardFailure = "手机执行这一步时出错了（${error.javaClass.simpleName}），已经停下。"
+                    ToolResult(false, hardFailure!!, TOOL_ERROR_CODE)
                 }
                 alreadyRun[key] = result
+                result.image?.let(::rememberShot)
+                if (result.success && invocation.tool in TEXT_WRITING_TOOLS) {
+                    invocation.arguments["text"]?.takeIf { it.isNotBlank() }?.let(writtenText::add)
+                }
                 if (spec.informational && result.success) fetched += key
+                if (invocation.tool == "current_time" && result.success) {
+                    // A local fact the page need not carry: the clock answer is evidence for itself.
+                    ledger = ledger.plus(
+                        Observation(tool = "current_time", step = step, texts = listOf(result.detail)),
+                    )
+                }
                 executed += invocation to result
-                executedCalls += ExecutedCall(
-                    tool = invocation.tool,
-                    argument = if (invocation.tool in ManualActionPolicy.textTools) {
-                        invocation.arguments["text"].orEmpty()
-                    } else {
-                        invocation.arguments.values.joinToString(" ")
-                    },
-                    success = result.success,
-                    atMillis = System.currentTimeMillis(),
-                )
-                if (result.code == "requires_user") {
+                if (result.code == TOOL_ERROR_CODE) {
+                    // Stop the batch: the remaining calls were planned against a page we just failed
+                    // to touch, and continuing would compound an outcome we already cannot describe.
+                    executed += invocations.drop(executed.size).map {
+                        it to ToolResult(false, "前面的操作出错了，本批剩余操作未执行。", "skipped_after_error")
+                    }
+                    break
+                }
+                if (result.code == "requires_user" || result.code == "stale_screen") {
                     executed += invocations.drop(executed.size).map { skipped ->
-                        skipped to ToolResult(false, "前面的操作需要本人完成，本步骤未执行。", "blocked_by_safety")
+                        skipped to if (result.code == "stale_screen") {
+                            ToolResult(false, "页面已变化，本批剩余操作未执行，等待重新观察。", "skipped_stale_batch")
+                        } else {
+                            ToolResult(false, "前面的操作需要本人完成，本步骤未执行。", "blocked_by_safety")
+                        }
                     }
                     break
                 }
@@ -813,8 +1107,7 @@ class AgentLoop(
         } catch (cancelled: CancellationException) {
             // A stop in the middle of a batch is never allowed to leave a partial model transcript
             // or to replay the actions that already happened. Keep completed results, mark the
-            // rest cancelled, clear the pending queue, and let a later resume re-plan from the page.
-            pending = emptyList()
+            // rest cancelled, and let a later resume re-plan from a fresh observation.
             val completed = executed.map { it.second }
             val cancelledResults = invocations.drop(completed.size).map {
                 ToolResult(false, "用户已停止，这一步未执行。", "cancelled")
@@ -822,21 +1115,40 @@ class AgentLoop(
             appendResults(invocations, completed + cancelledResults)
             throw cancelled
         }
-        pending = emptyList()
 
+        // The transcript must stay well formed: appending tool results without their assistant
+        // message would make every later request invalid. This used to be an assertion, which turned
+        // a protocol repair into a crash after the assistant message had already been written.
         val assistant = transcript.getOrNull(assistantIndex)
-        check(assistant?.role == AgentMessage.Role.ASSISTANT && assistant.toolCalls.isNotEmpty()) {
-            "assistant message with tool calls must exist before execution"
+        if (assistant?.role != AgentMessage.Role.ASSISTANT || assistant.toolCalls.isEmpty()) {
+            logger("internal: no assistant message to attach tool results to")
+            return AgentOutcome.PAUSED("内部状态异常，已经停下。请重新说要办的事。")
         }
         appendResults(executed.map { it.first }, executed.map { it.second })
+
+        // An unclassified platform failure stops the run outright: the action may or may not have
+        // landed, and the honest answer is to hand the page back to the person rather than to guess.
+        val broke = hardFailure
+        if (broke != null) return AgentOutcome.PAUSED(broke)
 
         val results = executed.map { it.second }
 
         // Repeating one action is not by itself a stall: holding backspace or paging down are
         // legitimate repeats. Progress is judged by whether the screen actually changed.
-        // Repair budget is about the current obstacle, not the whole task: a step that worked
+        // Repair budget is about the current obstacle, not the whole task: a step with no obstacle
         // clears it, otherwise two unrelated hiccups would end an otherwise healthy run.
-        repairs = if (results.all { it.success }) 0 else repairs + results.count { it.code in REPAIRABLE_CODES }
+        //
+        // The counter is driven by the *code*, not by `success`. A duplicate call reports success
+        // (the first one did), so keying off success alone let a batch of six identical calls reset
+        // the budget every round while never actually touching the page.
+        val obstacles = results.count { it.code in REPAIRABLE_CODES }
+        repairs = if (obstacles == 0) 0 else repairs + obstacles
+        val stale = results.any { it.code == "stale_screen" }
+        val progressed = executed.any { (call, result) -> result.success && call.tool in SCREEN_ACTIONS }
+        recentStale.addLast(stale)
+        recentProgress.addLast(progressed)
+        while (recentStale.size > STALE_WINDOW) recentStale.removeFirst()
+        while (recentProgress.size > STALE_WINDOW) recentProgress.removeFirst()
 
         // Do not infer progress from a page fingerprint. Real apps such as Meituan animate,
         // recalculate distances/prices and rotate promotions, so rendered text or revision values
@@ -857,7 +1169,7 @@ class AgentLoop(
             recentActions.addLast(signature)
             while (recentActions.size > ACTION_WINDOW) recentActions.removeFirst()
         }
-        val actionCycle = !observational && isCyclic(recentActions)
+        val actionCycle = !observational && hasRepeatingPeriod(recentActions)
         if (actionCycle) cycleNotices += 1 else cycleNotices = 0
 
         // Same action, same arguments, and the execution layer reports "no screen change" every
@@ -889,6 +1201,12 @@ class AgentLoop(
                     needsPerson = true,
                     reason = PauseReason.PERSON_ACTION,
                 )
+            recentStale.count { it } >= maxStaleRefreshes && recentProgress.none { it } ->
+                AgentOutcome.PAUSED("每次准备动手时页面都已经变了，一直没能真的操作成功，先停下。等页面稳定后可以接着办。")
+            stale -> {
+                hook.onWarning("页面有变化，正在重新查看。")
+                null
+            }
             repairs >= maxRepairs ->
                 AgentOutcome.PAUSED("这一步总是做不成，已停下。您可以自己操作，或请家人帮忙。")
             cycleNotices >= CYCLE_NOTICE_LIMIT -> AgentOutcome.STUCK(
@@ -922,10 +1240,171 @@ class AgentLoop(
         }
     }
 
-    // ---- transcript helpers -------------------------------------------------
+    /**
+     * The only way a tool runs.
+     *
+     * The model's calls and the calls the loop starts on its own both come through here, so the
+     * gates cannot be sidestepped by adding another internal caller. They could before: the automatic
+     * screenshot on a blind page called `tools.execute` directly, which skipped the parameter check,
+     * the person-action policy, and — because the tool declares `needsApproval` — the consent that
+     * sending the screen to a vision model is supposed to require.
+     */
+    private suspend fun dispatch(
+        invocation: ToolInvocation,
+        spec: AgentToolSpec,
+        safetyScreen: ScreenSnapshot,
+    ): ToolResult {
+        refuse(invocation, spec, safetyScreen)?.let { return it }
+        hook.onAction(describe(invocation))
+        // Resolve against what the model saw, then rebind only an unchanged target. Checking the old
+        // id on the new page could authorize or block a different control.
+        val dispatchScreen = tools.observe()
+        return ManualActionPolicy.checkSensitiveScreen(invocation.tool, dispatchScreen) ?: run {
+            val proposed = resolveCoordinates(invocation, plannedScreen ?: safetyScreen)
+            val call = ScreenActionGuard.rebind(proposed, dispatchScreen)
+            if (call == null) {
+                ToolResult(false, "操作目标已变化，请重新观察后再选择。", "stale_screen")
+            } else {
+                val rebound = invocation.copy(arguments = invocation.arguments + ("target" to call.target))
+                ManualActionPolicy.checkScreen(rebound, dispatchScreen) ?: tools.execute(call)
+            }
+        }
+    }
 
+    /**
+     * The gates in front of every call, in the order that matters.
+     *
+     * Each one returns a refusal or null, and none can grant what a later one refuses: a malformed
+     * argument never reaches the policy check, the policy check never reaches the person, and the
+     * person is never asked to approve something already known to be unsafe.
+     */
+    private suspend fun refuse(
+        invocation: ToolInvocation,
+        spec: AgentToolSpec,
+        safetyScreen: ScreenSnapshot,
+    ): ToolResult? {
+        staticRefusal(invocation, spec, safetyScreen)?.let { return it }
+        if (spec.needsApproval && invocation.id !in preApprovedCalls) {
+            if (approval.needed(invocation)) {
+                hook.onApprovalRequest(approvalQuestion(invocation))
+                if (!approval.confirm(invocation)) {
+                    return ToolResult(false, "老人没有同意这个操作，这一步没有执行。", "denied_by_user")
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * The part of the gate that needs nobody: a bad argument or a person-only action.
+     *
+     * Kept separate so the batch can ask its "may I?" question only about calls that would actually
+     * run. It used to ask first and validate later, so a call with `x="abc"` still interrupted the
+     * person before being thrown away.
+     */
+    private fun staticRefusal(
+        invocation: ToolInvocation,
+        spec: AgentToolSpec,
+        safetyScreen: ScreenSnapshot,
+    ): ToolResult? {
+        validate(spec, invocation)?.let {
+            return ToolResult(false, "参数无效：$it，请根据工具目录修正。", it)
+        }
+        ManualActionPolicy.checkText(invocation)?.let { return it }
+        ManualActionPolicy.checkScreen(invocation, plannedScreen ?: safetyScreen)?.let { return it }
+        return null
+    }
+
+    /**
+     * Keeps a request inside its budget by folding page renders the model no longer needs.
+     *
+     * A step appends a full page render — around 140 controls — and nothing ever removed them, so a
+     * long task grew without bound until the provider refused the request. The transcript is
+     * append-only on purpose (the provider's prefix cache depends on it), so folding rewrites only
+     * the oldest page observations and does it in one decisive pass rather than a little every step.
+     *
+     * Nothing the audit needs is lost: the action trail lives in the assistant and tool messages,
+     * which are never touched, and the observed facts live in the evidence ledger, which is built
+     * separately. The current page is always kept — the model would be choosing between controls it
+     * cannot see without it.
+     */
+    private fun compactIfNeeded() {
+        if (contextBudgetTokens <= 0) return
+        val threshold = (contextBudgetTokens * COMPACT_AT_RATIO).toInt()
+        if (estimateTokens(transcript) <= threshold) return
+
+        val retain = (contextBudgetTokens * RETAIN_RATIO).toInt()
+        var spent = 0
+        var cut = transcript.size
+        while (cut > 1 && spent < retain) {
+            cut--
+            spent += estimateTokens(transcript[cut].content)
+        }
+
+        var folded = 0
+        for (index in 1 until cut) {          // index 0 is the person's request: never folded
+            val message = transcript[index]
+            if (message.image != null) {
+                transcript[index] = message.copy(image = null)
+            }
+            if (message.role != AgentMessage.Role.USER) continue
+            if (!message.content.contains(PAGE_RENDER_MARKER)) continue
+            transcript[index] = message.copy(content = FOLDED_OBSERVATION)
+            folded++
+        }
+        if (folded > 0) logger("context compacted: folded $folded old page observations")
+    }
+
+    /**
+     * A deliberately coarse size estimate.
+     *
+     * CJK characters are roughly one token each and Latin text roughly a quarter of that, which is
+     * the right order for the mix this app produces. It only has to be good enough to notice that a
+     * request is about to become too large; the provider's own accounting stays authoritative.
+     */
+    private fun estimateTokens(messages: List<AgentMessage>): Int =
+        messages.sumOf { estimateTokens(it.content) + if (it.image != null) IMAGE_TOKENS else 0 }
+
+    private fun estimateTokens(text: String): Int {
+        var wide = 0
+        var narrow = 0
+        for (ch in text) {
+            if (ch.code in 0x2E80..0x9FFF || ch.code in 0xF900..0xFAFF || ch.code in 0xFF00..0xFFEF) wide++
+            else narrow++
+        }
+        return wide + narrow / 4
+    }
+
+    // ---- transcript helpers -------------------------------------------------
     private fun assistant(text: String, calls: List<ToolInvocation> = emptyList()): AgentMessage =
         AgentMessage(AgentMessage.Role.ASSISTANT, content = text, toolCalls = calls)
+
+    /**
+     * The action half of the completion evidence, rebuilt from the transcript rather than kept in a
+     * second list. The transcript is already the one record that survives a restart, so a restored
+     * task's actions are audited exactly like the live run's and the two cannot drift apart.
+     */
+    private fun actionLedger(): List<ExecutedCall> {
+        val proposed = HashMap<String, ToolInvocation>()
+        for (message in transcript) {
+            if (message.role == AgentMessage.Role.ASSISTANT) {
+                message.toolCalls.forEach { proposed[it.id] = it }
+            }
+        }
+        val actions = mutableListOf<ExecutedCall>()
+        for (message in transcript) {
+            if (message.role != AgentMessage.Role.TOOL) continue
+            val call = message.toolCallId?.let(proposed::get) ?: continue
+            // Old saved transcripts predate the typed outcome; their rendered result is still ours.
+            val outcome = message.outcome ?: ToolOutcome(message.content.startsWith("success"), null)
+            actions += ExecutedCall(call.tool, auditArgument(call), outcome.success, outcome.screenChanged)
+        }
+        return actions
+    }
+
+    private fun auditArgument(call: ToolInvocation): String =
+        if (call.tool in ManualActionPolicy.textTools) call.arguments["text"].orEmpty()
+        else call.arguments.values.joinToString(" ")
 
     /** Appends one observation per executed call, and keeps only the newest image. */
     private fun appendResults(invocations: List<ToolInvocation>, results: List<ToolResult>) {
@@ -936,6 +1415,7 @@ class AgentLoop(
                 content = renderResult(result),
                 toolCallId = invocation.id,
                 image = result.image,
+                outcome = ToolOutcome(result.success, result.screenChanged),
             )
         }
         val newestImage = transcript.indexOfLast { it.image != null }
@@ -962,11 +1442,34 @@ class AgentLoop(
 
     private fun spec(name: String): AgentToolSpec? = tools.catalog.find { it.name == name }
 
+    /**
+     * Parameter checking, against the catalogue's own declarations.
+     *
+     * A value that does not parse is refused, never defaulted. It used to be defaulted: `x` was read
+     * with `toFloatOrNull() ?: 0.5f`, so a model that wrote `x="abc"` produced a real tap in the exact
+     * centre of the screen. Aiming somewhere arbitrary is worse than reporting a bad argument.
+     */
     private fun validate(spec: AgentToolSpec, invocation: ToolInvocation): String? {
         for (param in spec.parameters) {
-            if (param.required && invocation.arguments[param.name].isNullOrBlank()) {
-                return "missing_${param.name}"
+            val raw = invocation.arguments[param.name]
+            if (param.required && raw.isNullOrBlank()) return "missing_${param.name}"
+            if (raw.isNullOrBlank()) continue
+            when (param.type) {
+                "number" -> if (raw.toFloatOrNull() == null) return "invalid_${param.name}"
+                "integer" -> if (raw.toIntOrNull() == null) return "invalid_${param.name}"
             }
+        }
+        if (invocation.tool == "tap_xy") {
+            // Ratios of the screen, not pixels: a value outside 0..1 is arithmetic, not a place.
+            for (axis in listOf("x", "y")) {
+                val ratio = invocation.arguments[axis]?.toFloatOrNull() ?: return "missing_$axis"
+                if (ratio !in 0f..1f) return "invalid_$axis"
+            }
+        }
+        invocation.arguments["durationMs"]?.takeIf { it.isNotBlank() }?.let { raw ->
+            val ms = raw.toIntOrNull() ?: return "invalid_durationMs"
+            val allowed = if (invocation.tool == "wait") 100..5000 else 100..1500
+            if (ms !in allowed) return "invalid_durationMs"
         }
         if (invocation.tool == "type_text") {
             val text = invocation.arguments["text"].orEmpty()
@@ -991,18 +1494,23 @@ class AgentLoop(
         endX = invocation.arguments["endX"]?.toIntOrNull() ?: -1,
         endY = invocation.arguments["endY"]?.toIntOrNull() ?: -1,
         revision = observed.revision,
+        observedScreen = observed,
     )
 
     /** `tap_xy` carries fractions of the screen; convert them to the pixels the service expects. */
     private fun resolveCoordinates(invocation: ToolInvocation, screen: ScreenSnapshot): ToolCall {
         val call = toCall(invocation, screen)
         if (invocation.tool == "tap_xy") {
-            val fx = invocation.arguments["x"]?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 0.5f
-            val fy = invocation.arguments["y"]?.toFloatOrNull()?.coerceIn(0f, 1f) ?: 0.5f
-            val width = screen.width.takeIf { it > 0 } ?: 1080
-            val height = screen.height.takeIf { it > 0 } ?: 2400
-            val x = (fx * width).toInt()
-            val y = (fy * height).toInt()
+            val fx = invocation.arguments["x"]?.toFloatOrNull() ?: -1f
+            val fy = invocation.arguments["y"]?.toFloatOrNull() ?: -1f
+            // No known screen size means there is no pixel to aim at. The old code substituted
+            // 1080x2400 and (0.5, 0.5), which turned a malformed call into a real tap on the middle
+            // of the person's screen; an out-of-range coordinate is refused by the service instead.
+            if (fx !in 0f..1f || fy !in 0f..1f || screen.width <= 0 || screen.height <= 0) {
+                return call.copy(name = "tap", x = -1, y = -1, endX = -1, endY = -1)
+            }
+            val x = (fx * screen.width).toInt()
+            val y = (fy * screen.height).toInt()
             return call.copy(name = "tap", x = x, y = y, endX = x, endY = y)
         }
         // Remember what the chosen id looked like. The service re-observes before dispatch; without
@@ -1042,11 +1550,44 @@ class AgentLoop(
     }
 
     private companion object {
+        /** Room for one planning request, in tokens. Folding starts at 80% of it. */
+        const val MAX_CONTEXT_TOKENS = 24_000
+
+        /** Mirrors the shape DSH's compaction uses: act at 80%, keep the newest 16%. */
+        const val COMPACT_AT_RATIO = 0.8
+        const val RETAIN_RATIO = 0.16
+
+        /** A rough price for one attached screenshot when sizing a request. */
+        const val IMAGE_TOKENS = 1_200
+
+        /** Page renders carry this; only they are folded, never the action trail. */
+        const val PAGE_RENDER_MARKER = "当前页面："
+
+        const val FOLDED_OBSERVATION =
+            "（早期的页面观察已折叠，模型看不到它们了。需要哪一页就重新观察；" +
+                "已经做过的动作仍然完整保留在对话记录里。）"
+
+        /** Tool identity comes from [PhoneTool]; see that file for why it is declared in one place. */
+        val TEXT_WRITING_TOOLS = PhoneTool.textTools
+
         /** How many recent action signatures to keep when looking for a cycle. */
         const val ACTION_WINDOW = 12
 
         /** Cycle warnings before giving up. Single-action repeats are left to the step limit. */
         const val CYCLE_NOTICE_LIMIT = 5
+
+        /** How many recent steps the stale budget is measured over. */
+        const val STALE_WINDOW = 8
+
+        /** How many distinct page entries are kept when looking for a two-page oscillation. */
+        const val PAGE_WINDOW = 12
+
+        /** Screenshots handed to the completion reviewer; enough for the page, bounded for cost. */
+        const val MAX_REVIEW_IMAGES = 2
+
+        /** Bounded wait for a window that has not attached yet (a cold-starting app). */
+        const val UNRESOLVED_RETRIES = 3
+        const val UNRESOLVED_DELAY_MS = 700L
 
         /**
          * Repeating the *same* action (same tool and same arguments) with no screen change at all is
@@ -1059,21 +1600,28 @@ class AgentLoop(
          */
         const val REPEAT_NOTICE_LIMIT = 3
         const val REPEAT_STOP_LIMIT = 5
-        val REPEATABLE_TOOLS = setOf("scroll", "swipe", "back", "wait")
+        val REPEATABLE_TOOLS = PhoneTool.repeatable
+        val SCREEN_ACTIONS = PhoneTool.screenActions
 
         /** Give up on screenshots after this many consecutive refusals. */
         const val SCREENSHOT_FAILURE_LIMIT = 2
-        const val HANDOFF_TOOL = "handoff"
-        const val OPEN_APP_TOOL = "open_app"
-        const val IMPOSSIBLE_TOOL = "impossible"
-        const val ASK_PERSON_TOOL = "ask_person"
-        const val ASK_USER_TOOL = "ask_user"
+        val HANDOFF_TOOL = PhoneTool.HANDOFF.toolName
+        val OPEN_APP_TOOL = PhoneTool.OPEN_APP.toolName
+        val IMPOSSIBLE_TOOL = PhoneTool.IMPOSSIBLE.toolName
+        val ASK_PERSON_TOOL = PhoneTool.ASK_PERSON.toolName
+        val ASK_USER_TOOL = PhoneTool.ASK_USER.toolName
         const val MAX_OPTIONS = 4
         val REPAIRABLE_CODES = setOf(
             "unknown_tool", "missing_argument", "missing_target", "ambiguous_target",
-            "stale_screen", "text_too_long", "invalid_gesture", "not_editable", "blind_page",
+            "text_too_long", "not_editable", "blind_page",
             "text_has_space", "already_fetched", "not_clickable",
+            // A batch of identical calls is the model spinning, not progress: it must spend the same
+            // budget as any other obstacle, otherwise it can run to the step limit unnoticed.
+            "duplicate_skipped",
         )
+
+        /** A tool threw something we cannot classify: the action's outcome is unknown. */
+        const val TOOL_ERROR_CODE = "tool_error"
         val TOOL_LABELS = mapOf(
             "tap_text" to "点按", "click" to "点按", "tap_xy" to "按位置点按",
             "type_text" to "输入", "paste_text" to "粘贴", "long_press" to "长按",

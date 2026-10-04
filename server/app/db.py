@@ -103,6 +103,12 @@ def init(path: str | None = None) -> None:
                 "UPDATE devices SET pair_code_expires_at = created_at + ?",
                 (PAIR_CODE_TTL_SECONDS,),
             )
+        if "pair_code_role" not in device_columns:
+            # Databases from before roles were bound to the invite: every existing code was a
+            # family invite, because that was the only thing the join form offered.
+            connection.execute(
+                "ALTER TABLE devices ADD COLUMN pair_code_role TEXT NOT NULL DEFAULT 'family'"
+            )
 
 
 @contextmanager
@@ -120,9 +126,11 @@ def new_token() -> str:
 
 
 def new_pair_code() -> str:
-    # Short enough to read off the elder's phone and type into a browser once.
+    # Read off the elder's phone and typed into a browser once. Eight characters over this alphabet
+    # is about 40 bits; six was about 30, which is guessable inside a one-hour window by anyone who
+    # can reach the join page. Length is cheap, and it is still short enough to read aloud.
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    return "".join(secrets.choice(alphabet) for _ in range(6))
+    return "".join(secrets.choice(alphabet) for _ in range(8))
 
 
 def create_device(elder_name: str) -> dict[str, Any]:
@@ -156,6 +164,30 @@ def device_by_pair_code(code: str) -> dict[str, Any] | None:
             (code.strip().upper(), time.time()),
         ).fetchone()
         return dict(row) if row else None
+
+
+def rotate_pair_code(device_id: int, role: str) -> dict[str, Any]:
+    """Issue a fresh invite code for one role, invalidating the previous one.
+
+    The role lives on the invite, not on the join form. Whoever holds the code can join, but only
+    as the role the person who handed out the code chose — a joiner can no longer promote
+    themselves to 家人 and read the elder's private context, or leave them a message that the
+    phone reads aloud as "家人留言".
+    """
+    with db() as connection:
+        for _ in range(5):
+            code = new_pair_code()
+            try:
+                connection.execute(
+                    "UPDATE devices SET pair_code = ?, pair_code_role = ?, pair_code_expires_at = ? "
+                    "WHERE id = ?",
+                    (code, role, time.time() + PAIR_CODE_TTL_SECONDS, device_id),
+                )
+            except sqlite3.IntegrityError:
+                continue
+            row = connection.execute("SELECT * FROM devices WHERE id = ?", (device_id,)).fetchone()
+            return dict(row)
+    raise RuntimeError("could not allocate a pairing code")
 
 
 def touch_device(device_id: int, note: str = "") -> None:

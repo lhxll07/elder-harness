@@ -343,8 +343,8 @@ class OverlayService : Service() {
         // Only the cases where the next move is the person's own: the agent refused an irreversible
         // step for them, or asked them to do it. A run that merely got stuck keeps the generic panel.
         val isPersonStep = state.phase == TaskPhase.NEEDS_PERSON ||
-            (state.phase == TaskPhase.PAUSED && state.needsPersonStep && !state.outcomeUnverified)
-        if (!isResult && !isPersonStep && !state.outcomeUnverified) {
+            (state.phase == TaskPhase.PAUSED && state.needsPersonStep && !state.awaitingReview)
+        if (!isResult && !isPersonStep && !state.awaitingReview) {
             // Same dot-and-word status line as the home screen, so the two surfaces agree.
             card.addView(OverlayUi.statusRow(this, state.phase))
             card.addView(OverlayUi.gap(this))
@@ -390,7 +390,7 @@ class OverlayService : Service() {
             state.phase == TaskPhase.COMPLETED || state.phase == TaskPhase.CANNOT ->
                 resultCard(card, state, phaseChanged && !expanding)
 
-            state.outcomeUnverified -> unverifiedCard(card, state)
+            state.awaitingReview -> unverifiedCard(card, state)
 
             isPersonStep -> personStepCard(card, state, phaseChanged && !expanding)
 
@@ -447,7 +447,7 @@ class OverlayService : Service() {
         session.speaking.value -> "正在说…"
         session.voice.state.value == VoiceSession.State.RECORDING -> "正在听…"
         session.voice.state.value == VoiceSession.State.TRANSCRIBING -> "正在听懂…"
-        state.outcomeUnverified -> "无法核实"
+        state.awaitingReview -> "待您确认"
         state.needsPersonStep -> "等您操作"
         state.phase == TaskPhase.WORKING && state.step > 0 -> "正在办 ${state.step}"
         state.phase == TaskPhase.WORKING -> "正在办"
@@ -549,10 +549,11 @@ class OverlayService : Service() {
     }
 
     private fun unverifiedCard(card: LinearLayout, state: SessionState) {
-        card.addView(OverlayUi.text(this, "结果无法核实", Elder.status.value, OverlayUi.attention, bold = true))
+        card.addView(OverlayUi.text(this, "结果请您看一眼", Elder.status.value, OverlayUi.attention, bold = true))
         card.addView(OverlayUi.gap(this))
         card.addView(OverlayUi.tinted(this, state.message, OverlayUi.waitTint))
-        card.addView(optionButton("收起，查看页面") { expanded = false; render(session.state.value) })
+        card.addView(optionButton("我确认办好了") { session.confirmReviewedResult() })
+        card.addView(optionButton("还没办完，接着办") { session.resume() })
         row(card, "打开银龄专线" to { openHome() }, "结束这件事" to { session.finish() })
     }
 
