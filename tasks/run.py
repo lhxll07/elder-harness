@@ -232,15 +232,35 @@ def fresh_part(log: str, baseline: str) -> str:
     return log
 
 
-def wait_for_settle(timeout_s: int, baseline: str) -> tuple[str, str] | None:
-    """Poll the log until this task reports a terminal outcome. Returns (status, message)."""
+# `settle:` is printed for every ending, and not every ending is the end of the run. ASKING means the
+# phone has asked the person a question and the loop carries on as soon as they answer it. Treating
+# the first `settle:` line as final recorded S2 as "ASKING, 5 steps, 15s" while the run actually
+# ended 74 seconds later at 18 steps in NEEDS_PERSON — and every task that asks a clarifying
+# question was truncated the same way. Any future "waiting for the human" status belongs here.
+WAITING_STATUSES = {"ASKING"}
+
+
+def wait_for_settle(
+    timeout_s: int, baseline: str, wait_for_answer: bool = True
+) -> tuple[str, str] | None:
+    """Poll the log until this task reports an outcome it cannot continue past.
+
+    When the deadline passes, the last status seen is returned rather than None: a run that is still
+    waiting for an answer is recorded as exactly that, instead of being mislabelled a timeout.
+
+    `wait_for_answer` is False for `--yes`, where nobody is present to answer a question, so waiting
+    for one would only burn the whole timeout.
+    """
     deadline = time.monotonic() + timeout_s
+    last: tuple[str, str] | None = None
     while time.monotonic() < deadline:
         settled = latest_settle(fresh_part(read_log(), baseline))
         if settled:
-            return settled
+            last = settled
+            if settled[0] not in WAITING_STATUSES or not wait_for_answer:
+                return settled
         time.sleep(3)
-    return None
+    return last
 
 
 # ----------------------------------------------------------------------------- log parsing
@@ -475,12 +495,17 @@ def main() -> int:
 
             prepare(task["id"], args.stuck_app)
             launch_task(task["goal"], env, restore=task["id"] in RESTORE_TASKS)
-            settled = wait_for_settle(args.timeout, baseline_log)
+            settled = wait_for_settle(args.timeout, baseline_log, wait_for_answer=not args.yes)
             if settled is None:
                 print(f"  ! {args.timeout}s 未收尾，通过调试通道干净停止（不使用 force-stop）")
                 stop_task()
                 time.sleep(2)
                 settled = ("TIMEOUT", "")
+            elif settled[0] in WAITING_STATUSES:
+                # The person is still answering on the phone. Stopping the task here would throw away
+                # the question they are in the middle of answering, so leave it running and record
+                # what is true at this moment.
+                print(f"  ! {args.timeout}s 内老人还没回答完，按 {settled[0]} 如实记录（不停止任务）")
             wall = int((datetime.now() - started).total_seconds())
 
             fresh = fresh_part(read_log(), baseline_log)
