@@ -15,6 +15,7 @@ harness/out/
 # 服务端本地开发
 server/.venv/
 server/hotline.db*
+__pycache__/
 server/**/__pycache__/
 server/.pytest_cache/
 server/.env
@@ -25,3 +26,6 @@ server/.env
 # 演示 HTML 的符号链接（指向同目录的 figures/assets）
 docs/aic-2026/slides/figures
 docs/aic-2026/slides/assets
+
+# 真机评测日志与结果（含页面文字，勿入库）
+tasks/runs/
