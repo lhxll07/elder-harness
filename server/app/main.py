@@ -292,6 +292,11 @@ def join(
         (member for member in db.circle_of(device["id"]) if clean_phone and member["phone"] == clean_phone),
         None,
     )
+    if existing and existing["role"] != role:
+        return HTMLResponse(
+            web.join_page("这个手机号已绑定其他身份，请由老人手机上的家人重新确认邀请。"),
+            status_code=403,
+        )
     member = existing or db.add_circle_member(device["id"], clean_name, clean_phone, role)
     session = db.create_session(member["id"])
     log.info("[join] device=%s member=%s role=%s", device["id"], clean_name, role)

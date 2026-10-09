@@ -2,7 +2,9 @@ import requests, re, sys, warnings, hashlib, os, json
 warnings.filterwarnings("ignore")
 H={"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/131.0 Safari/537.36",
    "Accept-Language":"zh-CN,zh;q=0.9"}
-CACHE="/home/lhx/Projects/elder-harness/fetch_log/cache"
+from pathlib import Path
+
+CACHE=str(Path(__file__).resolve().parent / "cache")
 os.makedirs(CACHE,exist_ok=True)
 def raw(url, timeout=40):
     key=hashlib.md5(url.encode()).hexdigest()

@@ -91,6 +91,39 @@ def test_repeated_wrong_codes_are_throttled(client, device):
     assert known.status_code == 429
 
 
+@pytest.mark.parametrize("invite_role", ["community", "neighbor"])
+def test_lower_role_invite_cannot_reuse_a_family_phone(client, device, invite_role):
+    join(client, device, phone="13800000001", role="family")
+    family_member = db.circle_of(device["device_id"])[0]
+    client.cookies.clear()
+    response = client.post(
+        "/join",
+        data={
+            "pair_code": invite(client, device, invite_role),
+            "name": "其他人",
+            "phone": family_member["phone"],
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 403
+    assert "session" not in response.cookies
+    assert "session" not in client.cookies
+    assert db.circle_of(device["device_id"]) == [family_member]
+    assert client.post("/family/message", data={"text": "越权留言"}, follow_redirects=False).status_code == 303
+    assert db.pending_for_device(device["device_id"]) == []
+
+
+def test_same_role_invite_reuses_the_member_without_duplicating_it(client, device):
+    join(client, device, phone="13800000001", role="family")
+    original = db.session_member(client.cookies.get("session"))
+    client.cookies.clear()
+    join(client, device, phone="13800000001", role="family")
+    restored = db.session_member(client.cookies.get("session"))
+    assert restored["id"] == original["id"]
+    assert restored["role"] == "family"
+    assert len(db.circle_of(device["device_id"])) == 1
+
+
 def test_invite_needs_the_device_token_and_a_known_role(client, device):
     assert client.post("/api/device/invite", json={"role": "family"}).status_code == 401
     assert client.post(

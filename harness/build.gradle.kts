@@ -10,7 +10,7 @@ kotlin {
 sourceSets {
     main {
         kotlin {
-            srcDirs(".", "../app/src/main/java")
+            srcDirs("src/main/kotlin", "../app/src/main/java")
             include("Harness.kt")
             include("com/yinling/hotline/CloudPlanner.kt")
         }

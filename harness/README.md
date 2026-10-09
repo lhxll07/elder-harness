@@ -59,7 +59,7 @@ transcript 的结构合法性是硬约束：每个 `tool_calls` 都必须有对�
 
 本次 core 回归另有 **47/47** 项通过，其中新增 **29** 项，覆盖原观察目标绑定、动态页面恢复、批次跨应用授权、人工交接后停止，以及结果证据的来源与数字匹配。运行：`./gradlew :core:test --offline`。
 
-完成核验同时统计收益与代价：当前 9 条对照样本中，5/5 条错误结论未直接进入完成状态，4 条真实结果中有 2 条仍待人工核对。`Unverified` 表示证据不足，`Unsupported` 表示规则发现冲突；不能把二者都表述成已证明错误。页面节点数不再充当业务条目数，盲页面的数字结论也不再自动确认。详细边界与验证计划见 [技术评审记录](../docs/technical-review-2026-10-04.md)。
+完成核验同时统计收益与代价；具体样本数量以当前运行输出为准。`Unverified` 表示证据不足，`Unsupported` 表示规则发现冲突，不能把二者都表述成已证明错误。页面节点数不充当业务条目数，盲页面的数字结论也不自动确认。当前验证与已知边界见 [验证基线](../docs/testing/README.md) 和 [项目审查](../docs/reviews/2026-10-09.md)。
 
 **这一组评测真找出过五个缺口。F1—F4 已修复，F5 是路线级上限、如实保留：**
 
@@ -77,7 +77,7 @@ transcript 的结构合法性是硬约束：每个 `tool_calls` 都必须有对�
 
 ## 不覆盖什么
 
-Android 相关的路径**无法在这里验证**，只能在真机上手工测（`docs/status.md` 里记了实测结果）：
+Android 相关的路径**无法在这里验证**，只能在真机上手工测（`docs/testing/device-baseline-2026-09-29.md` 里记了实测结果）：
 
 - 辅助功能服务的页面观察与执行（`ScreenAccessService`）
 - 截图管线（分辨率/无损 WebP/后台编码）
@@ -86,6 +86,6 @@ Android 相关的路径**无法在这里验证**，只能在真机上手工测�
 
 ## 目录
 
-- `Harness.kt`：检查本体，用假的 `AgentTools`/`AgentPlanner`/`ActionApproval` 驱动循环
+- `src/main/kotlin/Harness.kt`：检查本体，用假的 `AgentTools`/`AgentPlanner`/`ActionApproval` 驱动循环
 - `mock_server.py`：mock 的 OpenAI 兼容端点，校验 transcript 后返回预设动作
 - `run.sh` / `run.py`：构建 harness、起临时端口 mock、跑检查并传递退出码

@@ -136,5 +136,5 @@
 ---
 
 ### 数据文件
-- 抓取脚本：`lit/verify.py`、`lit/arxivq.py`
-- 原始证据：`lit/v1.json`、`lit/v1_api.json`、`lit/v2.json`、`lit/v2_api.json`、`lit/detail.txt`
+- 抓取脚本：同目录 `verify.py`、`arxivq.py`
+- 原始证据：同目录 `v1.json`、`v1_api.json`、`v2.json`、`v2_api.json`、`detail.txt`

@@ -6,26 +6,28 @@ local.properties
 *.iml
 *.apk
 .env*
+!.env.example
 *.jks
 *.keystore
-
-# harness 构建产物
-harness/out/
 
 # 服务端本地开发
 server/.venv/
 server/hotline.db*
 __pycache__/
-server/**/__pycache__/
-server/.pytest_cache/
-server/.env
+.pytest_cache/
 
 # Binary document templates
 *.doc
 
-# 演示 HTML 的符号链接（指向同目录的 figures/assets）
-docs/aic-2026/slides/figures
-docs/aic-2026/slides/assets
+# 可从参赛材料源文件重新生成的中间产物
+docs/aic-2026/*.docx
+docs/aic-2026/*.pdf
+docs/aic-2026/deck/deck.html
+docs/aic-2026/deck/deck.print.html
+docs/aic-2026/deck/*.pdf
+docs/aic-2026/figures/fig*.mmd
+docs/aic-2026/figures/puppeteer.json
+docs/aic-2026/refs/**/cache/
 
 # 真机评测日志与结果（含页面文字，勿入库）
 tasks/runs/

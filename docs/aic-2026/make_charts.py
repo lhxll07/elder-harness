@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """把报告里的实测数据画成图。数值全部取自《作品方案-定稿.md》，不新造数据。"""
 import matplotlib
+from pathlib import Path
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+
+FIGURES = Path(__file__).resolve().parent / "figures"
+FIGURES.mkdir(exist_ok=True)
 
 rcParams["font.sans-serif"] = ["Noto Sans CJK SC"]
 rcParams["axes.unicode_minus"] = False
@@ -38,7 +42,7 @@ for b, v in zip(bars, zh):
 a2.set_title("空间分布：中段明显优于上下边缘", fontsize=11.5, pad=8)
 a2.set_ylabel("命中率（%）"); style(a2, 100)
 fig.suptitle("每屏单次、合计 34 样本，仅作方向性证据", fontsize=9.5, color="#666", y=1.05)
-fig.savefig("figures/chart-r3.png"); plt.close(fig)
+fig.savefig(FIGURES / "chart-r3.png"); plt.close(fig)
 
 # ── 图 B：执行约束三组对照（六（七））────────────────────────────
 fig, (b1, b2) = plt.subplots(1, 2, figsize=(11, 3.7))
@@ -57,7 +61,7 @@ for b, v in zip(bars, asks):
 b2.set_title("少打扰：一次 10 步任务的确认次数（越低越好）", fontsize=10.5, pad=8)
 b2.set_ylabel("次"); style(b2, 12)
 fig.suptitle("分级执行（绿柱）同时占住两项指标的低位：危险动作执行得少、打扰也少", fontsize=10, color="#444", y=1.05)
-fig.savefig("figures/chart-constraint.png"); plt.close(fig)
+fig.savefig(FIGURES / "chart-constraint.png"); plt.close(fig)
 
 # ── 图 C：隐蔽型危险动作的修复前后（六（六））────────────────────
 fig, ax = plt.subplots(figsize=(9.5, 3.4))
@@ -75,7 +79,7 @@ ax.set_ylabel("被拦住的动作数"); ax.set_ylim(0, 9.6)
 ax.legend(frameon=False, fontsize=9.5, loc="upper left")
 style(ax)
 ax.set_title("隐蔽型由 0/8 提升至 8/8；边界探针由 6/6 漏拦改善为 5/6（如实保留）", fontsize=10.5, pad=10)
-fig.savefig("figures/chart-x8.png"); plt.close(fig)
+fig.savefig(FIGURES / "chart-x8.png"); plt.close(fig)
 
 # ── 图 D：只追加策略下的缓存命中（三（三）5 / 附录（三））──────────
 fig, ax = plt.subplots(figsize=(9.5, 3.3))
@@ -90,7 +94,7 @@ ax.text(4.5, 30, "从存档恢复后", ha="center", fontsize=9, color="#555")
 ax.set_ylabel("前缀缓存命中率（%）"); ax.set_ylim(-5, 110)
 style(ax, 110)
 ax.set_title("只追加对话记录带来的前缀缓存命中（同一任务，deepseek-chat）", fontsize=10.5, pad=10)
-fig.savefig("figures/chart-cache.png"); plt.close(fig)
+fig.savefig(FIGURES / "chart-cache.png"); plt.close(fig)
 print("已生成 chart-r3 / chart-constraint / chart-x8 / chart-cache")
 
 # ── 图 D：完成核验的分层收益与代价（六（八），由 harness/run.sh 实跑）──────
@@ -111,5 +115,5 @@ d2.set_title("代价：把真办成的判为“待核对”（共 10 项，越�
 d2.set_ylabel("项"); style(d2, 3)
 fig.suptitle("文本证据层把机械核验够不着的那一类补上（12/22 → 22/22），代价如实计入 1/10",
              fontsize=10, color="#444", y=1.05)
-fig.savefig("figures/chart-verify.png"); plt.close(fig)
+fig.savefig(FIGURES / "chart-verify.png"); plt.close(fig)
 print("chart-verify.png")

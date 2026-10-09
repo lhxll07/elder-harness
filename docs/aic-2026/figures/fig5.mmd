@@ -1,9 +1,0 @@
-%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
-flowchart TD
-  P1[页面观察<br/>控件树与渲染文本] -->|来源 PAGE| L[证据账本<br/>按页面版本与步骤编号]
-  P2[本地工具事实<br/>例如系统时间] -->|来源 TOOL| L
-  P3[执行者自己输入的文字<br/>输入框会把它显示出来] -->|来源 SELF_TYPED| X[不参与背书]
-  L --> C{核验}
-  X -.->|不能为声明背书| C
-  C -->|同一字段在两个应用显示不同值| Q[判为待核对]
-  C -->|事实与本轮记录一致| OK[通过]

@@ -179,4 +179,4 @@
 - 本机 `web_fetch` 对 gov.cn / stats.gov.cn / miit.gov.cn 等被 DNS fake-IP（198.18.0.x）拦截而失败；全部条目改用 `python3 requests`（`verify=False`，Chrome UA）直接抓取成功。
 - 所有 21 个引用 URL 在最终复核中均返回 **HTTP 200**。
 - PDF 文本使用 `pdftotext -enc UTF-8` 抽取；网页正文使用正则去标签抽取。
-- 原始抓取缓存与抽取文本保存在 `/home/lhx/Projects/elder-harness/fetch_log/`（含 `cnnic55.txt`、`cnnic56.txt`、`age2024.txt`、`wza2024.txt`、`cache/`）。
+- 原始抽取文本保存在 `docs/aic-2026/refs/aging-fetch-log/`（含 `cnnic55.txt`、`cnnic56.txt`、`age2024.txt`、`wza2024.txt`）；重跑脚本生成的 `cache/` 不入库。
