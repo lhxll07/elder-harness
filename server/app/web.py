@@ -1,60 +1,16 @@
-"""Server-rendered pages for the trusted circle.
-
-A web page rather than an app on purpose: a family member, a grid worker or a neighbour gets a link
-in a text message and is looking at the situation ten seconds later, on whatever phone they already
-have. Nothing to install, nothing to approve.
-
-Everything shown here is filtered by role. "Trusted" is not a single blob of access: a community
-worker needs to know that help is wanted, not what the person was typing.
-"""
-
 from __future__ import annotations
 
 import html
+import re
 import time
 from typing import Any
 
+from .family_view import ROLE_LABEL, visible_circle, visible_events
+
 KIND_LABEL = {
-    "peace": "报平安",
-    "help": "求助",
-    "done": "办好了",
-    "alert": "异常",
-    "message": "留言",
-    "ack": "回应",
+    "peace": "报平安", "help": "求助", "done": "办好了",
+    "alert": "联系提醒", "message": "留言", "ack": "回应",
 }
-
-# What each role may see in the timeline.
-VISIBLE_KINDS = {
-    "family": {"peace", "help", "done", "alert", "message", "ack"},
-    "community": {"help", "alert", "ack"},
-    "neighbor": {"help"},
-}
-
-ROLE_LABEL = {"family": "家人", "community": "社区", "neighbor": "邻居"}
-
-STYLE = """
-body { font-family: -apple-system, "Noto Sans CJK SC", sans-serif; margin: 0; padding: 18px;
-       background: #f6f7f8; color: #17202a; line-height: 1.6; }
-h1 { font-size: 22px; margin: 0 0 4px; }
-h2 { font-size: 17px; margin: 26px 0 8px; }
-.card { background: #fff; border-radius: 12px; padding: 14px 16px; margin: 10px 0;
-        box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-.muted { color: #5d6d7e; font-size: 14px; }
-.warn { color: #b9770e; font-weight: 600; }
-.bad { color: #c0392b; font-weight: 600; }
-.ok { color: #1e8449; font-weight: 600; }
-button, .button { font-size: 17px; padding: 10px 16px; border-radius: 10px; border: 0;
-        background: #1a7f6b; color: #fff; font-weight: 600; }
-input, select { font-size: 17px; padding: 10px; border-radius: 8px; border: 1px solid #ccd1d6;
-        width: 100%; box-sizing: border-box; margin: 4px 0 12px; }
-label { font-size: 15px; font-weight: 600; }
-ul { padding-left: 18px; margin: 6px 0; }
-.kind { display: inline-block; font-size: 13px; padding: 1px 8px; border-radius: 20px;
-        background: #eaeef0; color: #34495e; margin-right: 6px; }
-.claimed { background: #fdf3e3; }
-.ctx { background: #f4f6f7; border-left: 3px solid #b3bec4; padding: 6px 10px; margin: 8px 0;
-       font-size: 14px; color: #34495e; white-space: pre-wrap; }
-"""
 
 
 def escape(value: Any) -> str:
@@ -78,33 +34,83 @@ def clock(when: float) -> str:
 
 def page(title: str, body: str) -> str:
     return (
-        "<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-        f"<title>{escape(title)}</title><style>{STYLE}</style></head><body>{body}</body></html>"
+        '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        f'<title>{escape(title)}</title><link rel="stylesheet" href="/static/family.css">'
+        f'</head><body><main class="shell">{body}</main></body></html>'
     )
 
 
 def join_page(error: str = "", code: str = "") -> str:
-    error_html = f"<div class='card bad'>{escape(error)}</div>" if error else ""
-    body = f"""
-<h1>银龄专线 · 加入可信的人</h1>
-<p class="muted">配对码显示在老人手机的「设置 → 家人与社区」里。</p>
-{error_html}
-<form method="post" action="/join">
-  <div class="card">
-    <label>配对码</label>
-    <input name="pair_code" value="{escape(code)}" maxlength="8" autocapitalize="characters" required>
-    <label>你的称呼（老人看到的名字）</label>
-    <input name="name" placeholder="例如：大女儿 / 张网格员" required>
-    <label>手机号（用于有事时通知你）</label>
-    <input name="phone" inputmode="tel" placeholder="选填，但建议填">
-    <button type="submit">加入</button>
-  </div>
-</form>
-<p class="muted">你的身份由发给你配对码的人决定：码是「家人」就是家人，是「社区」就只能看到求助与异常。
-请只让真正可信的人看到这个码。</p>
+    error_html = f'<div class="notice danger" role="alert">{escape(error)}</div>' if error else ""
+    return page("加入家人守护圈", f"""
+<div class="join-layout">
+  <section class="join-intro">
+    <a class="brand" href="/">银龄智办 <span>家人端</span></a>
+    <p class="eyebrow">可信的人，一起把事情接住</p>
+    <h1>老人需要帮忙时，<br>这里有人回应。</h1>
+    <p class="lead">查看联系状态、接手求助、给老人留一句话。不用安装新的应用，也不能远程控制老人手机。</p>
+    <ol class="steps"><li>在老人手机打开「家人设置 → 家人与求助」</li><li>请装机家人选择你的身份，生成邀请码</li><li>输入邀请码，加入对应的守护圈</li></ol>
+    <p class="muted">邀请码是临时凭证，只交给真正可信的人。</p>
+  </section>
+  <section class="panel join-form" aria-labelledby="join-title">
+    <p class="eyebrow">首次加入</p><h2 id="join-title">连接老人和家人</h2>
+    {error_html}
+    <form method="post" action="/join">
+      <label for="pair-code">邀请码</label>
+      <input id="pair-code" name="pair_code" value="{escape(code)}" maxlength="8" minlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="老人手机上的 8 位邀请码" required>
+      <label for="member-name">你的称呼</label>
+      <input id="member-name" name="name" maxlength="24" autocomplete="name" placeholder="例如：大女儿、张网格员" required>
+      <label for="member-phone">联系电话 <span class="muted">选填</span></label>
+      <input id="member-phone" name="phone" type="tel" maxlength="20" autocomplete="tel" placeholder="便于可信的人联系你">
+      <button class="button full" type="submit">加入守护圈</button>
+    </form>
+    <p class="muted">身份由邀请码决定，不能在这里选择或提高权限。当前服务端通知仅记录日志，不会自动发送真实短信。</p>
+  </section>
+</div>
 """
-    return page("加入可信的人", body)
+    )
+
+
+def receipt(event: dict[str, Any]) -> str:
+    if event["direction"] != "to_device" or event["kind"] not in ("message", "ack"):
+        return ""
+    if event.get("read_at"):
+        return f'<p class="receipt good">老人已看到 · {clock(event["read_at"])}</p>'
+    if event.get("delivered_at") or event.get("delivered"):
+        when = f' · {clock(event["delivered_at"])}' if event.get("delivered_at") else ""
+        return f'<p class="receipt">已到手机{when}，尚未确认已读</p>'
+    return '<p class="receipt pending">等待老人手机收取</p>'
+
+
+def event_card(event: dict[str, Any], members: dict[int, dict[str, Any]], actionable: bool = False) -> str:
+    kind = KIND_LABEL.get(event["kind"], event["kind"])
+    context = f'<details class="context"><summary>查看求助背景</summary><p>{escape(event["context"])}</p></details>' if event.get("context") else ""
+    body = f'<p class="event-body">{escape(event["body"])}</p>' if event.get("body") else ""
+    claim = ""
+    action = ""
+    if event["status"] == "claimed":
+        member = members.get(event.get("claimed_by"), {})
+        claim = f'<p class="receipt good">{escape(member.get("name", "有人"))} 已经接手 · {clock(event.get("claimed_at") or 0)}</p>'
+    elif actionable:
+        action = f'<form method="post" action="/family/claim/{int(event["id"])}"><button class="button" type="submit">我来处理</button></form>'
+    return f"""
+<article class="event-card">
+  <div class="event-meta"><span class="badge">{escape(kind)}</span><time>{clock(event['created_at'])}</time></div>
+  <h3>{escape(event['title'])}</h3>{body}{context}{claim}{receipt(event)}{action}
+</article>
+"""
+
+
+def contact_status(device: dict[str, Any], silence_seconds: int) -> tuple[str, str, str]:
+    last_seen = device.get("last_seen_at")
+    if last_seen is None:
+        return "pending", "还没有收到手机联系", "请确认老人手机已完成配对，并开启常驻服务。"
+    age = max(0, time.time() - last_seen)
+    if age >= silence_seconds:
+        return "danger", f"手机 {human_age(age)}联系过", "手机可能没电、断网或应用被系统关闭。先打个电话确认，不代表老人发生危险。"
+    tone = "pending" if age >= silence_seconds / 3 else "good"
+    return tone, f"手机 {human_age(age)}联系过", "这里只反映设备联系情况，不是健康监测，也不表示老人已经读到留言。"
 
 
 def dashboard(
@@ -114,98 +120,49 @@ def dashboard(
     circle: list[dict[str, Any]],
     silence_seconds: int,
     flash: str = "",
+    requests: list[dict[str, Any]] | None = None,
 ) -> str:
-    now = time.time()
     role = member["role"]
-    last_seen = device.get("last_seen_at")
-    if last_seen is None:
-        status = "<span class='muted'>还没有联系过（手机上的 App 还没配对成功）</span>"
-    else:
-        age = now - last_seen
-        css = "bad" if age >= silence_seconds else ("warn" if age >= silence_seconds / 3 else "ok")
-        status = f"<span class='{css}'>手机 {human_age(age)}联系过</span>"
-
-    visible = VISIBLE_KINDS.get(role, set())
-    shown = [event for event in events if event["kind"] in visible]
-    open_help = [event for event in shown if event["kind"] in ("help", "alert") and event["status"] == "new"]
-    claimed = [event for event in shown if event["kind"] in ("help", "alert") and event["status"] == "claimed"]
-
-    def render_event(event: dict[str, Any]) -> str:
-        label = KIND_LABEL.get(event["kind"], event["kind"])
-        extra = ""
-        if event["kind"] in ("help", "alert") and event["status"] == "claimed":
-            claimer = next((m for m in circle if m["id"] == event["claimed_by"]), None)
-            who = claimer["name"] if claimer else "有人"
-            extra = f"<div class='muted'>👌 {escape(who)} 已经接手（{clock(event['claimed_at'] or 0)}）</div>"
-        # Community and neighbours see that help is wanted, not what the person was doing.
-        context = ""
-        if event["context"] and role == "family":
-            context = f"<div class='ctx'>{escape(event['context'])}</div>"
-        body_html = f"<div>{escape(event['body'])}</div>" if event["body"] else ""
-        receipt = ""
-        if event["direction"] == "to_device" and event["kind"] in ("message", "ack"):
-            if event["read_at"]:
-                receipt = f"<div class='muted ok'>老人已看到 {clock(event['read_at'])}</div>"
-            elif event["delivered_at"] or event["delivered"]:
-                when = f" {clock(event['delivered_at'])}" if event["delivered_at"] else ""
-                receipt = f"<div class='muted'>已到手机{when}</div>"
-            else:
-                receipt = "<div class='muted'>等待老人手机收取</div>"
-        return (
-            f"<div class='card {'claimed' if event['status'] == 'claimed' else ''}'>"
-            f"<span class='kind'>{escape(label)}</span>"
-            f"<span class='muted'>{clock(event['created_at'])}</span>"
-            f"<div><b>{escape(event['title'])}</b></div>"
-            f"{body_html}{context}{receipt}{extra}</div>"
-        )
-
-    help_html = "".join(
-        f"<div class='card'><span class='kind'>求助</span>"
-        f"<span class='muted'>{clock(event['created_at'])}</span>"
-        f"<div><b>{escape(event['title'])}</b></div>"
-        f"<div>{escape(event['body'])}</div>"
-        + (f"<div class='ctx'>{escape(event['context'])}</div>" if event["context"] and role == "family" else "")
-        + f"<form method='post' action='/family/claim/{event['id']}'>"
-        f"<button type='submit'>我来处理</button></form></div>"
-        for event in open_help
-    ) or "<div class='card muted'>现在没有需要处理的求助。</div>"
-
-    message_form = ""
-    if role == "family":
-        message_form = """
-<h2>给老人留一句话</h2>
-<form method="post" action="/family/message">
-  <div class="card">
-    <input name="text" placeholder="例如：明天下午我来看你" required>
-    <button type="submit">发到老人手机上</button>
-    <p class="muted">会显示成大字，并用语音念出来。</p>
-  </div>
-</form>
-"""
-
-    members_html = "".join(
-        f"<li>{escape(m['name'])}（{escape(ROLE_LABEL.get(m['role'], m['role']))}）</li>" for m in circle
-    )
-
-    flash_html = f"<div class='card ok'>{escape(flash)}</div>" if flash else ""
-
-    body = f"""
-<h1>{escape(device['elder_name'] or '老人')}</h1>
-<div class="muted">{status} · 我是 {escape(member['name'])}（{escape(ROLE_LABEL.get(role, role))}）</div>
+    shown = visible_events(events, role)
+    visible_requests = visible_events(requests if requests is not None else events, role)
+    contacts = visible_circle(circle, role)
+    members = {contact["id"]: contact for contact in contacts}
+    pending = [event for event in visible_requests if event["kind"] in ("help", "alert") and event["status"] == "new"]
+    claimed = [event for event in visible_requests if event["kind"] in ("help", "alert") and event["status"] == "claimed"]
+    tone, status, detail = contact_status(device, silence_seconds)
+    pending_html = "".join(event_card(event, members, actionable=True) for event in pending) or '<div class="empty">现在没有需要处理的求助。<span>收到新求助后，会显示在这里。</span></div>'
+    claimed_html = "".join(event_card(event, members) for event in claimed) or '<div class="empty">暂无正在处理的求助。</div>'
+    history_html = "".join(event_card(event, members) for event in shown[:30]) or '<div class="empty">还没有记录。手机联系和求助记录会显示在这里。</div>'
+    flash_html = f'<div class="notice" role="status">{escape(flash)}</div>' if flash else ""
+    message_link = '<a href="#message">给老人留言</a>' if role == "family" else ""
+    message_html = """
+<section class="panel" id="message" aria-labelledby="message-title">
+  <div class="section-heading"><div><p class="eyebrow">只有家人可用</p><h2 id="message-title">给老人留一句话</h2></div></div>
+  <form method="post" action="/family/message">
+    <label for="message-text">留言内容</label>
+    <textarea id="message-text" name="text" maxlength="500" rows="4" placeholder="例如：明天下午我来看你，不用着急。" required></textarea>
+    <p class="muted">提交后等待手机收取，再显示成大字并播报。只有老人确认后才标为已读。</p>
+    <button class="button" type="submit">提交留言</button>
+  </form>
+</section>
+""" if role == "family" else '<section class="panel"><h2>你的协作范围</h2><p class="muted">你可以查看并接手权限范围内的求助。留言仅对家人开放，老人办事的私密背景不会显示给你。</p></section>'
+    contact_cards = []
+    for contact in contacts:
+        phone = contact.get("phone", "")
+        phone_html = f'<a class="contact-phone" href="tel:{escape(phone)}">{escape(phone)}</a>' if phone and re.fullmatch(r"[+0-9 ()-]{3,24}", phone) else ""
+        contact_cards.append(f'<li><div><strong>{escape(contact["name"])}</strong><span>{escape(ROLE_LABEL.get(contact["role"], ""))}</span></div>{phone_html}</li>')
+    contact_html = "".join(contact_cards)
+    return page(f"{device['elder_name'] or '老人'} · 家人守护圈", f"""
+<header class="topbar"><a class="brand" href="/family">银龄智办 <span>家人端</span></a><div class="session"><span>{escape(member['name'])} · {escape(ROLE_LABEL.get(role, ''))}</span><form method="post" action="/family/logout"><button class="text-button" type="submit">退出</button></form></div></header>
+<section class="hero"><div><p class="eyebrow">家人守护圈</p><h1>{escape(device['elder_name'] or '老人')}的近况</h1><p class="lead">先看是否需要回应，再看事情进展。</p></div><a class="button secondary" href="/family">刷新近况</a></section>
+<nav class="page-nav" aria-label="家人端分区"><a href="#requests">待接手求助</a><a href="#follow-up">处理进展</a>{message_link}<a href="#activity">最近记录</a></nav>
 {flash_html}
-
-<h2>需要处理的求助</h2>
-{help_html}
-
-<h2>最近发生的事</h2>
-{''.join(render_event(event) for event in shown[:30]) or "<div class='card muted'>还没有记录。</div>"}
-
-{message_form}
-
-<h2>可信的人</h2>
-<div class="card"><ul>{members_html}</ul>
-<p class="muted">只有名单里的人能收到通知、能为老人处理事情。名单之外的人说什么都不算。</p></div>
-
-<p class="muted">这一页只显示状态和求助，不显示老人屏幕上的内容。</p>
+<section class="overview" aria-label="联系与求助概览"><article class="status-card {tone}"><p class="eyebrow">手机联系</p><h2>{status}</h2><p>{detail}</p></article><article class="stat-card"><span>待接手</span><strong>{len(pending)}</strong><a href="#requests">查看求助</a></article><article class="stat-card"><span>已接手，待跟进</span><strong>{len(claimed)}</strong><a href="#follow-up">查看进展</a></article></section>
+<div class="dashboard-grid"><div class="primary-column">
+  <section class="panel" id="requests" aria-labelledby="requests-title"><div class="section-heading"><div><p class="eyebrow">优先回应</p><h2 id="requests-title">需要处理的求助</h2></div><span class="badge">{len(pending)} 条待接手</span></div>{pending_html}</section>
+  <section class="panel" id="follow-up"><h2>正在处理</h2><p class="muted">“接手”表示有人回应，不等于事情已经办好。</p>{claimed_html}</section>
+  <section class="panel" id="activity"><h2>最近发生的事</h2><p class="muted">显示你有权查看的最近记录；留言送达与已读分开记录。</p>{history_html}</section>
+</div><aside class="side-column">{message_html}<section class="panel"><h2>可信的人</h2><ul class="contacts">{contact_html}</ul><p class="muted">身份由老人手机上的邀请决定。当前通知只记日志，不能代替主动联系。</p></section></aside></div>
+<footer>不提供远程控制。家人可查看求助背景，社区和邻居只能看到各自权限范围的记录。</footer>
 """
-    return page(f"{device['elder_name'] or '老人'} · 银龄专线", body)
+    )

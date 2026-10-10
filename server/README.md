@@ -12,7 +12,7 @@ cp .env.example .env
 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8787
 ```
 
-网页入口：<http://127.0.0.1:8787/>（配对码在老人手机的「设置 → 家人与社区」里）。
+网页入口：<http://127.0.0.1:8787/>（邀请码在老人手机的「家人设置 → 家人与求助」里）。
 
 测试：
 
@@ -41,6 +41,7 @@ cd server
 |---|---|---|---|
 | POST | `/api/device/pair` | 家人装机时 | 换回设备令牌 + 配对码 |
 | POST | `/api/device/invite` | 已配对手机 | 刷新指定角色的邀请码，不新建设备 |
+| POST | `/api/device/profile` | 已配对手机 | 修改老人称呼，保留设备身份和守护圈 |
 | POST | `/api/device/heartbeat` | 老人手机 | 报到（证明活着）+ 取回要显示的消息 |
 | POST | `/api/device/ack` | 老人手机 | 确认消息已显示或已读 |
 | POST | `/api/device/events` | 老人手机 | 上报 `peace` / `help` / `done` / `alert` |
@@ -50,6 +51,8 @@ cd server
 | POST | `/join` | 圈子 | 用配对码加入（记住身份与角色）|
 | POST | `/family/claim/{id}` | 圈子 | 接手一条求助（同时给老人手机回一句"我来处理"）|
 | POST | `/family/message` | **仅家人** | 给老人留一句话（老人手机大字 + 语音）|
+| POST | `/family/logout` | 圈子 | 撤销当前服务端会话并清除 Cookie |
+| GET | `/api/devices/{id}/summary` | 当前设备的圈子 | 与网页共用角色过滤，非家人不返回背景或成员电话 |
 | POST | `/api/watch/check` | 定时/测试 | 手动触发"失联"检查 |
 
 设备端用 `Authorization: Bearer <token>`；圈子成员用会话 Cookie。
@@ -66,12 +69,20 @@ cd server
 
 邀请码绑定角色；同一手机号已有另一种角色时不能复用其成员身份，否则低权限邀请码会借到家人会话。
 
+### 家人页面
+
+页面按「手机联系 → 待接手求助 → 处理进展 → 最近记录」组织；家人可从分区导航直达留言，手机与桌面使用同一套响应式 HTML/CSS，不引入前端运行时。
+
+求助接手不等于办好；留言提交不等于送达。手机确认展示后才显示「已到手机」，老人确认后才显示「已读」。尚未处理的求助单独查询，不会被最近记录的数量上限挤掉。页面与摘要 API 返回 `Cache-Control: no-store`，退出会删除当前会话，旧 Cookie 无法复用。
+
+代码边界：`main.py` 保留设备、加入和语音入口；`family.py` 承担家人业务路由，`family_view.py` 统一权限，`web.py` 渲染页面，`static/family.css` 管理样式。专项回归位于 `tests/test_family.py`。
+
 ## 部署限制
 
 - 运行依赖与开发依赖分开；语音连接直接依赖 `websockets`，不能假设基础 `uvicorn` 会自动安装它。
 - 当前按单进程设计：配对码失败限速保存在进程内，watcher 随服务进程启动，不直接启用多 worker。
 - 公网或局域网部署需 HTTPS、入口防护和凭证管理；`/api/device/pair` 目前没有安装者认证或配额，不应直接裸露到公网。
-- 服务端会话尚无撤销和数据库过期检查；日志含事件、语音片段与通知号码，上线前需脱敏和生命周期治理。
+- 服务端支持退出撤销当前会话，但尚无管理员批量撤销和数据库会话过期检查；日志含事件、语音片段与通知号码，上线前需脱敏和生命周期治理。
 - 测试数字和审查清单统一见 [验证基线](../docs/testing/README.md) 与 [项目审查](../docs/reviews/2026-10-09.md)。
 
 ## M1 的边界（故意不做的）

@@ -25,14 +25,15 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Body, Cookie, FastAPI, Form, Header, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from . import load_env
 
 # Configuration is read at import time; load .env before importing modules that snapshot it.
 load_env(str(Path(__file__).resolve().parent.parent / ".env"))
 
-from . import db, notify, speech, watch, web  # noqa: E402
+from . import db, family, family_view, notify, speech, watch, web  # noqa: E402
 
 log = logging.getLogger("hotline")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -66,7 +67,6 @@ def note_join_failure(ip: str) -> None:
     _join_failures.setdefault(ip, []).append(time.time())
 
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import asyncio
@@ -80,6 +80,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="银龄专线 · 家人与社区", lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=Path(__file__).resolve().parent / "static"), name="static")
+app.include_router(family.create_router(SILENCE_SECONDS))
 
 
 # --------------------------------------------------------------------------- device (the phone)
@@ -110,6 +112,7 @@ def pair(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         "token": device["token"],
         "pair_code": device["pair_code"],
         "pair_code_role": "family",
+        "expires_in": db.PAIR_CODE_TTL_SECONDS,
         "heartbeat_seconds": HEARTBEAT_SECONDS,
     }
 
@@ -126,7 +129,7 @@ def invite(
     """
     device = device_from_auth(authorization)
     role = str(payload.get("role", "family"))
-    if role not in web.ROLE_LABEL:
+    if role not in family_view.ROLE_LABEL:
         raise HTTPException(status_code=400, detail="身份只能是 family / community / neighbor")
     rotated = db.rotate_pair_code(device["id"], role)
     log.info("[invite] device=%s role=%s", device["id"], role)
@@ -135,6 +138,17 @@ def invite(
         "pair_code_role": role,
         "expires_in": db.PAIR_CODE_TTL_SECONDS,
     }
+
+
+@app.post("/api/device/profile")
+def update_profile(
+    payload: dict[str, Any] = Body(default={}),
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    device = device_from_auth(authorization)
+    name = str(payload.get("elder_name", "")).strip()[:40]
+    db.update_device_name(device["id"], name)
+    return {"elder_name": name}
 
 
 @app.post("/api/device/heartbeat")
@@ -245,13 +259,9 @@ def post_event(
 # --------------------------------------------------------------------------- the circle (web)
 
 
-def member_from_cookie(session: str | None) -> dict[str, Any] | None:
-    return db.session_member(session) if session else None
-
-
 @app.get("/", response_class=HTMLResponse)
 def index(session: str | None = Cookie(default=None)):
-    if member_from_cookie(session):
+    if family.member_from_cookie(session):
         return RedirectResponse("/family", status_code=303)
     return HTMLResponse(web.join_page())
 
@@ -282,9 +292,9 @@ def join(
     # not read from the form: letting a joiner pick "家人" meant that anyone who guessed a code
     # could read the elder's private context and leave a message the phone reads aloud as
     # "家人留言" — which is exactly the channel phone fraud needs.
-    role = str(device.get("pair_code_role") or "family")
-    if role not in web.ROLE_LABEL:
-        role = "family"
+    role = str(device.get("pair_code_role", ""))
+    if role not in family_view.ROLE_LABEL:
+        return HTMLResponse(web.join_page("邀请身份无效，请由老人手机重新生成邀请码。"), status_code=403)
     clean_name = name.strip()[:24] or "家人"
     clean_phone = phone.strip()[:20]
     # Joining twice with the same number updates that person instead of adding a duplicate.
@@ -312,69 +322,6 @@ def join(
     return response
 
 
-@app.get("/family", response_class=HTMLResponse)
-def family(
-    session: str | None = Cookie(default=None),
-    ok: str = "",
-):
-    member = member_from_cookie(session)
-    if not member:
-        return RedirectResponse("/", status_code=303)
-    with db.db() as connection:
-        row = connection.execute("SELECT * FROM devices WHERE id = ?", (member["device_id"],)).fetchone()
-    device = dict(row)
-    return HTMLResponse(
-        web.dashboard(
-            member,
-            device,
-            db.events_for(device["id"], limit=80),
-            db.circle_of(device["id"]),
-            SILENCE_SECONDS,
-            flash=ok,
-        )
-    )
-
-
-@app.post("/family/claim/{event_id}")
-def claim(event_id: int, session: str | None = Cookie(default=None)):
-    member = member_from_cookie(session)
-    if not member:
-        return RedirectResponse("/", status_code=303)
-    event = db.claim_event(event_id, member["id"], member["device_id"])
-    if not event:
-        return RedirectResponse("/family?ok=这条求助已经有人接手了", status_code=303)
-    db.add_event(
-        member["device_id"],
-        "ack",
-        "to_device",
-        title=f"{member['name']}说她来处理",
-        body="等一下，我来帮你。",
-        created_by=member["id"],
-    )
-    log.info("[claim] event=%s by=%s", event_id, member["name"])
-    return RedirectResponse("/family?ok=你已经接手，老人手机上会收到提示", status_code=303)
-
-
-@app.post("/family/message")
-def message(
-    text: str = Form(...),
-    session: str | None = Cookie(default=None),
-):
-    member = member_from_cookie(session)
-    if not member:
-        return RedirectResponse("/", status_code=303)
-    # Only family may put words on the elder's phone: that channel reads as a familiar voice, and it
-    # must not be usable by someone the person does not know.
-    if member["role"] != "family":
-        raise HTTPException(status_code=403, detail="只有家人能给老人留话")
-    body = text.strip()[:500]
-    if body:
-        db.add_event(
-            member["device_id"], "message", "to_device", title="留言", body=body, created_by=member["id"]
-        )
-    return RedirectResponse("/family?ok=已经发到老人手机上", status_code=303)
-
-
 @app.post("/api/watch/check")
 def trigger_watch(authorization: str | None = Header(default=None)) -> dict[str, Any]:
     """For tests and for a cron-style deployment; the background task calls the same function."""
@@ -385,28 +332,3 @@ def trigger_watch(authorization: str | None = Header(default=None)) -> dict[str,
         raise HTTPException(status_code=401, detail="定时检查令牌无效")
     raised = watch.check_silence(silence_seconds=SILENCE_SECONDS)
     return {"raised": [event["title"] for event in raised]}
-
-
-@app.get("/api/devices/{device_id}/summary")
-def summary(
-    device_id: int,
-    session: str | None = Cookie(default=None),
-) -> JSONResponse:
-    """A small read-only view for the circle member paired with this device."""
-    member = member_from_cookie(session)
-    if not member or member["device_id"] != device_id:
-        # 404 (not 403) avoids confirming which device ids exist.
-        raise HTTPException(status_code=404, detail="没有这个设备")
-    with db.db() as connection:
-        row = connection.execute("SELECT * FROM devices WHERE id = ?", (device_id,)).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="没有这个设备")
-    device = dict(row)
-    return JSONResponse(
-        {
-            "elder_name": device["elder_name"],
-            "last_seen_at": device["last_seen_at"],
-            "circle": db.circle_of(device_id),
-            "events": db.events_for(device_id, limit=20),
-        }
-    )

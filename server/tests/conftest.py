@@ -34,3 +34,23 @@ def device(client):
 
 def auth(device_info):
     return {"Authorization": f"Bearer {device_info['token']}"}
+
+
+def invite(client, device, role="family"):
+    """Rotate the phone's invite code to one role. The role travels with the code."""
+    response = client.post("/api/device/invite", json={"role": role}, headers=auth(device))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["pair_code_role"] == role
+    return body["pair_code"]
+
+
+def join(client, device, name="大女儿", phone="13800000001", role="family"):
+    """Join the circle. There is no role field on the form: the invite already carries it."""
+    response = client.post(
+        "/join",
+        data={"pair_code": invite(client, device, role), "name": name, "phone": phone},
+        follow_redirects=False,
+    )
+    assert response.status_code == 303
+    return response

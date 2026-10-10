@@ -19,30 +19,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
@@ -55,20 +45,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.em
 import com.yinling.core.MarkdownLite
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.yinling.hotline.settings.SettingsScreen
 
 class MainActivity : ComponentActivity() {
     private val session get() = (application as HotlineApp).session
@@ -111,7 +99,7 @@ class MainActivity : ComponentActivity() {
             val state by session.state.collectAsState()
             val hotline = application as HotlineApp
             val scope = rememberCoroutineScope()
-            var settings by remember { mutableStateOf(false) }
+            var settings by rememberSaveable { mutableStateOf(false) }
             var request by remember { mutableStateOf(state.goal) }
             // Server-side recognition (iFlytek, through our server) beats the phone's own: this phone
             // owns neither a RecognitionService nor a usable engine, so its keyboard is all it has.
@@ -160,7 +148,10 @@ class MainActivity : ComponentActivity() {
             )) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     if (settings) {
-                        SettingsPage(session, onBack = { settings = false })
+                        SettingsScreen(session, refreshKey = permissionVersion, onBack = {
+                            canListen = session.server.isConfigured() && session.server.speechEnabled
+                            settings = false
+                        })
                     } else {
                         val tick = permissionVersion
                         val devMode = session.autoConfirm
@@ -586,524 +577,6 @@ private fun HomePage(
     }
 }
 
-
-@Composable
-private fun SettingsPage(session: SessionController, onBack: () -> Unit) {
-    val context = LocalContext.current
-    var familyName by remember { mutableStateOf(session.familyName) }
-    var familyPhone by remember { mutableStateOf(session.familyPhone) }
-    var endpoint by remember { mutableStateOf(session.endpoint) }
-    var model by remember { mutableStateOf(session.model) }
-    var key by remember { mutableStateOf(session.apiKey) }
-    var vision by remember { mutableStateOf(session.visionEnabled) }
-    // Either half being on means the switch reads as on, so a state left by an older build
-    // (auto_confirm=true without developer_mode) is still visible and can be turned off here.
-    var developer by remember { mutableStateOf(session.developerMode || session.autoConfirm) }
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Row {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回") }
-            Text("家人设置", fontSize = 27.sp, fontWeight = FontWeight.Bold)
-        }
-        Text(
-            "这些是给家人装的，老人不需要进来（首页长按标题可以进来）。",
-            fontSize = 15.sp,
-            color = Color.DarkGray,
-        )
-        var speak by remember { mutableStateOf(session.speakerEnabled) }
-        var speakerState by remember { mutableStateOf(session.speakerStatus()) }
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("语音播报", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-                Text("接线员说话时念出来，看不清屏幕也听得见。", fontSize = 15.sp, color = Color.DarkGray)
-                Text(speakerState, fontSize = 14.sp, color = Color.DarkGray)
-            }
-            Switch(
-                checked = speak,
-                onCheckedChange = { on ->
-                    speak = on
-                    session.speakerEnabled = on
-                    // Ask the engine to start now so the status line tells the truth immediately.
-                    session.tryPrepareSpeaker()
-                    speakerState = session.speakerStatus()
-                },
-            )
-        }
-        if (!speakerState.startsWith("可用")) {
-            // Chinese OEM phones often ship no usable engine at all; the family has to install one,
-            // and that is a one-tap trip to the system screen rather than something we can do.
-            OutlinedButton(
-                onClick = { (context.applicationContext as HotlineApp).openTextToSpeechSettings() },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("去设置语音（系统 → 文字转语音）", fontSize = 16.sp) }
-        }
-        Text("家人", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        OutlinedTextField(familyName, { familyName = it }, label = { Text("称呼") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(familyPhone, { familyPhone = it }, label = { Text("电话号码") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-        Text("智能接线员", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text("办事时，当前页面的可见文字会发送到这里填写的模型服务。", fontSize = 15.sp)
-        OutlinedTextField(endpoint, { endpoint = it }, label = { Text("服务地址") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(model, { model = it }, label = { Text("模型") }, modifier = Modifier.fillMaxWidth())
-        Text(
-            "建议 deepseek-chat：实测同一任务步数少得多、坐标也更准（3~6 步 vs 19~32 步）。" +
-                "带思考的模型（如 deepseek-flash）每步都要权衡，反而容易来回试、点不准。",
-            fontSize = 14.sp,
-            color = Color.DarkGray,
-        )
-        OutlinedTextField(
-            key, { key = it }, label = { Text("访问密钥") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("允许请求屏幕图像", fontSize = 17.sp)
-            Switch(checked = vision, onCheckedChange = { vision = it })
-        }
-        Text("仅在模型支持图片时开启。开启后，盲页面会自动把当前屏幕图像发给该模型。", fontSize = 14.sp)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("开发者模式", fontSize = 17.sp)
-            Switch(checked = developer, onCheckedChange = { developer = it })
-        }
-        Text("调试试用：所有操作不再询问，直接执行；完整对话写入 files/loop.log。给老人用请关闭。", fontSize = 14.sp)
-        Text("访问密钥保存在本机加密存储（Android Keystore），重启后仍然可用；换手机需要重新填写。", fontSize = 14.sp, color = Color.DarkGray)
-        Spacer(Modifier.height(8.dp))
-        KeepAliveSection()
-        Spacer(Modifier.height(8.dp))
-        PeaceSection()
-        Spacer(Modifier.height(8.dp))
-        SkillSection()
-        Spacer(Modifier.height(8.dp))
-        ServerSection()
-        Button(onClick = {
-            session.familyName = familyName.trim()
-            session.familyPhone = familyPhone.trim()
-            session.endpoint = endpoint.trim()
-            session.model = model.trim()
-            session.apiKey = key.trim()
-            session.visionEnabled = vision
-            session.developerMode = developer
-            // The switch says "所有操作不再询问，直接执行" — that IS auto_confirm. Until now only
-            // the logging half was wired, so the confirmation mode could not be changed from the
-            // UI at all while both the settings text and the evaluation protocol assumed it could.
-            session.autoConfirm = developer
-            onBack()
-        }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("保存", fontSize = 19.sp) }
-    }
-}
-
-/**
- * "Keep me running": the three switches an app cannot flip for itself. Each one states plainly
- * whether it is on, because the failure this screen exists to prevent is the person believing the
- * assistant is watching when it is not.
- */
-@Composable
-private fun KeepAliveSection() {
-    val context = LocalContext.current
-    var tick by remember { mutableIntStateOf(0) }
-    val running = remember(tick) { ScreenAccessService.isRunning() }
-    val enabled = remember(tick) { ScreenAccessService.isEnabled(context) }
-    val batteryFree = remember(tick) { KeepAlive.isIgnoringBatteryOptimizations(context) }
-    val canNotify = remember(tick) { KeepAlive.notificationsAllowed(context) }
-    var autoStartFound by remember { mutableStateOf<Boolean?>(null) }
-    val askNotifications = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { tick++ }
-
-    val good = Color(0xFF087E75)
-    val bad = Color(0xFFC46A14)
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("一直运行", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text("这三样决定我能不能一直在后台看着手机。给老人用的手机上都要打开。", fontSize = 15.sp)
-
-        Text(
-            when {
-                running -> "① 无障碍服务：运行中 ✓"
-                enabled -> "① 无障碍服务：已开启，等系统连接…"
-                else -> "① 无障碍服务：未开启 ✗ 我既看不到屏幕，也没法操作"
-            },
-            fontSize = 16.sp,
-            color = if (running) good else bad,
-        )
-        if (!running) {
-            OutlinedButton(
-                onClick = { KeepAlive.openAccessibilitySettings(context) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("去开启无障碍服务") }
-        }
-
-        Text(
-            if (batteryFree) "② 电池优化：已忽略 ✓" else "② 电池优化：系统可能随时杀掉我 ✗",
-            fontSize = 16.sp,
-            color = if (batteryFree) good else bad,
-        )
-        if (!batteryFree) {
-            OutlinedButton(
-                onClick = { KeepAlive.requestIgnoreBatteryOptimizations(context) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("把本应用加入电池白名单") }
-        }
-
-        Text(
-            if (autoStartFound == true) "③ 自启动：已打开设置页" else "③ 自启动：需要在系统设置里允许本应用自启动",
-            fontSize = 16.sp,
-            color = if (autoStartFound == true) good else bad,
-        )
-        OutlinedButton(
-            onClick = { autoStartFound = KeepAlive.openAutoStartSettings(context) },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("打开自启动设置") }
-        if (autoStartFound == false) {
-            Text("没找到自启动页，已打开应用详情：请在系统的“省电/自启动”里允许本应用。", fontSize = 14.sp)
-        }
-
-        if (!canNotify) {
-            Text("④ 通知权限：未开启（掉线时我无法提醒您）", fontSize = 16.sp, color = bad)
-            OutlinedButton(
-                onClick = { askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("允许通知") }
-        }
-
-        TextButton(onClick = { tick++ }) { Text("重新检查") }
-    }
-}
-
-/**
- * The peace-of-mind agreement, written as an agreement rather than a promise.
- *
- * On the phones this runs on, an app cannot be a dependable 24/7 watch: the accessibility service is
- * removed by the system after a reboot and background execution is restricted. So the mechanism is a
- * daily message the family expects — a missing message is the alarm — and the screen says so instead
- * of implying that a phone can be trusted to notice everything.
- */
-@Composable
-private fun PeaceSection() {
-    val context = LocalContext.current
-    val peace = remember { (context.applicationContext as HotlineApp).peace }
-    var tick by remember { mutableIntStateOf(0) }
-    var enabled by remember { mutableStateOf(peace.enabled) }
-    var who by remember { mutableStateOf(peace.who) }
-    var okMinute by remember { mutableStateOf(peace.okMinuteOfDay) }
-    val canSms = remember(tick) {
-        context.checkSelfPermission(android.Manifest.permission.SEND_SMS) ==
-            android.content.pm.PackageManager.PERMISSION_GRANTED
-    }
-    val askSms = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { tick++ }
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("平安确认（和家人的约定）", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text(
-            "开启后每天给家人发一条“报平安”。和家人的约定是：收不到这条消息，就打个电话。" +
-                "这不是系统级的看护——手机没电、或系统把服务杀掉时我发不出去，所以这条约定比功能本身更重要。",
-            fontSize = 15.sp,
-        )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("开启平安确认", fontSize = 17.sp)
-            Switch(checked = enabled, onCheckedChange = { enabled = it; peace.enabled = it; tick++ })
-        }
-        OutlinedTextField(
-            who, { who = it; peace.who = it },
-            label = { Text("老人称呼（如：妈妈）") },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Text("每天几点前发这条消息", fontSize = 16.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            listOf(8 * 60, 9 * 60, 10 * 60).forEach { minute ->
-                OutlinedButton(
-                    onClick = { okMinute = minute; peace.okMinuteOfDay = minute; tick++ },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        "%02d:00".format(minute / 60),
-                        fontWeight = if (okMinute == minute) FontWeight.Bold else FontWeight.Normal,
-                    )
-                }
-            }
-        }
-        if (!canSms) {
-            Text("短信权限未开启，我发不出这条消息。", fontSize = 16.sp, color = Color(0xFFC46A14))
-            OutlinedButton(
-                onClick = { askSms.launch(android.Manifest.permission.SEND_SMS) },
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text("允许发送短信") }
-        }
-        Text(remember(tick) { peace.status() }, fontSize = 15.sp)
-        OutlinedButton(
-            onClick = {
-                val decision = peace.preview()
-                LoopLog.event("[peace] 手动检查：$decision")
-                tick++
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("现在检查一次（不会发送）") }
-    }
-}
-
-/**
- * A deliberately small window into generated skills.
- *
- * The model's flow summaries are not trusted immediately: they land in `candidate/`, the family can
- * view them, adopt one, and roll it back. Only `active/` is handed to the planner, and a `shadow`
- * revision stays invisible until it beats the incumbent on the frozen task set.
- *
- * The card answers six questions and nothing else — what it is, what it fixed, whether it broke
- * anything, where the evidence is, whether it ever triggered a local gate, and what to do with it.
- * The elder's own screen never shows any of this.
- */
-@Composable
-private fun SkillSection() {
-    val context = LocalContext.current
-    val app = context.applicationContext as HotlineApp
-    val store = remember { app.skills }
-    var tick by remember { mutableIntStateOf(0) }
-    var expanded by remember { mutableStateOf<String?>(null) }
-    val candidates = remember(tick) { store.candidateSkills().groupBy { it.stableId } }
-    val active = remember(tick) { store.activeSkills().groupBy { it.stableId } }
-
-    fun refresh() {
-        app.refreshSkills()
-        tick++
-    }
-
-    @Composable
-    fun card(skill: Skill, isCandidate: Boolean) {
-        val blocked = skill.regressionResult == "fail" || skill.falseDone > 0
-        val key = "${skill.stableId}@${skill.version}"
-        ElderCard {
-            Text(skill.description, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Text(
-                "${skill.stableId} · v${skill.version} · " +
-                    (if (isCandidate) "候选" else "生效") +
-                    " · " + (if (skill.source == "learned") "模型生成" else "内置"),
-                fontSize = 13.sp,
-                color = Color.DarkGray,
-            )
-            Text(skillApplicabilityLine(skill), fontSize = 13.sp, color = Color.DarkGray)
-            Text(skillFixLine(skill), fontSize = 14.sp)
-            Text(
-                skillRegressionLine(skill),
-                fontSize = 14.sp,
-                color = if (blocked) Color(0xFFB00020) else Color.DarkGray,
-            )
-            Text(skillEvidenceLine(skill), fontSize = 13.sp, color = Color.DarkGray)
-            Text(skillSafetyLine(skill), fontSize = 13.sp, color = Color.DarkGray)
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                TextButton(onClick = { expanded = if (expanded == key) null else key }) { Text("查看") }
-                if (isCandidate) {
-                    TextButton(
-                        enabled = !blocked,
-                        onClick = {
-                            if (runCatching { store.promote(skill.stableId, skill.version) }.getOrDefault(false)) {
-                                Toast.makeText(context, "已采用，下一次任务会看到它", Toast.LENGTH_SHORT).show()
-                                refresh()
-                            } else {
-                                Toast.makeText(context, "采用被门禁拒绝", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                    ) { Text(if (blocked) "采用（已禁用）" else "采用") }
-                    TextButton(onClick = { expanded = null }) { Text("保持候选") }
-                    TextButton(onClick = {
-                        if (runCatching { store.deleteCandidate(skill.stableId) }.getOrDefault(false)) refresh()
-                    }) { Text("删除") }
-                } else if (skill.source == "learned") {
-                    TextButton(onClick = {
-                        if (runCatching { store.rollback(skill.stableId) }.getOrDefault(false)) {
-                            Toast.makeText(context, "已回退到上一个可用版本", Toast.LENGTH_SHORT).show()
-                            refresh()
-                        }
-                    }) { Text("回退到上一版") }
-                    TextButton(onClick = {
-                        if (runCatching { store.rollback(skill.stableId, 1) }.getOrDefault(false)) {
-                            Toast.makeText(context, "已回退到 v1", Toast.LENGTH_SHORT).show()
-                            refresh()
-                        }
-                    }) { Text("回退到 v1") }
-                    TextButton(onClick = {
-                        if (runCatching { store.retire(skill.stableId) }.getOrDefault(false)) {
-                            Toast.makeText(context, "已退休，下一次任务不再加载它", Toast.LENGTH_SHORT).show()
-                            refresh()
-                        }
-                    }) { Text("退休") }
-                }
-            }
-            if (expanded == key) Text(skill.body, fontSize = 14.sp)
-        }
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("技巧", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text(
-            "模型从成功任务里总结出的流程先进入候选；采用后才会出现在 load_skill 里，可随时回退。" +
-                "只有通过回归测试（没让旧任务变差、没有谎报）的候选才能点“采用”。" +
-                "这里只存文字步骤，不存截图，也不自动执行关键操作。",
-            fontSize = 15.sp,
-        )
-
-        Text("候选技巧", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-        if (candidates.isEmpty()) {
-            Text("暂无候选技巧。", fontSize = 15.sp, color = Color.DarkGray)
-        }
-        candidates.forEach { (_, versions) ->
-            versions.sortedByDescending { it.version }.forEach { card(it, isCandidate = true) }
-        }
-
-        Text("当前生效的技巧", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-        active.forEach { (_, versions) ->
-            versions.sortedByDescending { it.version }.forEach { card(it, isCandidate = false) }
-        }
-    }
-}
-
-private fun skillApplicabilityLine(skill: Skill): String =
-    "适用：${skill.apps.joinToString("、").ifBlank { "通用" }} · 任务族 ${skill.goalFamily.ifBlank { "未定" }}"
-
-private fun skillFixLine(skill: Skill): String =
-    "它修好了：基线失败留档 ${skill.baselineRun.ifBlank { "无（还没有失败基线）" }}"
-
-private fun skillRegressionLine(skill: Skill): String = when {
-    skill.regressionResult == "fail" ->
-        "这条技巧会让 ${skill.regressionSet.joinToString("、").ifBlank { "旧任务" }} 变差，不能采用"
-    skill.regressionResult == "pass" ->
-        "旧任务回归 ${skill.regressionSet.joinToString("、").ifBlank { "无" }}：仍通过"
-    else -> "还没跑冻结任务集回归（不能自动启用）"
-}
-
-private fun skillEvidenceLine(skill: Skill): String =
-    "证据：成功留档 ${skill.evidenceRun.ifBlank { "无" }} · 独立验证 ${skill.verifiedRuns} 次"
-
-private fun skillSafetyLine(skill: Skill): String = buildString {
-    append("安全：禁做词 ${skill.forbidden.size} 个")
-    if (skill.forbidden.isNotEmpty()) append("（${skill.forbidden.joinToString("、")}）")
-    append(if (skill.falseDone == 0) " · 未出现谎报" else " · 出现过 ${skill.falseDone} 次谎报")
-}
-
-/**
- * Pairing this phone with the trusted circle.
- *
- * The family sets this up once. After that the phone reports what happened, and the people who care
- * open a web link — no app for them to install, and no extra permission for the elder to grant.
- */
-@Composable
-private fun ServerSection() {
-    val context = LocalContext.current
-    val app = context.applicationContext as HotlineApp
-    val server = remember { ServerClient(app) }
-    val scope = rememberCoroutineScope()
-    var tick by remember { mutableIntStateOf(0) }
-    var address by remember { mutableStateOf(server.baseUrl) }
-    var elder by remember { mutableStateOf(server.elderName) }
-    var busy by remember { mutableStateOf(false) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("家人与社区（可信的人）", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text(
-            "配对后，遇到办不了的事会通知家人和社区。他们不用装应用：打开网页就能看到，并接手处理。" +
-                "只有名单里的人算数。",
-            fontSize = 15.sp,
-        )
-        OutlinedTextField(
-            elder, { elder = it; server.elderName = it },
-            label = { Text("老人称呼（家人看到的，如：妈妈）") },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            address, { address = it },
-            label = { Text("服务器地址（HTTPS；本地 adb reverse 用 http://127.0.0.1:8787）") },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedButton(
-            onClick = {
-                server.baseUrl = address
-                server.elderName = elder
-                busy = true
-                scope.launch {
-                    runCatching { server.pair() }
-                    busy = false
-                    tick++
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(if (busy) "正在配对…" else "配对 / 重新配对") }
-
-        if (server.pairCode.isNotBlank()) {
-            val familyUrl = server.familyUrl()
-            Text("邀请码", fontSize = 16.sp)
-            Text(server.pairCode, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-            Text(
-                "让 TA 在浏览器打开 $familyUrl 输入这个码。身份由你在这里决定，加入的人改不了。",
-                fontSize = 15.sp,
-            )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ServerClient.ROLE_NAMES.forEach { (role, label) ->
-                    OutlinedButton(
-                        onClick = {
-                            server.baseUrl = address
-                            busy = true
-                            scope.launch {
-                                runCatching { server.invite(role) }
-                                busy = false
-                                tick++
-                            }
-                        },
-                        enabled = !busy,
-                    ) { Text("邀请$label", fontSize = 15.sp) }
-                }
-            }
-            if (familyUrl.contains("127.0.0.1") || familyUrl.contains("localhost") || familyUrl.contains("::1")) {
-                Text(
-                    "这个地址只适合本机联调；家人远程打开网页，请改成服务器电脑可被访问的 HTTPS 地址。",
-                    fontSize = 14.sp,
-                    color = Color(0xFFC46A14),
-                )
-            }
-        }
-        Text(remember(tick) { server.lastResult.ifBlank { "还没联系过服务器" } }, fontSize = 15.sp)
-        Text(
-            remember(tick) {
-                if (!server.isConfigured()) "语音识别：服务器还没配对"
-                else if (server.speechEnabled) "语音识别：可用（服务器转写，密钥不在手机上）"
-                else "语音识别：服务端未配置讯飞密钥"
-            },
-            fontSize = 15.sp,
-        )
-        OutlinedButton(
-            onClick = {
-                busy = true
-                scope.launch {
-                    runCatching { server.heartbeat("手动联系") }
-                    runCatching { server.refreshSpeechStatus() }
-                    busy = false
-                    tick++
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("现在联系一次") }
-        OutlinedButton(
-            onClick = {
-                busy = true
-                scope.launch {
-                    runCatching {
-                        server.postEvent(
-                            kind = "help",
-                            title = "${server.elderName.ifBlank { "老人" }}需要人帮忙（测试）",
-                            body = "这是一条测试求助，用来确认家人那边收得到。",
-                            context = "目标：测试家人端\\n卡在：测试按钮",
-                        )
-                    }
-                    busy = false
-                    tick++
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("发一条测试求助") }
-    }
-}
 
 /**
  * 把模型输出的 Markdown 渲染成老人能直接读的排版：加粗、标题、列表各有其形，而不是显示标记本身。

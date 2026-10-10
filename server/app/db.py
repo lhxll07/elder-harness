@@ -157,6 +157,17 @@ def device_by_token(token: str) -> dict[str, Any] | None:
         return dict(row) if row else None
 
 
+def device_by_id(device_id: int) -> dict[str, Any] | None:
+    with db() as connection:
+        row = connection.execute("SELECT * FROM devices WHERE id = ?", (device_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def update_device_name(device_id: int, name: str) -> None:
+    with db() as connection:
+        connection.execute("UPDATE devices SET elder_name = ? WHERE id = ?", (name, device_id))
+
+
 def device_by_pair_code(code: str) -> dict[str, Any] | None:
     with db() as connection:
         row = connection.execute(
@@ -226,6 +237,11 @@ def create_session(circle_id: int) -> str:
     return token
 
 
+def delete_session(token: str) -> None:
+    with db() as connection:
+        connection.execute("DELETE FROM sessions WHERE token = ?", (token,))
+
+
 def session_member(token: str) -> dict[str, Any] | None:
     with db() as connection:
         row = connection.execute(
@@ -262,6 +278,16 @@ def events_for(device_id: int, limit: int = 50) -> list[dict[str, Any]]:
         rows = connection.execute(
             "SELECT * FROM events WHERE device_id = ? ORDER BY id DESC LIMIT ?",
             (device_id, limit),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+
+def open_requests_for(device_id: int) -> list[dict[str, Any]]:
+    with db() as connection:
+        rows = connection.execute(
+            "SELECT * FROM events WHERE device_id = ? AND kind IN ('help', 'alert') "
+            "AND status IN ('new', 'claimed') ORDER BY id DESC",
+            (device_id,),
         ).fetchall()
         return [dict(row) for row in rows]
 
@@ -308,12 +334,20 @@ def acknowledge_events(device_id: int, event_ids: list[int], read: bool = False)
     return acked
 
 
-def claim_event(event_id: int, circle_id: int, device_id: int) -> dict[str, Any] | None:
+def claim_event(
+    event_id: int,
+    circle_id: int,
+    device_id: int,
+    allowed_kinds: tuple[str, ...] = ("help", "alert"),
+) -> dict[str, Any] | None:
+    if not allowed_kinds:
+        return None
+    placeholders = ",".join("?" for kind in allowed_kinds)
     with db() as connection:
         cursor = connection.execute(
             "UPDATE events SET status = 'claimed', claimed_by = ?, claimed_at = ? "
-            "WHERE id = ? AND device_id = ? AND kind IN ('help', 'alert') AND status = 'new'",
-            (circle_id, time.time(), event_id, device_id),
+            f"WHERE id = ? AND device_id = ? AND kind IN ({placeholders}) AND status = 'new'",
+            (circle_id, time.time(), event_id, device_id, *allowed_kinds),
         )
         if cursor.rowcount == 0:
             # Someone else already claimed it, or it is not a help/alert. Returning None is what

@@ -1,6 +1,8 @@
 package com.yinling.hotline
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -64,6 +66,14 @@ class ServerClient(private val app: HotlineApp) {
         set(value) {
             prefs.edit().putString("pair_code", value).apply()
         }
+
+    var pairCodeRole: String
+        get() = prefs.getString("pair_code_role", "").orEmpty()
+        private set(value) { prefs.edit().putString("pair_code_role", value).apply() }
+
+    var pairCodeExpiresAt: Long
+        get() = prefs.getLong("pair_code_expires_at", 0L)
+        private set(value) { prefs.edit().putLong("pair_code_expires_at", value).apply() }
 
     var elderName: String
         get() = prefs.getString("elder_name", "").orEmpty()
@@ -175,18 +185,40 @@ class ServerClient(private val app: HotlineApp) {
     fun familyUrl(): String = if (baseUrl.isBlank()) "" else "$baseUrl/"
 
     /** The one-time pairing: the phone asks for a token and a code the family will type in. */
-    suspend fun pair(): String = withContext(Dispatchers.IO) {
-        val body = JSONObject().put("elder_name", elderName).toString()
-        val json = request("POST", "/api/device/pair", body, token = null)
+    suspend fun pair(): String = connect(baseUrl, elderName)
+
+    suspend fun connect(address: String, name: String): String = withContext(Dispatchers.IO) {
+        com.yinling.core.ServiceAddress.error(address)?.let { throw ServerError(it) }
+        val target = address.trim().trimEnd('/')
+        val body = JSONObject().put("elder_name", name.trim()).toString()
+        val json = request("POST", "/api/device/pair", body, token = null, baseAddress = target)
             ?: throw ServerError("配对失败：服务器没有回应。")
-        token = json.optString("token")
-        pairCode = json.optString("pair_code")
+        val newToken = json.optString("token")
+        val newCode = json.optString("pair_code")
+        if (newToken.isBlank() || newCode.length != 8) throw ServerError("配对失败：服务器没有返回有效凭证。")
+        currentCoroutineContext().ensureActive()
+        token = newToken
+        baseUrl = target
+        elderName = name
+        pairCode = newCode
+        pairCodeRole = json.optString("pair_code_role", "family")
+        pairCodeExpiresAt = json.optLong("expires_in").let { if (it > 0L) System.currentTimeMillis() + it * 1000L else 0L }
+        lastHeartbeatAt = 0L
         heartbeatSeconds = json.optInt("heartbeat_seconds", 300)
         lastResult = "已配对（配对码 ${pairCode}）"
         // The code itself never goes to the log: it is a setup secret, and logcat is readable by
         // anything the person plugs into the phone.
         LoopLog.event("[server] 配对成功")
         pairCode
+    }
+
+    suspend fun updateElderName(name: String): Boolean = withContext(Dispatchers.IO) {
+        if (!isConfigured()) return@withContext false
+        val body = JSONObject().put("elder_name", name.trim()).toString()
+        val json = request("POST", "/api/device/profile", body, token) ?: return@withContext false
+        elderName = json.optString("elder_name")
+        lastResult = "老人称呼已保存"
+        true
     }
 
     /**
@@ -197,10 +229,16 @@ class ServerClient(private val app: HotlineApp) {
      * once the circle is bigger than the household.
      */
     suspend fun invite(role: String): String = withContext(Dispatchers.IO) {
+        if (!isConfigured()) throw ServerError("请先连接守护圈服务")
+        if (role !in ROLE_NAMES) throw ServerError("请选择有效的邀请身份")
         val body = JSONObject().put("role", role).toString()
         val json = request("POST", "/api/device/invite", body, token)
             ?: throw ServerError(lastResult.ifBlank { "邀请码生成失败：服务器没有回应。" })
-        pairCode = json.optString("pair_code")
+        val newCode = json.optString("pair_code")
+        if (newCode.length != 8) throw ServerError("邀请码生成失败：服务器没有返回有效邀请码")
+        pairCode = newCode
+        pairCodeRole = json.optString("pair_code_role", role)
+        pairCodeExpiresAt = json.optLong("expires_in").let { if (it > 0L) System.currentTimeMillis() + it * 1000L else 0L }
         lastResult = "已生成${ROLE_NAMES[role] ?: role}邀请码"
         pairCode
     }
@@ -264,9 +302,9 @@ class ServerClient(private val app: HotlineApp) {
             ok
         }
 
-    private fun request(method: String, path: String, body: String?, token: String?): JSONObject? {
+    private fun request(method: String, path: String, body: String?, token: String?, baseAddress: String = baseUrl): JSONObject? {
         val url = try {
-            URL(baseUrl + path)
+            URL(baseAddress + path)
         } catch (_: Exception) {
             lastResult = "服务器地址无法识别"
             return null
