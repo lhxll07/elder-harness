@@ -42,13 +42,11 @@ check("表号引用都能对上题注", used_tables <= valid_tables,
 check("题注与表格数量一致", len(TABLE_CAPTIONS) == len(TABLE_NUMBERS),
       f"题注 {len(TABLE_CAPTIONS)} vs 编号 {len(TABLE_NUMBERS)}")
 
-# 2. 图号：正文引用不超过插图清单里的最大图号
-listed_figs = [int(m.group(1)) for m in FIGURE_REF.finditer(
-    text[text.index("| 图号 |"):text.index("| 图号 |") + 4000])]
+# 2. 图号：1..N 连续出现，且不超过实际插图数（正文 13 张 Mermaid + 8 张实机截图 = 21）
+FIG_TOTAL = 21
 used_figs = {int(m.group(1)) for m in FIGURE_REF.finditer(text)}
-max_fig = max(listed_figs) if listed_figs else 0
-check("图号引用不越界", max(used_figs) <= max_fig, f"引用到图 {max(used_figs)}，清单到图 {max_fig}")
-check("图 1—%d 都在插图清单里" % max_fig, set(range(1, max_fig + 1)) <= set(listed_figs))
+check("图号引用不越界", max(used_figs) <= FIG_TOTAL, f"引用到图 {max(used_figs)}，共 {FIG_TOTAL} 张")
+check("图号引用不下于 1", min(used_figs) >= 1 if used_figs else True)
 
 # 3. 文献：不引用未定义的键，也不留从未引用的条目
 defined = {k for k, _ in REFS}

@@ -100,7 +100,6 @@ TABLE_CAPTIONS = [
     "20 位老年人的实地调查：五个维度的独立完成情况",
     "如实披露的统计口径与局限",
     "研发方向：问题、现状与验收方式",
-    "插图清单与作图说明",
     "关键设计参数",
     "可当场重跑的四条命令与实测输出",
     "上下文前缀缓存命中实测",
@@ -254,7 +253,7 @@ REF_GROUPS = [
 #     但该处只有要点与图 11、没有表格，因此编号 20 空着（正文已改为“见图 11”）。
 #   · 第 54 张表（附录“可当场重跑的四条命令与实测输出”）在正文中不参与表号。
 TABLE_SKIP_NUMBERS = (22,)
-TABLE_UNNUMBERED = (56,)
+TABLE_UNNUMBERED = (55,)
 
 
 def table_numbers(count):
@@ -581,6 +580,17 @@ def build_cover(doc, title, subtitle, infos):
 
 # ---------------------------------------------------------------- 正文渲染
 
+def tighten_table(table):
+    """把单元格上下边距收到 0、左右收到 0.08cm：58 张表数百行，累计可省数页。"""
+    mar = OxmlElement("w:tblCellMar")
+    for side, width in (("top", 0), ("bottom", 0), ("left", 45), ("right", 45)):
+        el = OxmlElement(f"w:{side}")
+        el.set(qn("w:w"), str(width))
+        el.set(qn("w:type"), "dxa")
+        mar.append(el)
+    table._tbl.tblPr.append(mar)
+
+
 def add_table(doc, rows, caption, number):
     cap = spacing(doc.add_paragraph(), 4, 1)
     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -591,6 +601,7 @@ def add_table(doc, rows, caption, number):
     t = doc.add_table(rows=1, cols=len(header))
     t.style = "Table Grid"
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    tighten_table(t)
     widths = COL_WIDTHS.get(caption)
     if widths and len(widths) == len(header):
         t.autofit = False
@@ -600,7 +611,7 @@ def add_table(doc, rows, caption, number):
     for i, text in enumerate(header):
         cell = t.rows[0].cells[i]
         cell.text = ""
-        p = spacing(cell.paragraphs[0], 2, 2)
+        p = spacing(cell.paragraphs[0], 0, 0)
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         add_runs(p, text, TBL, True)
         shade_cell(cell, "F2F2F2")
@@ -614,7 +625,7 @@ def add_table(doc, rows, caption, number):
             for seg in text.split("<br>"):
                 p = cell.paragraphs[0] if first else cell.add_paragraph()
                 first = False
-                spacing(p, 1, 1)
+                spacing(p, 0, 0)
                 add_runs(p, seg, TBL)
 
     if widths and len(widths) == len(header):
@@ -630,11 +641,11 @@ def add_table(doc, rows, caption, number):
         lay.set(qn("w:type"), "fixed")
         t._tbl.tblPr.append(lay)
 
-    spacing(doc.add_paragraph(), 0, 4).add_run("")
+    spacing(doc.add_paragraph(), 0, 2).add_run("")
 
 
-MAX_FIG_W_CM = 12.5   # 正文宽度上限（压页数：图是第二大杠杆）
-MAX_FIG_H_CM = 12.5   # 留出题注与页边距；过高会让图上的字印出来过小
+MAX_FIG_W_CM = 11.5   # 正文宽度上限（压页数：图是第二大杠杆）
+MAX_FIG_H_CM = 10.5   # 留出题注与页边距；过高会让图上的字印出来过小
 
 
 def add_figure(doc, png, caption, number, max_h_cm=MAX_FIG_H_CM):
@@ -660,7 +671,7 @@ def add_figure(doc, png, caption, number, max_h_cm=MAX_FIG_H_CM):
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.keep_with_next = True
     p.add_run().add_picture(str(png), width=Cm(width_cm))
-    cap = spacing(doc.add_paragraph(), 2, 10)
+    cap = spacing(doc.add_paragraph(), 2, 6)
     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
     add_runs(cap, f"图 {number}　{caption}", NOTE, True)
 
@@ -722,7 +733,7 @@ def render(doc, text, num):
                 gp.paragraph_format.keep_with_next = True
                 set_font(gp.add_run(group_title), FONT, S["小四"], True)
                 for k, t in items:
-                    rp = spacing(doc.add_paragraph(), 0, 2)
+                    rp = spacing(doc.add_paragraph(), 0, 0)
                     rp.paragraph_format.left_indent = Cm(0.9)
                     rp.paragraph_format.first_line_indent = Cm(-0.9)
                     add_runs(rp, f"[{num[k]}] {t}", S["五号"])
@@ -773,7 +784,7 @@ def render(doc, text, num):
                 set_font(p.add_run(lines[i]), MONO, NOTE)
                 i += 1
             i += 1
-            spacing(doc.add_paragraph(), 0, 4).add_run("")
+            spacing(doc.add_paragraph(), 0, 2).add_run("")
             continue
 
         # 引用块（边界声明等）
@@ -789,7 +800,7 @@ def render(doc, text, num):
             if s.startswith(marker):
                 p = doc.add_heading(level=lvl)
                 add_runs(p, expand(s[len(marker):]), size, True)
-                spacing(p, 12 if lvl == 1 else 8, 6 if lvl == 1 else 4)
+                spacing(p, 10 if lvl == 1 else 6, 4 if lvl == 1 else 2)
                 # 一级章节（作品简介、一、项目概述……九、附录）各自另起一页。
                 # 用 page_break_before 而不是插入分页符：标题已经在页首时不会多出一张空页。
                 if lvl == 1:
