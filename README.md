@@ -78,7 +78,7 @@ server/.venv/bin/python -m pytest server/tests -q
 ## 参赛与研究材料
 
 - [参赛材料导航](docs/aic-2026/README.md)：方案 Markdown、23 页演示源文件、实验及构建步骤。
-- `docs/aic-2026/提交-2026AIC/`：保留现有命名的最终计划书与答辩 PDF，不由构建脚本自动覆盖。
+- `docs/aic-2026/提交-校赛/`：保留现有命名的最终计划书与答辩 PDF，不由构建脚本自动覆盖。
 - `docs/aic-2026/refs/`：唯一一套参赛调研文本、文献抓取脚本与原始证据。
 - `docs/archive/`：已被当前审查取代的工程记录和已删除视频工程的旧分镜；不是当前产品说明。
 

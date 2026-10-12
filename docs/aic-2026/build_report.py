@@ -47,8 +47,7 @@ TBL, NOTE = S["五号"], S["小五"]   # 表格用五号(10.5pt)：中文惯例�
 # 按文档中出现顺序一一对应；数量不符时脚本报错，避免编号错位。
 
 TABLE_CAPTIONS = [
-    "作品概览一览",
-    "核心证据索引（给评审的定位表）",
+    "作品概览与证据索引（给评审的定位表）",
     "老年人手机办事痛点的四层十二项剖析",
     "现有助老方案对比（一）：执行能力维度",
     "现有助老方案对比（二）：工程与合规维度",
@@ -67,7 +66,6 @@ TABLE_CAPTIONS = [
     "智能体可调用的工具目录",
     "五种任务收尾方式及其对老人的呈现",
     "典型任务全流程走查（美团点餐至结算交接）",
-    "S1 查课表的三轮演进",
     "跨应用悬浮接线台的交互要素与工程细节",
     "多应用适配路径与实机任务覆盖",
     "实机问题驱动的开发迭代阶段",
@@ -97,10 +95,12 @@ TABLE_CAPTIONS = [
     "坐标定位命中率的空间分布",
     "实机实验发现的三个新问题",
     "典型应用场景与交接边界",
-    "如实披露的统计口径与局限（截至 2026-10-04）",
+    "20 位老年人的实地调查：五个维度的独立完成情况",
+    "如实披露的统计口径与局限",
     "研发方向：问题、现状与验收方式",
     "插图清单与作图说明",
     "关键设计参数",
+    "可当场重跑的四条命令与实测输出",
     "上下文前缀缓存命中实测",
     "文献验证清单（候选池）与本报告实际收录条数的关系",
     "第三方组件与服务清单",
@@ -244,7 +244,34 @@ REF_GROUPS = [
     ("三、技术文档", "t_"),
 ]
 
-CITE_RE = re.compile(r"\[@([a-z0-9_]+)\]")
+# 单个引用写成 [@key]；同一处要并列多条时写成 [@key1; @key2; @key3]，
+# 渲染成一个按序号升序的方括号（[19, 25, 26]），避免一串 [19] [25] [26] 像文献罗列。
+# ---------------------------------------------------------------- 表号规则
+# 正文引用的表号必须与实际存在的表对上，不能简单顺排：
+#   · 编号 20：正文在第四部分（一）4 把“S1 查课表的三轮演进”引用为“表 20”，
+#     但该处只有要点与图 11、没有表格，因此编号 20 空着（正文已改为“见图 11”）。
+#   · 第 54 张表（附录“可当场重跑的四条命令与实测输出”）在正文中不参与表号。
+TABLE_SKIP_NUMBERS = (20,)
+TABLE_UNNUMBERED = (54,)
+
+
+def table_numbers(count):
+    """算出每张表的显示编号；None 表示该表在正文中不编号。"""
+    numbers, num = [], 1
+    for index in range(1, count + 1):
+        if num in TABLE_SKIP_NUMBERS:
+            num += 1
+        if index in TABLE_UNNUMBERED:
+            numbers.append(None)
+            continue
+        numbers.append(num)
+        num += 1
+    return numbers
+
+
+TABLE_NUMBERS = table_numbers(len(TABLE_CAPTIONS))
+
+CITE_RE = re.compile(r"\[\s*(@[a-z0-9_]+(?:\s*[;，、,]?\s*@[a-z0-9_]+)*)\s*\]")
 
 
 # 列宽（cm，合计 15cm = A4 正文宽度）。仅对列数多、首列文字长的表做定制，
@@ -556,7 +583,7 @@ def add_table(doc, rows, caption, number):
     cap = spacing(doc.add_paragraph(), 4, 1)
     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
     cap.paragraph_format.keep_with_next = True
-    add_runs(cap, f"表 {number}　{caption}", NOTE, True)
+    add_runs(cap, f"表 {number}　{caption}" if number else caption, NOTE, True)
 
     header, body = rows[0], rows[1:]
     t = doc.add_table(rows=1, cols=len(header))
@@ -646,13 +673,16 @@ def render(doc, text, num):
     cited = set()
 
     def expand(s):
-        """把 [@key] 换成 [序号]，并记录引用过哪些文献。"""
+        """把 [@key] / [@key1; @key2] 换成 [序号] / [序号, 序号]，并记录引用过哪些文献。"""
         def sub(m):
-            key = m.group(1)
-            if key not in num:
-                raise KeyError(f"正文引用了未定义的文献键：{key}")
-            cited.add(key)
-            return f"[{num[key]}]"
+            keys = re.findall(r"@([a-z0-9_]+)", m.group(1))
+            numbers = []
+            for key in keys:
+                if key not in num:
+                    raise KeyError(f"正文引用了未定义的文献键：{key}")
+                cited.add(key)
+                numbers.append(num[key])
+            return "[" + ", ".join(str(n) for n in sorted(numbers)) + "]"
         return CITE_RE.sub(sub, s)
 
     def flush():
@@ -660,7 +690,8 @@ def render(doc, text, num):
         if pending:
             tno += 1
             cap = TABLE_CAPTIONS[tno - 1] if tno <= len(TABLE_CAPTIONS) else "（缺题注）"
-            add_table(doc, pending, cap, tno)
+            number = TABLE_NUMBERS[tno - 1] if tno <= len(TABLE_NUMBERS) else tno
+            add_table(doc, pending, cap, number)
             pending = []
 
     while i < len(lines):
@@ -757,6 +788,10 @@ def render(doc, text, num):
                 p = doc.add_heading(level=lvl)
                 add_runs(p, expand(s[len(marker):]), size, True)
                 spacing(p, 12 if lvl == 1 else 8, 6 if lvl == 1 else 4)
+                # 一级章节（作品简介、一、项目概述……九、附录）各自另起一页。
+                # 用 page_break_before 而不是插入分页符：标题已经在页首时不会多出一张空页。
+                if lvl == 1:
+                    p.paragraph_format.page_break_before = True
                 break
         else:
             # 列表
