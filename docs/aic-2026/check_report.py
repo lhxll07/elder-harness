@@ -73,6 +73,18 @@ hit = [b for b in banned if offending(b)]
 check("禁忌表述零命中（否定语境不算）", not hit,
       f"命中: {[(b, offending(b)) for b in hit]}")
 
+# 4.5 核心数字跨表一致（同一指标在正文各处必须同一数值）
+CONSISTENT = {
+    "分级执行拦截 15/20": ["15/20", "15 / 20"],
+    "固定词表拦截 6/20": ["6/20", "6 / 20"],
+    "完成核验 22/22": ["22/22"],
+    "仅机械层 12/22": ["12/22"],
+}
+for label, forms in CONSISTENT.items():
+    check(f"核心数字出现：{label}", any(f in text for f in forms))
+for wrong in ["7/20", "7 / 20", "222 项", "23 个测试类"]:
+    check(f"无残留错值：{wrong}", wrong not in text)
+
 # 5. 关键数字仍与数据文件一致
 checks = {
     "31 条运行归档": "31",
