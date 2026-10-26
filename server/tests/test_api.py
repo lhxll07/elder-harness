@@ -287,7 +287,7 @@ class _CookieClient:
 
         from app import main
 
-        self._client = TestClient(main.app)
+        self._client = TestClient(main.app, client=("127.0.0.1", 50000))
         for key, value in cookies.items():
             self._client.cookies.set(key, value)
 

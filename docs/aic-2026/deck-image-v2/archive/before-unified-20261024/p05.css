@@ -1,0 +1,401 @@
+@font-face {
+  font-family: "Page Five Sans SC";
+  src: url("assets/fonts/p05-sc-regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Page Five Sans SC";
+  src: url("assets/fonts/p05-sc-bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: "Page Five Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --ivory: #f4f8fa;
+  --gold: #e5c88f;
+  --muted: #c3d5e2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #071a2b;
+}
+
+p,
+h1,
+h2 {
+  margin: 0;
+}
+
+.viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 2048px;
+  width: 2048px;
+  height: 1152px;
+  overflow: hidden;
+  color: var(--ivory);
+  isolation: isolate;
+  transform: scale(var(--slide-scale, 1));
+  transform-origin: center;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
+}
+
+.heading {
+  position: absolute;
+  top: 61px;
+  left: 91px;
+  width: 1720px;
+}
+
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  color: var(--gold);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 2px;
+}
+
+.chapter::before {
+  width: 5px;
+  height: 22px;
+  border-radius: 2px;
+  background: var(--gold);
+  content: "";
+}
+
+.chapter span {
+  padding-left: 23px;
+  border-left: 1px solid #7594ab80;
+  color: #b7cddc;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 1px;
+}
+
+h1 {
+  margin-top: 12px;
+  font-size: 58px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+}
+
+h1 span {
+  color: var(--gold);
+}
+
+.brand {
+  position: absolute;
+  top: 65px;
+  right: 94px;
+  color: #bed1df;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 3px;
+}
+
+.plane-copy {
+  position: absolute;
+  top: 483px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 450px;
+  height: 174px;
+  text-align: center;
+  --plane-accent: #83cdea;
+}
+
+.plane-binding {
+  left: 212px;
+}
+
+.plane-authorization {
+  left: 801px;
+  --plane-accent: var(--gold);
+}
+
+.plane-evidence {
+  left: 1390px;
+  --plane-accent: #7bdccf;
+}
+
+.plane-copy h2 {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.plane-copy h2 span {
+  margin-right: 15px;
+  color: var(--plane-accent);
+  font-size: 23px;
+  letter-spacing: 1px;
+}
+
+.plane-mechanism {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.plane-value {
+  margin-top: 6px;
+  color: var(--plane-accent);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.section-label {
+  position: absolute;
+  color: #a9c6d9;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+.execution-label {
+  top: 684px;
+  left: 190px;
+}
+
+.deployment-label {
+  top: 835px;
+  left: 122px;
+}
+
+.execution-node {
+  position: absolute;
+  top: 731px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 252px;
+  height: 76px;
+  text-align: center;
+}
+
+.node-observe {
+  left: 275px;
+}
+
+.node-plan {
+  left: 597px;
+}
+
+.node-dispatch {
+  left: 905px;
+}
+
+.node-execute {
+  left: 1211px;
+}
+
+.node-finish {
+  left: 1526px;
+}
+
+.execution-node h2 {
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 4px;
+  white-space: nowrap;
+}
+
+.execution-node p {
+  margin-top: 3px;
+  color: #bfd4e3;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.deployment-part {
+  position: absolute;
+  top: 908px;
+  width: 430px;
+  height: 133px;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.deployment-interaction {
+  left: 122px;
+}
+
+.deployment-core {
+  left: 583px;
+}
+
+.deployment-android {
+  left: 1040px;
+}
+
+.deployment-service {
+  left: 1495px;
+}
+
+.deployment-part h2 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.deployment-part h2 span {
+  color: var(--gold);
+}
+
+.deployment-part p {
+  position: absolute;
+  top: 99px;
+  width: 100%;
+  color: #bfd3e1;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.deployment-part p span {
+  color: #e2edf4;
+}
+
+.footer-note {
+  position: absolute;
+  top: 1062px;
+  left: 94px;
+  color: #a9c0d0;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.footer-note span {
+  margin: 0 15px;
+  color: #c6b17f;
+}
+
+.page-number {
+  position: absolute;
+  top: 1058px;
+  right: 94px;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  color: #b2c6d6;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-number strong {
+  color: #e6edf2;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.page-number span {
+  color: #c6b17f;
+}
+
+@page {
+  size: 1280px 720px;
+  margin: 0;
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    width: 1280px;
+    height: 720px;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .viewport {
+    position: relative;
+    display: block;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: scale(0.625);
+    transform-origin: top left;
+  }
+}

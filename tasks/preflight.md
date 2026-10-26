@@ -11,7 +11,7 @@
 | adb | `adb devices` 能看到设备、已授权 USB 调试 |
 | 密钥 | `.env.local` 提供 `DEEPSEEK_BASE_URL / DEEPSEEK_API_KEY / DEEPSEEK_MODEL`，用 `--es` 注入（不落盘） |
 | 语音 / 家人看板 / 心跳（按需） | `cd server && python -m uvicorn app.main:app --host 0.0.0.0 --port 8787` + `adb reverse tcp:8787 tcp:8787`。只有 #4/#22 的家人落点、以及语音输入需要它 |
-| 收日志 | `adb logcat -s YinlingLoop`；`adb shell run-as com.yinling.hotline cat files/loop.log`；截图 `files/last-screen.jpg` |
+| 收日志 | `adb logcat -s YinlingLoop`；`adb shell run-as com.yinling.hotline cat files/loop.log`；默认不保存调试截图 |
 | 版本冻结表 | App `versionCode`、系统版本、目标 App 版本、模型名、提示词哈希、确认模式、网络类型 |
 
 ---
@@ -123,10 +123,12 @@ sleep 6 && adb logcat -d -s YinlingLoop | grep '\[census\]'             # 期望
 
 ---
 
-## 七、两个必须避开的坑
+## 七、三个必须避开的坑
 
 1. **不要用 `am force-stop` 停任务。** 你们文档已记录"强制停止后辅助功能服务有时不会自动重绑"，实测会把银龄专线从无障碍启用列表里摘掉，之后所有任务都读不到页面（模型会如实说"读不到屏幕"然后 handoff）。要停在 App 里点"停下/结束"，或等循环保护触发。**万一强杀过，回到第六节重新自检。**
 2. **版本漂移。** 关闭系统与应用商店的自动更新，否则同一任务在不同 App 版本上不可比；记录目标 App 版本号。
+
+3. **系统设置可能隐藏第三方悬浮窗。** 这不等于无障碍失效，也不是老人没有同意。待确认时从通知栏或桌面打开银龄专线，阅读用途后确认；应用先返回原页面再继续。不要为了让任务继续而打开自动确认或取消系统保护。若已暂停，先看具体拦截原因，不要反复点同意；同意截图并不解除资金、账号或权限更改的本人操作要求。
 
 ---
 

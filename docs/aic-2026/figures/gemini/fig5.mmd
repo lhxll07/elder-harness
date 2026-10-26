@@ -1,0 +1,14 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart LR
+  C["生成候选技能"] --> T1{"第一层：静态检查"}
+  T1 -->|不合规| S1["阻断：丢弃或退回重写"]
+  T1 -->|通过| T2{"第二层：反事实跨任务误匹配率<br/>(πm 离线决策序列回放)"}
+  T2 -->|πm > 0 或样本不足| S2["阻断：保留为未激活候选"]
+  T2 -->|命中目标且无误匹配| T3{"第三层：独立验证报告"}
+  T3 -->|报告未通过| S3["保持候选状态"]
+  T3 -->|目标提升且回归通过| V["家人采用验证版本"]
+  V --> R["出现失效时退休或回退"]
+  classDef stop fill:#fdecea,stroke:#c0392b,stroke-width:1px;
+  classDef pass fill:#eef4f3,stroke:#0f7b6c,stroke-width:1px;
+  class S1,S2,S3 stop;
+  class C,T1,T2,T3,V pass;

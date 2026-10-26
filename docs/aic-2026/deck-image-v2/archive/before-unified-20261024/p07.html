@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>银龄智办 · 分级执行与本人操作</title>
+    <link rel="stylesheet" href="p07.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第七页：常规操作连续推进，关键动作由本人完成">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p07-background.png" alt="三段通用消息交互：打开消息入口、准备未发送草稿、将发送操作交给本人；蓝色连续操作经金色交接箭头关联到本人标记和发送按钮">
+
+        <header class="heading">
+          <p class="chapter">授权创新<span>常规操作连续推进 · 关键动作由本人完成</span></p>
+          <h1 id="slide-title">高效自主推进，<span>关键决定</span>由本人掌握</h1>
+        </header>
+
+        <p class="brand">银龄智办</p>
+
+        <section class="message-scene" aria-label="进入会话、填写消息草稿、由本人完成发送">
+          <div class="stage-caption stage-enter">
+            <span class="stage-index" aria-hidden="true">01</span>
+            <h2>进入消息会话</h2>
+          </div>
+          <div class="stage-caption stage-draft">
+            <span class="stage-index" aria-hidden="true">02</span>
+            <h2>填写消息草稿</h2>
+          </div>
+          <div class="stage-caption stage-person">
+            <span class="stage-index" aria-hidden="true">03</span>
+            <h2>关键发送，本人完成</h2>
+          </div>
+
+          <p class="ui-label launcher-title">消息服务</p>
+          <p class="ui-label contact-label contact-draft">家人会话</p>
+          <p class="ui-label contact-label contact-person">家人会话</p>
+
+          <p class="chat-message incoming-draft" data-message-kind="incoming">到家了吗？</p>
+          <p class="chat-message reply-draft" data-message-kind="reply">快到了。</p>
+          <p class="chat-message incoming-person" data-message-kind="incoming">到家了吗？</p>
+          <p class="chat-message reply-person" data-message-kind="reply">快到了。</p>
+
+          <p class="draft-tag draft-tag-edit">待发送草稿</p>
+          <p class="draft-text draft-edit">我已到家，请放心。</p>
+          <p class="draft-tag draft-tag-person">待发送草稿</p>
+          <p class="draft-text draft-person">我已到家，请放心。</p>
+          <p class="owner-label">本人操作</p>
+          <p class="scene-label">消息交互示意</p>
+        </section>
+
+        <section class="value-copy value-autonomy" aria-label="常规操作连续推进的价值">
+          <h2>常规操作连续推进</h2>
+          <p>导航、查找、草稿准备连续衔接<br>让老人专注目标，而非逐步点按</p>
+        </section>
+
+        <section class="benchmark" aria-label="同一十步脚本的策略对照：逐步确认十次，分级执行一次">
+          <h2>同一 10 步脚本 · 确认次数对照</h2>
+          <div class="metric-line">
+            <div class="metric-column metric-before">
+              <strong data-metric="stepwise">10</strong>
+              <span>逐步确认</span>
+            </div>
+            <span class="metric-arrow" aria-hidden="true">→</span>
+            <div class="metric-column metric-after">
+              <strong data-metric="graded">1</strong>
+              <span>分级执行</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="value-copy value-person" aria-label="关键操作的执行归属">
+          <h2>关键操作由本人完成</h2>
+          <p>对外发送 · 付款 · 身份验证<br>在关键一步，自然交回本人操作</p>
+        </section>
+
+        <footer class="footer">
+          <p class="footer-note">工具分型<span>×</span>页面策略<span>×</span>一次性授权</p>
+          <p class="page-number" aria-label="第7页，共17页"><strong>07</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "p06.html";
+        }
+        if (event.key === "ArrowRight") {
+          window.location.href = "p08.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

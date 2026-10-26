@@ -1,0 +1,20 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TB
+  subgraph A["功能簇一 · 极简发起"]
+    direction LR
+    A1[大按钮发起] --- A2[语音插话] --- A3[停止入口]
+  end
+  subgraph B["功能簇二 · 自主跨应用代办"]
+    direction LR
+    B1[跨应用拓扑流转] --- B2[主动歧义澄清] --- B3[高危交还本人] --- B4[做不到诚实告知]
+  end
+  subgraph C["功能簇三 · 安全与可信保障"]
+    direction LR
+    C1[完成声明客观核验] --- C2[本地安全闸门] --- C3[停滞智能研判] --- C4[经验技能按需拉取]
+  end
+  subgraph D["功能簇四 · 家人异步协同"]
+    direction LR
+    D1[求助卡] --- D2[网页认领] --- D3[留言朗读] --- D4[首次用机提醒]
+  end
+  A --> B --> C --> D
+  D -.->|异常回退| B

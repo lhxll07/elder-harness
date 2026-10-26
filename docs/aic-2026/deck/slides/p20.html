@@ -1,75 +1,9 @@
-<div class="slide dense">
-  <div class="eyebrow">证据 · 真人试用</div>
-  <h1 class="title">20 位老人实地试用：17 位认为有帮助，最弱的一环是「接着办」</h1>
-  <div class="subtitle">走访中请老人当场试用（口头告知用途并取得同意），当场只问一个问题——<strong>「对您使用手机有没有帮助」</strong>；同时按评测计划的五个维度，记录他<strong>自己能不能做到</strong>。</div>
-  <div class="head-rule"></div>
-
-  <div class="body">
-    <div class="cols c2 wide-l" style="gap:44px">
-      <div>
-        <div class="ct-label" style="margin-bottom:12px">五个维度（均为走访者当场观察，不是老人自评）</div>
-        <table class="t">
-          <thead>
-            <tr>
-              <th style="width:40%">维度</th>
-              <th class="num">✓ 独立<br>完成</th>
-              <th class="num">△ 需要<br>提示</th>
-              <th class="num">✗ 没<br>做到</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>发起任务</td>
-              <td class="num">16</td><td class="num">—</td><td class="num">4</td>
-            </tr>
-            <tr style="background:var(--warn-tint)">
-              <td>理解状态</td>
-              <td class="num" style="font-weight:700">7</td>
-              <td class="num">8</td><td class="num">5</td>
-            </tr>
-            <tr>
-              <td>一键停止</td>
-              <td class="num">15</td><td class="num">3</td><td class="num">2</td>
-            </tr>
-            <tr style="background:var(--bad-tint)">
-              <td style="color:var(--bad);font-weight:700">断点续办</td>
-              <td class="num" style="color:var(--bad);font-weight:700">5</td>
-              <td class="num">7</td>
-              <td class="num" style="color:var(--bad);font-weight:700">8</td>
-            </tr>
-            <tr>
-              <td>找家人帮忙</td>
-              <td class="num">16</td><td class="num">4</td><td class="num">—</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="sm mt24">总体评价：<strong>有帮助 17</strong>、没什么用 2、还不如不用 1。样本：60–69 岁 8 人、70–79 岁 10 人、80 岁以上 2 人；男 10、女 10；渠道为亲属、社区、邻居。</div>
-      </div>
-
-      <div>
-        <div class="panel bad">
-          <div class="ph">两处短板最该补</div>
-          <ul class="clean tight" style="font-size:16.5px">
-            <li><strong>接续</strong>——只有 5 人独立完成、8 人没做到，卡在「找不到上次的记录」</li>
-            <li><strong>状态理解</strong>——只有 7 人独立完成，卡点几乎都在词上：「排队中」被当成卡住，「处理中」和「完成」分不清</li>
-          </ul>
-        </div>
-
-        <div class="panel" style="margin-top:18px">
-          <div class="ph">老人自己说的话</div>
-          <div style="font-size:16px;line-height:1.6;color:var(--ink-2)">
-            「能停就好，我怕它乱扣钱。」（P6）<br>
-            「按钮大，但『处理中』和『完成』我分不清。」（P9）<br>
-            「没什么用，我自己会挂号，它有时候还绕。」（P19）
-          </div>
-        </div>
-      </div>
-    </div>
+<section class="slide appendix" data-section="appendix" data-title="老人实验方法与数据边界">
+  <div class="topline"><span class="eyebrow">Q＆A / 数据能复算，结论要限界</span><span class="brand">银龄智办</span></div>
+  <h1 class="title">三条件对照怎么做，哪些还要回到原始记录。</h1>
+  <div class="content two">
+    <div class="source-list"><div><h3>10 人、93 条运行、31 组配对</h3><p>A 自己操作／B 现有助手／C 本作品。<br>每人 3–4 项任务；三条件顺序有记录，任务覆盖不完全均衡。</p></div><div><h3>评分与用时口径</h3><p>2＝独立完成，1＝辅助完成，0＝未完成。<br>主讲展示评分 2 的比例；用时中位数仅计算完成的运行。</p></div><div><h3>20 人试用是另一张记录表</h3><p>9 次演示模式、11 次生产模式；4 人全程代操作。<br>“认为有帮助”不能替代独立完成率。</p></div></div>
+    <div class="panel sand"><h2 class="compact-heading">不用于安全率结论的待复核项</h2><p class="small">3 条 danger_actions=1 的备注写“差点”，不应当作 3 次已发生的不可逆事件。</p><p class="small rule">P08／B／T3 的“发成短信给陌生人”与危险动作字段为 0 不一致；P08／C／T3 的“直接发给女儿微信”需核对是否超出草稿任务定义。</p><p class="small rule"><strong>本版不报告危险动作发生率。</strong><br>上述标注未复核前，不据此宣称安全优势或长期可靠性。</p></div>
   </div>
-
-  <div class="footer">
-    <span class="src">便利样本、无对照、口头同意；五个维度是走访者当场观察，与「总体评价」不要混读 · 逐人记录已归档、可逐条复核 · 那 1 例「还不如不用」也如实计入 · 见表 52</span>
-    <span class="pno">20</span>
-  </div>
-</div>
+  <div class="footer"><span class="src">原始 CSV 与 danger_review 列保留未改；聚合由 experiments/analyze.py 复算。便利样本、单设备，不作人群统计推断。</span><span class="pno">20</span></div>
+</section>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>银龄智办 · 需求与价值</title>
+    <link rel="stylesheet" href="p02.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第二页：需求与价值">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p02-background-unified-v01.png" alt="瓷白浅蓝开放空间：玻璃语音气泡、跨应用页面与金边结果单，以细蓝金曲线自然衔接">
+
+        <header class="heading">
+          <p class="chapter">需求与价值</p>
+          <h1 id="slide-title">适老服务，从“会用”到<span>“办成”</span></h1>
+        </header>
+
+        <p class="brand">银龄智办</p>
+
+        <section class="population soft-panel" aria-label="2025年末我国60岁及以上人口规模">
+          <p class="population-year">2025 年末 · 中国</p>
+          <h2>60 岁及以上人口</h2>
+          <p class="population-total"><strong>3.23</strong><span>亿</span></p>
+          <div class="population-share">
+            <p class="share-number"><strong>23.0</strong><span>%</span></p>
+            <p class="share-label">占全国人口</p>
+          </div>
+        </section>
+
+        <section class="service-path" aria-label="从口语到目标、从目标到行动、从行动到可核对结果">
+          <div class="stage-copy stage-goal">
+            <h2>听懂需求</h2>
+          </div>
+          <div class="stage-copy stage-action">
+            <h2>跨应用办理</h2>
+          </div>
+          <div class="stage-copy stage-result">
+            <h2>核对结果</h2>
+          </div>
+        </section>
+
+        <section class="result-copy" aria-label="结果单交互示意">
+          <h2>结果已核对</h2>
+        </section>
+
+        <footer class="footer">
+          <p class="source">数据来源：<a href="https://www.stats.gov.cn/sj/zxfbhjd/202602/t20260228_1962662.html" target="_blank" rel="noopener noreferrer">国家统计局《2025年统计公报》</a></p>
+          <p class="page-number" aria-label="第2页，共17页"><strong>02</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "cover.html";
+        }
+        if (event.key === "ArrowRight") {
+          window.location.href = "p03.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

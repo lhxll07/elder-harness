@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>银龄智办 · 场景闭环</title>
+    <link rel="stylesheet" href="p04.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第四页：快递查询场景闭环">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p04-background-unified-v01.png" alt="瓷白浅蓝快递查询流程：语音、服务入口、物流路线、页面核对依次连接到金边结果单与语音反馈">
+
+        <header class="heading">
+          <p class="chapter">场景闭环</p>
+          <h1 id="slide-title">把一句需求，变成<span>清楚的结果</span></h1>
+        </header>
+
+        <p class="brand">银龄智办</p>
+
+        <section class="request" aria-label="用户口语请求">
+          <p class="request-text">“看看我的快递到哪了”</p>
+        </section>
+
+        <section class="story" aria-label="查询快递的五个服务环节">
+          <div class="story-step step-understand">
+            <h2><span>01</span>理解目标</h2>
+          </div>
+          <div class="story-step step-service">
+            <h2><span>02</span>进入服务</h2>
+          </div>
+          <div class="story-step step-logistics">
+            <h2><span>03</span>定位物流</h2>
+          </div>
+          <div class="story-step step-verify">
+            <h2><span>04</span>读取核对</h2>
+          </div>
+          <div class="story-step step-deliver">
+            <h2><span>05</span>清楚交付</h2>
+          </div>
+          <div class="result-card" aria-label="案例结果：共4单，1单待取件，3单已签收">
+            <p class="result-summary">共 4 单快递</p>
+            <p class="result-primary"><strong>1</strong><span>单待取件</span></p>
+            <p class="result-secondary">另有 <strong>3</strong> 单已签收</p>
+          </div>
+        </section>
+
+        <section class="evidence soft-panel" aria-label="真实案例支撑与产品交付价值">
+          <div class="evidence-part evidence-execution">
+            <h2><span>5 步</span>真机执行</h2>
+          </div>
+          <div class="evidence-part evidence-match">
+            <h2>页面结果<span>逐项吻合</span></h2>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p class="source">案例：2026.10.03 真机归档<span>·</span>拼多多快递查询</p>
+          <p class="page-number" aria-label="第4页，共17页"><strong>04</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "p03.html";
+        }
+        if (event.key === "ArrowRight") {
+          window.location.href = "p05.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

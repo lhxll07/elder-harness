@@ -1,0 +1,51 @@
+<div class="slide">
+  <div class="eyebrow"><span class="num">16</span> 边界 · 我们知道哪里不行</div>
+  <h1 class="title">四件没做好的事，逐条列在这里</h1>
+  <div class="subtitle">不写「后续优化」，只写<strong>现在是什么状态、为什么、以及怎么验收</strong>。</div>
+
+  <div class="body" style="padding-top:26px">
+    <table class="t" style="font-size:16.5px">
+      <thead>
+        <tr>
+          <th style="width:16%">问题</th>
+          <th style="width:34%">现在的事实</th>
+          <th>为什么，以及下一步</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>设备状态动作<br><span style="font-size:13px;color:var(--ink-3)">漏拦</span></td>
+          <td><strong style="color:var(--red)">6 个里漏 5 个</strong>：关闭查找手机、允许安装未知应用、开启开发者选项、更换手机号、关闭定位服务</td>
+          <td>这是关键词表这条路的天花板。下一步换成「页面上下文 + 业务语义」联合判定，<strong>不再靠加词</strong></td>
+        </tr>
+        <tr>
+          <td>技能自进化<br><span style="font-size:13px;color:var(--ink-3)">第三层</span></td>
+          <td>判定逻辑写完、有单测，<strong style="color:var(--red)">一次实机都没跑过</strong></td>
+          <td>它是技能启用的唯一裁判。下一步在冻结任务集上跑 1 个候选 × 6 条判据，把「没跑过」变成「跑过，结论是 X」</td>
+        </tr>
+        <tr>
+          <td>适配面<br><span style="font-size:13px;color:var(--ink-3)">机型</span></td>
+          <td><strong style="color:var(--red)">单机型、单系统</strong>：OnePlus PLC110 / Android 16</td>
+          <td>不同厂商的后台策略、输入法与控件树差异还没覆盖。下一步补第二台机型，同一任务集重复 3 次</td>
+        </tr>
+        <tr>
+          <td>本地核验<br><span style="font-size:13px;color:var(--ink-3)">误判</span></td>
+          <td><strong style="color:var(--red)">L3 会系统性误判</strong>：某次运行 7 个动作全部被判为「改到了别的」</td>
+          <td>阈值还没校准。下一步按页面类型降级为 L3+L4 混合，报告里写「会误判」，不写「已解决」</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:auto;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:baseline;border-top:1.5px solid var(--ink);padding-top:26px">
+      <div class="kicker-line">我们的规矩</div>
+      <div class="lead" style="font-size:20px">
+        能测的给数字，不能测的给验收方式。<strong>说到哪，证据就到哪。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>方案书第六部分（十）、第八部分（五）1</span>
+    <span class="pno">16 / 22</span>
+  </div>
+</div>

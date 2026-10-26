@@ -1,0 +1,16 @@
+{
+  "source": [
+    "server/app/web.py",
+    "server/app/static/family.css"
+  ],
+  "data": "虚构示例；静态页面素材，不是端到端实机运行",
+  "assets": [
+    "overview",
+    "request",
+    "contacts",
+    "compose",
+    "submitted",
+    "delivered",
+    "read"
+  ]
+}

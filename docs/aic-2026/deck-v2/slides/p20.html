@@ -1,0 +1,63 @@
+<div class="slide">
+  <div class="eyebrow"><span class="num">20</span> 下一步 · 三件具体的事</div>
+  <h1 class="title">接下来要补的三件事，都有验收方式</h1>
+  <div class="subtitle">不写「持续优化」，写清楚<strong>现状、做什么、怎么算做完</strong>。</div>
+
+  <div class="body center">
+    <div class="rows">
+      <div class="row" style="grid-template-columns:80px 260px 1fr 280px;padding:30px 0">
+        <div class="idx">01</div>
+        <div>
+          <div class="rt" style="font-size:24px">操作前后对比</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">补完证据层的最后一块</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:17px">
+          现状：靠可观察的控件状态和页面文字；像素对比因为不可靠已经删掉。<br>
+          干什么：同一任务的前后帧对齐，给出「已确认 / 无法确认」。
+        </div>
+        <div style="font-size:15.5px;color:var(--ink-3);line-height:1.6;align-self:center">
+          验收：<br>误伤率一并记录，不低于人工核对
+        </div>
+      </div>
+
+      <div class="row" style="grid-template-columns:80px 260px 1fr 280px;padding:30px 0">
+        <div class="idx">02</div>
+        <div>
+          <div class="rt" style="font-size:24px">真机注入红队</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">现在只有离线验证</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:17px">
+          现状：harness 里有脚本化注入，<strong class="red-strong">真机和真实模型还没做过</strong>。<br>
+          干什么：在真机上投诱导页面，看危险动作执行数和交还率。
+        </div>
+        <div style="font-size:15.5px;color:var(--ink-3);line-height:1.6;align-self:center">
+          验收：<br>执行数、交还率、误拦率三项同时报
+        </div>
+      </div>
+
+      <div class="row" style="grid-template-columns:80px 260px 1fr 280px;padding:30px 0">
+        <div class="idx">03</div>
+        <div>
+          <div class="rt" style="font-size:24px">多人多机型</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">现在只有一台手机</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:17px">
+          现状：OnePlus / Android 16，20 位老人。<br>
+          干什么：第二台厂商机型、第二套输入法，同一任务集重复 3 次。
+        </div>
+        <div style="font-size:15.5px;color:var(--ink-3);line-height:1.6;align-self:center">
+          验收：<br>两种机型成功率差异可解释
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:46px;font-family:var(--serif);font-size:28px;line-height:1.6;color:var(--ink)">
+      这三件做完之前，我们不把「可信」写成「已验证」。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>方案书第八部分（五）2 评测计划</span>
+    <span class="pno">20 / 22</span>
+  </div>
+</div>

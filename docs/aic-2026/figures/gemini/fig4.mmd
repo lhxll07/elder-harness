@@ -1,0 +1,16 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart LR
+  C["执行判据<br/>动作会产生什么业务后果？"]
+  C --> L1["屏幕动作<br/>校验控件、版本与风险标签"]
+  C --> L2["业务动作<br/>付款、发送、退款与解绑交还本人"]
+  C --> L3["应用跳转<br/>新应用首次打开时请求确认"]
+
+  F4["F4 隐蔽风险实验"] -.->|扩展风险词族| L2
+  F3["F3 目标跳转实验"] -.->|新增应用确认| L3
+
+  classDef core fill:#0f7b6c,color:#fff,stroke:#0b5a4f,stroke-width:1.5px;
+  classDef layer fill:#eef4f3,stroke:#0f7b6c,stroke-width:1px;
+  classDef disc fill:#fdf3e3,stroke:#c9a227,stroke-width:1px;
+  class C core;
+  class L1,L2,L3 layer;
+  class F3,F4 disc;

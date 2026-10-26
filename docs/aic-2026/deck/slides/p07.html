@@ -1,40 +1,21 @@
-<div class="slide">
-  <div class="eyebrow">方案 · 系统架构</div>
-  <h1 class="title">四层架构：核心循环与 Android 完全解耦</h1>
-  <div class="subtitle">核心循环是纯 Kotlin，不依赖 Android，可在 JVM 上用模拟模型服务回归测试——这既是工程选择，也是安全要求。</div>
-  <div class="head-rule"></div>
-
-  <div class="body">
-    <div class="fig-wrap" style="max-height:330px">
-      <img src="../figures/fig2.png" alt="系统总体架构（四层）" style="max-height:330px">
+<section class="slide" data-section="main" data-title="证据不能自己证明自己">
+  <div class="topline"><span class="eyebrow">06 / 机制二 · 完成声明与证据绑定</span><span class="brand">银龄智办</span></div>
+  <h1 class="title">自己写进去的字，<br>不能证明事情办成了。</h1>
+  <div class="content two wide-left">
+    <div>
+      <div class="ledger">
+        <div class="ledger-row"><span class="source">PAGE</span><span>页面上观察到的内容</span><span class="green">可核对</span></div>
+        <div class="ledger-row"><span class="source">TOOL</span><span>工具记录的执行事实</span><span class="green">可核对</span></div>
+        <div class="ledger-row self"><span class="source">SELF_TYPED</span><span>助手自己输入后，页面显示的文字</span><span class="red">不背书</span></div>
+      </div>
+      <p class="small muted rule">来源只是第一道条件；还要核对字段、单位、否定、<br>新旧观察与跨应用冲突。页面出现文字，不等于业务成立。</p>
     </div>
-
-    <div class="cards c4 mt32" style="gap:18px">
-      <div class="card outline" style="padding:22px 24px">
-        <div class="cn">L1</div>
-        <div class="ct" style="font-size:18px">老人端交互层</div>
-        <div class="cb" style="font-size:15.5px">首页大圆钮 · 语音会话 · TTS 播报</div>
-      </div>
-      <div class="card is-accent" style="padding:22px 24px">
-        <div class="cn">L2</div>
-        <div class="ct" style="font-size:18px">智能体核心层</div>
-        <div class="cb" style="font-size:15.5px">执行循环 · 完成核验 · 停滞检测 · 工具目录</div>
-      </div>
-      <div class="card outline" style="padding:22px 24px">
-        <div class="cn">L3</div>
-        <div class="ct" style="font-size:18px">Android 执行层</div>
-        <div class="cb" style="font-size:15.5px">控件树+截图 · 风控执行约束层 · 经验技巧</div>
-      </div>
-      <div class="card outline" style="padding:22px 24px">
-        <div class="cn">L4</div>
-        <div class="ct" style="font-size:18px">云端服务层</div>
-        <div class="cb" style="font-size:15.5px">大模型 · 协作服务端 · 语音听写 · 家人网页</div>
-      </div>
+    <div class="verdict-block">
+      <span class="pill">例如：输入一条微信消息</span>
+      <h2>“输入成功”<br>不等于“消息已发送”。</h2>
+      <p class="small">输入动作可以核对；<br>发送需要本人操作，不能用输入框回声自证。</p>
+      <div class="rule small">本地不支持的完成声明，<br><strong>云端复核也不能翻回通过。</strong></div>
     </div>
   </div>
-
-  <div class="footer">
-    <span class="src">界面与原型的实机走查见方案书第四部分；模型可替换，规划器只依赖通用 tool calling 接口</span>
-    <span class="pno">07</span>
-  </div>
-</div>
+  <div class="footer"><span class="src">实现：EvidenceCheck / OutcomeCheck / MechanicalFirstReviewer。核验是有限规则下的一致性检查，不是任意业务结果的证明。</span><span class="pno">07</span></div>
+</section>

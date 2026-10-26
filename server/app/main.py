@@ -43,6 +43,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 HEARTBEAT_SECONDS = int(os.environ.get("HOTLINE_HEARTBEAT_SECONDS", "300"))
 SILENCE_SECONDS = int(os.environ.get("HOTLINE_SILENCE_SECONDS", str(watch.DEFAULT_SILENCE_SECONDS)))
 WATCH_TOKEN = os.environ.get("HOTLINE_WATCH_TOKEN", "").strip()
+ENROLLMENT_TOKEN = os.environ.get("HOTLINE_ENROLLMENT_TOKEN", "").strip()
+SPEECH_DEVICE_SECONDS = int(os.environ.get("HOTLINE_SPEECH_DEVICE_DAILY_SECONDS", "600"))
+SPEECH_TOTAL_SECONDS = int(os.environ.get("HOTLINE_SPEECH_TOTAL_DAILY_SECONDS", "3600"))
 
 # A pairing code is a setup secret that anyone who can reach this page may try to guess. Its length
 # is handled in ``db.new_pair_code``; this is the other half — a guesser gets a few tries, not an
@@ -97,16 +100,25 @@ def device_from_auth(authorization: str | None) -> dict[str, Any]:
 
 @app.get("/api/health")
 def health() -> dict[str, Any]:
-    return {"ok": True, "server_time": time.time(), "heartbeat_seconds": HEARTBEAT_SECONDS}
+    return {"ok": True, "server_time": time.time(), "heartbeat_seconds": HEARTBEAT_SECONDS, "notifications_configured": notify.is_configured()}
 
 
 @app.post("/api/device/pair")
-def pair(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+def pair(request: Request, payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
     """Called once when the family sets the phone up. Returns the token the phone keeps."""
+    host = request.client.host if request.client else "unknown"
+    supplied = str(payload.get("enrollment_token", ""))
+    if ENROLLMENT_TOKEN:
+        if not secrets.compare_digest(supplied, ENROLLMENT_TOKEN):
+            raise HTTPException(status_code=403, detail="需要服务管理员提供的设备注册口令")
+    elif host not in {"127.0.0.1", "::1"}:
+        raise HTTPException(status_code=403, detail="公开部署必须配置设备注册口令")
+    if not db.consume_quota(host, "pair", 10, 600):
+        raise HTTPException(status_code=429, detail="设备注册过于频繁")
     elder_name = str(payload.get("elder_name", "")).strip()[:40]
     device = db.create_device(elder_name)
     db.touch_device(device["id"], "刚刚配对")
-    log.info("[pair] device=%s elder=%r", device["id"], elder_name)
+    log.info("[pair] device=%s", device["id"])
     return {
         "device_id": device["id"],
         "token": device["token"],
@@ -115,6 +127,26 @@ def pair(payload: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         "expires_in": db.PAIR_CODE_TTL_SECONDS,
         "heartbeat_seconds": HEARTBEAT_SECONDS,
     }
+
+
+@app.post("/api/device/token/rotate")
+def rotate_token(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    device = device_from_auth(authorization)
+    return {"token": db.rotate_device_token(device["id"])}
+
+
+@app.get("/api/device/circle")
+def list_members(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    device = device_from_auth(authorization)
+    return {"members": [{key: member[key] for key in ("id", "name", "role")} for member in db.circle_of(device["id"])]}
+
+
+@app.delete("/api/device/circle/{member_id}")
+def remove_member(member_id: int, authorization: str | None = Header(default=None)) -> dict[str, bool]:
+    device = device_from_auth(authorization)
+    if not db.revoke_member(device["id"], member_id):
+        raise HTTPException(status_code=404, detail="成员不存在")
+    return {"ok": True}
 
 
 @app.post("/api/device/invite")
@@ -227,12 +259,21 @@ async def transcribe(
     pcm = bytes(pcm)
     if len(pcm) < speech.SAMPLE_RATE:  # under ~30ms of audio is a mis-tap, not a sentence
         return {"text": ""}
+    if len(pcm) % 2:
+        raise HTTPException(status_code=422, detail="音频必须为 PCM16")
+    seconds = max(1, (len(pcm) + speech.SAMPLE_RATE * 2 - 1) // (speech.SAMPLE_RATE * 2))
+    if not db.consume_quota(str(device["id"]), "speech-minute", 10, 60):
+        raise HTTPException(status_code=429, detail="语音请求过于频繁，请稍后再试")
+    if not db.consume_quota(str(device["id"]), "speech-daily", SPEECH_DEVICE_SECONDS, 86400, seconds):
+        raise HTTPException(status_code=429, detail="本设备今日语音额度已用完")
+    if not db.consume_quota("server", "speech-total", SPEECH_TOTAL_SECONDS, 86400, seconds):
+        raise HTTPException(status_code=429, detail="服务今日语音总额度已用完")
     try:
         text = await speech.transcribe(pcm, keyterms=[device["elder_name"]] if device["elder_name"] else None)
     except speech.SpeechError as error:
-        log.warning("[speech] device=%s 失败：%s", device["id"], error)
+        log.warning("[speech] device=%s failed=%s", device["id"], type(error).__name__)
         raise HTTPException(status_code=503, detail=str(error)) from error
-    log.info("[speech] device=%s %d 字节 → %r", device["id"], len(pcm), text[:40])
+    log.info("[speech] device=%s bytes=%d chars=%d", device["id"], len(pcm), len(text))
     return {"text": text}
 
 
@@ -250,10 +291,20 @@ def post_event(
     body = str(payload.get("body", "")).strip()[:1000]
     context = str(payload.get("context", "")).strip()[:2000]
     event = db.add_event(device["id"], kind, "from_device", title=title, body=body, context=context)
+    notification_state = "not_requested"
+    accepted = []
     if kind in {"help", "alert"}:
-        notify.notify_circle(db.circle_of(device["id"]), kind, title, body)
-    log.info("[event] device=%s kind=%s title=%r", device["id"], kind, title)
-    return {"id": event["id"], "created_at": event["created_at"]}
+        members = db.circle_of(device["id"])
+        accepted = notify.notify_circle(members, kind, title, body) or []
+        if not notify.recipients(members, kind):
+            notification_state = "no_recipients"
+        elif not notify.is_configured():
+            notification_state = "not_configured"
+        else:
+            notification_state = "accepted" if accepted else "failed"
+    log.info("[event] device=%s kind=%s", device["id"], kind)
+    return {"id": event["id"], "created_at": event["created_at"],
+            "notification_state": notification_state, "accepted_recipients": len(accepted)}
 
 
 # --------------------------------------------------------------------------- the circle (web)
@@ -309,7 +360,7 @@ def join(
         )
     member = existing or db.add_circle_member(device["id"], clean_name, clean_phone, role)
     session = db.create_session(member["id"])
-    log.info("[join] device=%s member=%s role=%s", device["id"], clean_name, role)
+    log.info("[join] device=%s member=%s role=%s", device["id"], member["id"], role)
     response = RedirectResponse("/family", status_code=303)
     response.set_cookie(
         "session",
@@ -317,7 +368,7 @@ def join(
         httponly=True,
         secure=request.url.scheme == "https",
         samesite="lax",
-        max_age=60 * 60 * 24 * 365,
+        max_age=db.SESSION_TTL_SECONDS,
     )
     return response
 

@@ -1,0 +1,195 @@
+{
+  "instrument": "Salamander Grand Piano V3",
+  "author": "Alexander Holm",
+  "license": "CC BY 3.0",
+  "repository": "https://github.com/sfzinstruments/SalamanderGrandPiano",
+  "revision": "3382bf9496bba2486f5ab0de55a264d1dfc38404",
+  "retuning_credit": "Markus Fiedler",
+  "files": [
+    {
+      "file": "LICENSE",
+      "sha256": "e6bc9e9c474700b708f568bac9e5a8a9bcb2b1dad53442f5ba449fcb848b8e76",
+      "bytes": 19467
+    },
+    {
+      "file": "Data/tune_ret.txt",
+      "sha256": "e19f23ad8e94dee71a4deda6b1f8aef85e8f79720a9dbcd165b189cbae8b9d50",
+      "bytes": 576
+    },
+    {
+      "file": "Data/region.txt",
+      "sha256": "f6341fe2e2a5417f4e7f3499a7dfdf0a4327a58bd6f12201d63d63ed7d557193",
+      "bytes": 3787
+    },
+    {
+      "file": "Samples/A1v6.flac",
+      "sha256": "48021c004e5b596d5d1dd8da535575b7787a209cdf6ea2ffb5b01331cd0d8d5b",
+      "bytes": 2691797
+    },
+    {
+      "file": "Samples/A1v10.flac",
+      "sha256": "e545108a593d3c8a54b83383e27b12033f6c036e9f9c15de92a1df3cf2a73eb2",
+      "bytes": 2709073
+    },
+    {
+      "file": "Samples/C2v6.flac",
+      "sha256": "8f6447953c23ee4147ac090740db1fa6aa7866fa71f50f6b79e11627b934d6f9",
+      "bytes": 2532539
+    },
+    {
+      "file": "Samples/C2v10.flac",
+      "sha256": "0e55ec6b4046552b7f00b19fb38fbe8aaf02d50f7f4badf9e7eb008ad0843e18",
+      "bytes": 2571694
+    },
+    {
+      "file": "Samples/D#2v6.flac",
+      "sha256": "ae35b1e6edb7f02b7f561f545d54582a991686fae2b5ac36623ac969f5b558c8",
+      "bytes": 2571610
+    },
+    {
+      "file": "Samples/D#2v10.flac",
+      "sha256": "7847ef2ab4bab2ae111e34390b843dc9f5875e1fb26a0d0df30ff916aa550152",
+      "bytes": 2606773
+    },
+    {
+      "file": "Samples/F#2v6.flac",
+      "sha256": "bd9b013a9fc065180e249ba34f7fea87014bb49a0822a867756011c8c8b20d4d",
+      "bytes": 2338769
+    },
+    {
+      "file": "Samples/F#2v10.flac",
+      "sha256": "db7c995bf388612d88de97c98183e71860a8c13fb46b02b8b3770fa1f0349ca9",
+      "bytes": 2343261
+    },
+    {
+      "file": "Samples/A2v6.flac",
+      "sha256": "5f4c946e63b95631d7cf014335cdc8bd1c9d8f08c0f15d81e7744a1b8bf5594a",
+      "bytes": 1877093
+    },
+    {
+      "file": "Samples/A2v10.flac",
+      "sha256": "206bccac2ad09b26a46198876692a892dad8d56021dcf2f6e348aa038db7028c",
+      "bytes": 1931380
+    },
+    {
+      "file": "Samples/C3v6.flac",
+      "sha256": "ba2fc308c3a6cd20797df32cc67b786be510178f0e36e8906165fa0f56d89bc2",
+      "bytes": 1737740
+    },
+    {
+      "file": "Samples/C3v10.flac",
+      "sha256": "eb3ddb8e7df54f63d1f91c7fcc04c921623941d325df3ebeed291e1a6d82318c",
+      "bytes": 1745075
+    },
+    {
+      "file": "Samples/D#3v6.flac",
+      "sha256": "85b680ac6a5c723991400442bdb0f4d7f2c4034fcbb7150d7c65462026cc5daa",
+      "bytes": 1745644
+    },
+    {
+      "file": "Samples/D#3v10.flac",
+      "sha256": "6d932b081ecf89a9dd4bf84a74aab0945992c70b1ecff1880806b28829fbfd74",
+      "bytes": 1809266
+    },
+    {
+      "file": "Samples/F#3v6.flac",
+      "sha256": "74450756324f4bd405dcb576c483349af159cf0f9e4696d75b1c0a5e222f107c",
+      "bytes": 1802747
+    },
+    {
+      "file": "Samples/F#3v10.flac",
+      "sha256": "fb05b33c7e8bf85f2cac42f8c75ab1530754dc771f00f15f57a9d86c05cbd13f",
+      "bytes": 1816439
+    },
+    {
+      "file": "Samples/A3v6.flac",
+      "sha256": "dd193a700831d5f70bedbbee5b5dc444e7cc8bc591da7afd39435988b7d86041",
+      "bytes": 1763993
+    },
+    {
+      "file": "Samples/A3v10.flac",
+      "sha256": "78669b41c7fabb11aa073cc8f834197cb36689653d6671f441bb82b41fdb51ff",
+      "bytes": 1758312
+    },
+    {
+      "file": "Samples/C4v6.flac",
+      "sha256": "34483e5fc6aff00789419747af639bca5ac0e2d0740dd320ca009e0fb7795c31",
+      "bytes": 1728236
+    },
+    {
+      "file": "Samples/C4v10.flac",
+      "sha256": "0e9d6e945df79113cd8bd9e841aed5d4537989704e993bfbed7fa8839724244a",
+      "bytes": 1817704
+    },
+    {
+      "file": "Samples/D#4v6.flac",
+      "sha256": "ce4e5efbc6a9c4901d671f1ac8157428b17759167fd90120a479d1483d2f9891",
+      "bytes": 1526123
+    },
+    {
+      "file": "Samples/D#4v10.flac",
+      "sha256": "a00e4a1e6e2658e686e2eab60dff701fd539e75072ab3811cb3038d01192dc72",
+      "bytes": 1553345
+    },
+    {
+      "file": "Samples/F#4v6.flac",
+      "sha256": "c46b4f43f2dc73671c8636c3aafd6ec9c3a23411afd03d968511bd0e3b58e62c",
+      "bytes": 1453107
+    },
+    {
+      "file": "Samples/F#4v10.flac",
+      "sha256": "a9912cc7b9cc3c6f4fae20eeb0d9570f21c164f9a69475dfdcd6f7290b159317",
+      "bytes": 1495027
+    },
+    {
+      "file": "Samples/A4v6.flac",
+      "sha256": "1b9a6fc43f87537aebbb59eb57d4e2c0ad4c3aad8412d148a5dae2b4bad2058b",
+      "bytes": 1412851
+    },
+    {
+      "file": "Samples/A4v10.flac",
+      "sha256": "9e2aa68c1495c007ee16e8ce5c97cb07ac7249fd4cc77ba759551971d9c01be0",
+      "bytes": 1442501
+    },
+    {
+      "file": "Samples/C5v6.flac",
+      "sha256": "9a941f71b43929327669990f999e91b1573ec320127cdba000c97964d8fd3ff1",
+      "bytes": 1529239
+    },
+    {
+      "file": "Samples/C5v10.flac",
+      "sha256": "89924ca36674fc1b3f7b99bf503be9f1644f093efa28cbbcedbc885866ec050e",
+      "bytes": 1545522
+    },
+    {
+      "file": "Samples/D#5v6.flac",
+      "sha256": "271617dddc2be1b0c58f6dc4b11f8dc52cefbf5a6e0f3d769e26518adbcf4f86",
+      "bytes": 1274068
+    },
+    {
+      "file": "Samples/D#5v10.flac",
+      "sha256": "f9b7d545e732b6601b0a0181440cb70bd14eadf37518d9063432b5ef2a9a10fe",
+      "bytes": 1299972
+    },
+    {
+      "file": "Samples/F#5v6.flac",
+      "sha256": "fe84fdd051a934c8bbc6975c1200cfd8c926624facdabb540092b06441d9659b",
+      "bytes": 1180064
+    },
+    {
+      "file": "Samples/F#5v10.flac",
+      "sha256": "fc02895d148b1c591ac927248e0363c085a46a1ca79524ca67cbbcaab29462e3",
+      "bytes": 1147890
+    },
+    {
+      "file": "Samples/A5v6.flac",
+      "sha256": "aa49dd81b7b0c60c31cec7d156ce4ff480f5695fcc002d997ccc6eba04de6237",
+      "bytes": 1023382
+    },
+    {
+      "file": "Samples/A5v10.flac",
+      "sha256": "b0a77c5be8aeff9d0e9f02d544833a78612527a8662dea839a3c4514840a0160",
+      "bytes": 1123676
+    }
+  ]
+}

@@ -250,12 +250,12 @@ fun ElderVerticalGap(height: androidx.compose.ui.unit.Dp = Elder.gap) {
  * person sees both, sometimes at once; the wording belongs to the product, not to a toolkit.
  */
 fun statusText(phase: TaskPhase): String = when (phase) {
-    TaskPhase.WORKING -> "正在办"
+    TaskPhase.WORKING -> "我正在办，点一下可暂停"
     TaskPhase.CONFIRMING -> "等您点一下确认"
     TaskPhase.ASKING -> "等您回答一句"
     TaskPhase.NEEDS_PERSON -> "这一步要您自己做"
-    TaskPhase.NEEDS_FAMILY -> "已经找家人了"
-    TaskPhase.PAUSED -> "停下了"
+    TaskPhase.NEEDS_FAMILY -> "需要家人帮忙"
+    TaskPhase.PAUSED -> "已暂停，您可继续或求助"
     TaskPhase.CANNOT -> "这件事我办不了"
     TaskPhase.COMPLETED -> "办好了"
     TaskPhase.IDLE -> "我在"

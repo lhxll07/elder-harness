@@ -29,6 +29,11 @@ cd server
 | `HOTLINE_DB` | `server/hotline.db` | SQLite 文件位置 |
 | `HOTLINE_HEARTBEAT_SECONDS` | 300 | 手机应多久报到一次 |
 | `HOTLINE_SILENCE_SECONDS` | 21600（6 小时）| 安静多久算异常，通知圈子 |
+| `HOTLINE_ENROLLMENT_TOKEN` | 空 | 公开部署的设备注册口令；未配置时只允许回环来源注册，反向代理部署必须显式配置 |
+| `HOTLINE_SESSION_TTL_SECONDS` | 2592000 | 网页会话服务端有效期（秒，最少 60） |
+| `HOTLINE_SPEECH_DEVICE_DAILY_SECONDS` | 600 | 单设备每日语音预算（秒） |
+| `HOTLINE_SPEECH_TOTAL_DAILY_SECONDS` | 3600 | 全服务每日语音预算（秒） |
+| `HOTLINE_NOTIFY_WEBHOOK` / `HOTLINE_NOTIFY_TOKEN` | 空 | 可选通知中继地址与 Bearer 凭证；生产中继使用 HTTPS |
 | `HOTLINE_PAIR_TTL_SECONDS` | 3600（1 小时）| 配对码有效期；过期后用设备端 `/api/device/invite` 刷新，避免新建设备 |
 | `HOTLINE_WATCH_TOKEN` | empty (disabled) | Independent Bearer token for `/api/watch/check` |
 | `HOTLINE_JOIN_WINDOW_SECONDS` / `HOTLINE_JOIN_MAX_FAILURES` | 600 / 5 | 单进程内的配对码失败限速 |
@@ -42,7 +47,9 @@ cd server
 | POST | `/api/device/pair` | 家人装机时 | 换回设备令牌 + 配对码 |
 | POST | `/api/device/invite` | 已配对手机 | 刷新指定角色的邀请码，不新建设备 |
 | POST | `/api/device/profile` | 已配对手机 | 修改老人称呼，保留设备身份和守护圈 |
-| POST | `/api/device/heartbeat` | 老人手机 | 报到（证明活着）+ 取回要显示的消息 |
+| POST | `/api/device/heartbeat` | 老人手机 | 手机在线报到（不证明人身安全）+ 取回要显示的消息 |
+| GET / DELETE | `/api/device/circle` / `/api/device/circle/{id}` | 已配对手机 | 查看成员 / 撤销成员全部会话并重新开放未完成的认领 |
+| POST | `/api/device/token/rotate` | 已配对手机 | 更换设备令牌，旧令牌立即失效 |
 | POST | `/api/device/ack` | 老人手机 | 确认消息已显示或已读 |
 | POST | `/api/device/events` | 老人手机 | 上报 `peace` / `help` / `done` / `alert` |
 | POST | `/api/device/transcribe` | 老人手机 | 上传 PCM 录音，返回听写文本 |
@@ -81,14 +88,20 @@ cd server
 
 - 运行依赖与开发依赖分开；语音连接直接依赖 `websockets`，不能假设基础 `uvicorn` 会自动安装它。
 - 当前按单进程设计：配对码失败限速保存在进程内，watcher 随服务进程启动，不直接启用多 worker。
-- 公网或局域网部署需 HTTPS、入口防护和凭证管理；`/api/device/pair` 目前没有安装者认证或配额，不应直接裸露到公网。
-- 服务端支持退出撤销当前会话，但尚无管理员批量撤销和数据库会话过期检查；日志含事件、语音片段与通知号码，上线前需脱敏和生命周期治理。
+- 公网或局域网部署需 HTTPS、入口防护及 `HOTLINE_ENROLLMENT_TOKEN`；口令只在装机时输入，不保存到手机。不要因为反向代理连接来自回环地址而省略口令。注册每来源每 10 分钟最多 10 次。
+- 服务端检查会话期限，支持设备端撤销成员和轮换设备令牌；业务日志只记事件/成员编号、长度和状态，不打印语音正文、姓名或通知号码。代理访问日志仍需部署方控制留存。
+- 语音每设备每分钟最多 10 次，并以 SQLite 事务扣减设备和全服务的日秒数预算。按 UTC 自然日窗口统计，失败的供应商调用也占预算，不自动退款。多进程共享配额，但 watcher 与邀请码猜测限速仍按单进程部署。
 - 测试数字和审查清单统一见 [验证基线](../docs/testing/README.md) 与 [项目审查](../docs/reviews/2026-10-09.md)。
 
 ## M1 的边界（故意不做的）
 
-- **不发短信**：`notify.py` 现在只写日志。真实短信需要服务商、签名与模板审核（国内要几天），
-  接口形状已经留好，M2 换实现即可
+- **不内置短信供应商**：可配置 `notify.py` 的通知 Webhook；未配置时只有网页记录，不假装提醒已发送。中继响应 2xx 只表示接收，不代表送达或已读；失败不删事件，也不添加隐藏重试队列。
 - **没有账号密码**：设备用令牌，家人用配对码换会话；没有找回密码、没有多设备管理
 - **没有派单/值班**：社区的路由、认领超时升级属于 M3
 - **不做远程控制**：只给状态和请求。远程协助/屏幕共享正是我们要防的诈骗手法
+
+### 通知中继协议
+
+向 `HOTLINE_NOTIFY_WEBHOOK` POST JSON，认证为 `Authorization: Bearer <HOTLINE_NOTIFY_TOKEN>`。正文包含 `kind` 和 `recipients`，每个接收项含 `id/role/phone/title/body`；只有家人收到业务标题与正文，社区/邻居收到通用查看提醒。仅允许 HTTPS（本机调试可用回环 HTTP），拒绝重定向，5 秒超时。凭证不经 URL 传递。
+
+`POST /api/device/events` 返回 `id/created_at/notification_state/accepted_recipients`。`notification_state` 区分 `not_requested/no_recipients/not_configured/accepted/failed`。手机据此说明“求助已登记但提醒未发送”，不得将数据库写入等同于已通知家人。

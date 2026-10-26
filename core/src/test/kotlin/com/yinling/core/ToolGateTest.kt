@@ -171,6 +171,32 @@ class ToolGateTest {
     }
 
     @Test
+    fun `ordinary settings controls proceed while generic security changes require the person`() {
+        val font = ScreenElement("font", "", "字体大小", "SeekBar", listOf(0, 0, 100, 20),
+            false, false, false, false, true, rangeCurrent = 1, rangeMin = 0, rangeMax = 4)
+        val weight = font.copy(id = "weight", description = "", bounds = listOf(0, 30, 100, 50))
+        val apply = font.copy(id = "apply", text = "应用", description = "", role = "Button",
+            clickable = true, rangeCurrent = null, rangeMin = null, rangeMax = null)
+        val screen = page().copy(app = "com.android.settings", labels = listOf("字体大小", "字体粗细"),
+            elements = listOf(font, weight, apply))
+        val adjust = ToolInvocation("adjust", "scroll", mapOf("target" to "font", "argument" to "down"))
+        val save = ToolInvocation("save", "click", mapOf("target" to "apply"))
+        assertEquals(null, ManualActionPolicy.checkScreen(adjust, screen))
+        assertEquals(null, ManualActionPolicy.checkScreen(
+            adjust.copy(arguments = adjust.arguments + ("target" to "weight")), screen))
+        assertTrue(ManualActionPolicy.hasReadableDisplaySlider(screen))
+        assertEquals(null, ManualActionPolicy.checkScreen(save, screen))
+        assertEquals("requires_user", ManualActionPolicy.checkScreen(save,
+            screen.copy(labels = listOf("权限"), elements = listOf(apply)))?.code)
+        assertEquals(null, ManualActionPolicy.checkScreen(save,
+            screen.copy(labels = listOf("声音与振动"), elements = listOf(apply))))
+        assertEquals("requires_user", ManualActionPolicy.checkScreen(save,
+            screen.copy(labels = listOf("安装未知应用"), elements = listOf(apply.copy(text = "允许"))))?.code)
+        assertEquals("requires_user", ManualActionPolicy.checkScreen(save,
+            screen.copy(labels = listOf("重置手机"), elements = listOf(apply.copy(text = "确定"))))?.code)
+    }
+
+    @Test
     fun `a swipe duration outside the declared range is refused`() = runBlocking {
         val phone = Phone(::page)
         val loop = AgentLoop(

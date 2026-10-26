@@ -1,0 +1,30 @@
+@import url("unified.css");
+
+@font-face { font-family: "Page Four Unified SC"; src: url("assets/fonts/p04-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Page Four Unified SC"; src: url("assets/fonts/p04-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-style: normal; font-display: block; }
+:root { --slide-font: "Page Four Unified SC"; }
+.request { position: absolute; top: 211px; left: 91px; display: flex; align-items: center; height: 68px; padding: 11px 25px; border-radius: 18px; }
+.request-text { color: var(--blue); font-size: 28px; font-weight: 700; line-height: 1.5; white-space: nowrap; }
+.story-step { position: absolute; top: 763px; width: 302px; height: 114px; padding: 17px 14px; border-radius: 18px; text-align: center; }
+.step-understand { left: 65px; }
+.step-service { left: 420px; }
+.step-logistics { left: 793px; }
+.step-verify { left: 1155px; }
+.step-deliver { left: 1621px; }
+.story-step h2 { font-size: 27px; font-weight: 700; line-height: 1.4; letter-spacing: 1px; white-space: nowrap; }
+.story-step h2 span { margin-right: 14px; color: var(--gold); font-size: 19px; font-variant-numeric: tabular-nums; }
+.story-step p { margin-top: 7px; color: var(--muted); font-size: 20px; line-height: 1.5; white-space: nowrap; }
+.result-card { position: absolute; top: 401px; left: 1615px; width: 285px; height: 244px; }
+.result-summary { color: #315c7c; font-size: 22px; font-weight: 700; line-height: 1.5; white-space: nowrap; }
+.result-primary { display: flex; align-items: baseline; gap: 15px; height: 100px; margin-top: 8px; white-space: nowrap; }
+.result-primary strong { color: var(--blue); font-size: 69px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.result-primary span { color: var(--navy); font-size: 30px; font-weight: 700; line-height: 1.5; }
+.result-secondary { margin-top: 5px; color: #42667f; font-size: 25px; line-height: 1.5; white-space: nowrap; }
+.result-secondary strong { color: var(--blue); font-size: 29px; }
+.result-note { margin-top: 17px; color: #60798d; font-size: 20px; line-height: 1.5; white-space: nowrap; }
+.evidence { position: absolute; top: 929px; left: 91px; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; width: 1866px; height: 119px; padding: 14px 20px; }
+.evidence-part { text-align: center; }
+.evidence-part + .evidence-part { border-left: 1px solid rgba(104, 155, 191, 0.23); }
+.evidence-part h2 { font-size: 29px; font-weight: 700; line-height: 1.4; letter-spacing: 0.6px; white-space: nowrap; }
+.evidence-part h2 span { margin: 0 6px; color: var(--blue); }
+.evidence-part p { margin-top: 8px; color: var(--muted); font-size: 19px; line-height: 1.5; white-space: nowrap; }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">转圈测试</string>
+    <string name="loading">正在加载…</string>
+    <string name="loading_hint">内容加载中，请稍候</string>
+</resources>

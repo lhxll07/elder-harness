@@ -39,30 +39,34 @@ object SecretStore {
     private val revisionCounter = AtomicLong(0)
     val revision: Long get() = revisionCounter.get()
 
-    fun save(context: Context, plain: String, name: String = API_KEY) {
+    @Synchronized
+    fun save(context: Context, plain: String, name: String = API_KEY): Boolean {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val ciphertextKey = "${name}_enc"
         val ivKey = "${name}_iv"
-        if (plain.isBlank()) {
-            prefs.edit().remove(ciphertextKey).remove(ivKey).apply()
+        val previousCiphertext = prefs.getString(ciphertextKey, null)
+        val previousIv = prefs.getString(ivKey, null)
+        return runCatching {
+            val editor = prefs.edit()
+            if (plain.isBlank()) {
+                editor.remove(ciphertextKey).remove(ivKey)
+            } else {
+                val cipher = Cipher.getInstance(TRANSFORM)
+                cipher.init(Cipher.ENCRYPT_MODE, secretKey(name))
+                val bytes = cipher.doFinal(plain.toByteArray())
+                editor.putString(ciphertextKey, Base64.encodeToString(bytes, Base64.NO_WRAP))
+                    .putString(ivKey, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
+            }
+            check(editor.commit()) { "credential_persistence_failed" }
             revisionCounter.incrementAndGet()
-            return
-        }
-        runCatching {
-            val cipher = Cipher.getInstance(TRANSFORM)
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey(name))
-            val bytes = cipher.doFinal(plain.toByteArray())
-            prefs.edit()
-                .putString(ciphertextKey, Base64.encodeToString(bytes, Base64.NO_WRAP))
-                .putString(ivKey, Base64.encodeToString(cipher.iv, Base64.NO_WRAP))
-                .apply()
-            revisionCounter.incrementAndGet()
+            true
         }.onFailure {
-            // Never leave an older secret on disk while the caller believes the new one is saved.
-            prefs.edit().remove(ciphertextKey).remove(ivKey).apply()
+            if (!prefs.edit().putString(ciphertextKey, previousCiphertext).putString(ivKey, previousIv).commit()) {
+                LoopLog.event("[key] 旧凭证恢复未能确认落盘")
+            }
             revisionCounter.incrementAndGet()
-            LoopLog.event("[key] 保存失败，旧值已清除：${it.message}")
-        }
+            LoopLog.event("[key] 凭证保存失败：${it.javaClass.simpleName}")
+        }.getOrDefault(false)
     }
 
     fun load(context: Context, name: String = API_KEY): String {

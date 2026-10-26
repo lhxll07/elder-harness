@@ -1,0 +1,27 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TD
+  subgraph ThreePlanes["3PA 三平面执行架构"]
+    subgraph P1["P1 绑定面"]
+      B1["界面版本校验"]
+      B2["控件目标重绑定"]
+      B3["派发前重新观察"]
+    end
+    subgraph P2["P2 授权面"]
+      A1["工具契约校验"]
+      A2["风险词族与页面检查"]
+      A3["确认与本人操作"]
+    end
+    subgraph P3["P3 证据面"]
+      E1["证据来源分型"]
+      E2["数字与引文核对"]
+      E3["本地通过后模型复核"]
+    end
+  end
+  P1 --> I1["I1 目标有效"]
+  P3 --> I2["I2 完成有据"]
+  P2 --> I3["I3 高危交还本人"]
+  P2 --> I4["I4 未知动作拒绝"]
+  classDef plane fill:#f4f9f9,stroke:#0f7b6c,stroke-width:1.5px;
+  classDef inv fill:#eef4f3,stroke:#0b5a4f,stroke-width:1px;
+  class P1,P2,P3 plane;
+  class I1,I2,I3,I4 inv;

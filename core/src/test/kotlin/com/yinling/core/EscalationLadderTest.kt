@@ -150,7 +150,7 @@ class EscalationLadderTest {
 
     @Test
     fun `a local-only repaint also spends the rung`(): Unit = runBlocking {
-        val tools = DeadTools(::page, effect = ActionEffect.LOCAL_ONLY)
+        val tools = DeadTools(::page, effect = ActionEffect.CHANGED_OTHER)
         var requested = 0
         val loop = AgentLoop(
             planner {

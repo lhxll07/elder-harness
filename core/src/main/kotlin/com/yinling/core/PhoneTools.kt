@@ -92,8 +92,7 @@ data class ToolResult(
     /**
      * The local verdict on what this action did to the page, computed without a model call.
      *
-     * [ActionEffect.UNKNOWN] means the local layer could not judge (typically because no before/after
-     * bitmaps were in hand and the page revision did not change either). It is the honest default:
+     * [ActionEffect.UNKNOWN] means the local layer had no checkable before/after state. It is the honest default:
      * an unverified step is not a successful one.
      */
     val effect: ActionEffect = ActionEffect.UNKNOWN,
@@ -107,14 +106,11 @@ data class ToolResult(
  * Top-level, not nested in [ToolResult], so the name says which of the two "effect" ideas in this
  * package it is: [WorldEffect] (`OutcomeCheck.kt`) is the *business* consequence a completion claim
  * asserts (SEND/PAY/…), while this is the *local* observation of what the last action did to the
- * screen. The design's five cases are exactly the ones below.
+ * screen. Only observable platform state, not pixel motion, can confirm an effect.
  */
 enum class ActionEffect {
     /** The page changed and the declared expected text showed up where it was expected. */
     APPLIED,
-
-    /** Only the region that was touched repainted; the page as a whole did not move. */
-    LOCAL_ONLY,
 
     /** The page changed, but not in the way the step declared: something else moved. */
     CHANGED_OTHER,
@@ -153,7 +149,8 @@ object PhoneToolCatalog {
     private fun effectParam() = param(
         EXPECTED_EFFECT_ARG, "string",
         "必填。≤${EXPECTED_EFFECT_MAX_CHARS}字，写清这一步做完后你在页面上会看到什么，例如：" +
-            "expectedEffect: 表格日期范围变成 10月12日-10月18日。只写\"页面会变化\"不算，会要求重写。",
+            "expectedEffect: 表格日期范围变成 10月12日-10月18日。按钮或标题原文用「」括起。" +
+            "本地只核对新增的明确文字事实、同一输入框值或滑块值；页面变化本身不是成功，不可当成已发送或已付款。",
     )
 
     val specs: List<AgentToolSpec> = listOf(
@@ -391,9 +388,31 @@ object PhoneToolCatalog {
                 appendElement(element, unnamed, screen.width, screen.height)
             }
 
-            val omitted = screen.elements.size - listed.size
-            if (omitted > 0) {
-                append("…另有 ").append(omitted).append(" 个没有标签的控件未列出（可能是布局容器）。\n")
+            val listedIds = listed.mapTo(HashSet()) { it.id }
+            val omitted = screen.elements.filterNot { it.id in listedIds }
+            if (omitted.isNotEmpty()) {
+                // What was left out decides what the model should do about it, so say which it is.
+                // Calling every omission "a label-less container" is how a page that was really a
+                // scrollable list read as a page that had nothing more on it: on the weather page the
+                // heading 多日天气预报 was listed while every date row under it was cut, and the model
+                // — told the rest was layout noise — answered with tomorrow's numbers it had never
+                // seen. "The list is cut, scroll" and "nothing here" must not look the same.
+                val droppedLabelled = omitted.count { it.text.isNotBlank() || it.description.isNotBlank() }
+                val droppedActionable = omitted.count { it.clickable || it.longClickable || it.editable }
+                when {
+                    droppedLabelled > 0 -> {
+                        append("…这一页还有 ").append(omitted.size).append(" 个控件没有列出，其中 ")
+                        append(droppedLabelled).append(" 个带文字。**下面还有内容，先 scroll 往下看**，")
+                        append("不要凭这一屏下结论，也不要用没有列出来的数字。\n")
+                    }
+                    droppedActionable > 0 -> {
+                        append("…另有 ").append(omitted.size).append(" 个控件未列出（其中 ")
+                        append(droppedActionable).append(" 个可操作）。需要时先 scroll 再看。\n")
+                    }
+                    else -> {
+                        append("…另有 ").append(omitted.size).append(" 个没有标签的控件未列出（可能是布局容器）。\n")
+                    }
+                }
             }
         }
 
@@ -507,267 +526,6 @@ object PhoneToolCatalog {
 
     /** Enough to cover a phone screen with room for off-screen list items. */
     private const val MAX_ELEMENTS = 140
-}
-
-/**
- * One grayscale frame, as the effect verifier sees the screen.
- *
- * Pixels are 0..255 luminance, row-major. Bitmap decoding stays in the Android layer; everything
- * below this line is pure arithmetic, which is what lets the thresholds and the classification be
- * tested on the JVM without a device.
- */
-data class GrayFrame(val pixels: IntArray, val width: Int, val height: Int) {
-    init {
-        require(pixels.size == width * height) { "grayscale frame is ${pixels.size} but ${width}x${height}" }
-    }
-
-    /** A square block of [size] centred on (cx, cy), or null when the screen is smaller than 32px. */
-    fun blockCentredAt(cx: Int, cy: Int, size: Int = BLOCK): GrayFrame? {
-        if (width < MIN_BLOCK || height < MIN_BLOCK) return null
-        val side = minOf(size, width, height)
-        val left = (cx - side / 2).coerceIn(0, width - side)
-        val top = (cy - side / 2).coerceIn(0, height - side)
-        val out = IntArray(side * side)
-        for (row in 0 until side) {
-            System.arraycopy(pixels, (top + row) * width + left, out, row * side, side)
-        }
-        return GrayFrame(out, side, side)
-    }
-
-    companion object {
-        /** The 160x160 block the design calls for around the touch point. */
-        const val BLOCK = 160
-
-        /** Below this the block is too small to say anything; the check is skipped instead. */
-        const val MIN_BLOCK = 32
-    }
-}
-
-/**
- * The local, model-free judgement of what one action did to the page (mechanism A).
- *
- * Three independent signals, deliberately cheap: a structural comparison of the touched region
- * (L1/SSIM), the share of the rest of the page whose pixels moved (L2), and whether the words the
- * model declared actually turned up in the page text afterwards (L3). The page revision the host
- * already reported (L4) is only a fallback, used when no pixels are available at all.
- *
- * Thresholds are shipped as constants, not calibrated on a device (see the delivery notes): a
- * mismatch here costs a needless "please check", never a false "done", because an unverified effect
- * can only ever downgrade a completion claim.
- */
-object EffectVerifier {
-
-    /** L1: below this, the region the finger touched is judged to have changed. */
-    const val SSIM_CHANGED_BELOW = 0.92
-
-    /** L2: per-channel difference that counts as a changed pixel. */
-    const val PIXEL_DELTA = 20
-
-    /** L2: above this share of changed pixels outside the touched block, the page moved. */
-    const val PAGE_CHANGED_RATIO = 0.002
-
-    /**
-     * L1: structural similarity of the two blocks, averaged over 8x8 windows.
-     *
-     * Standard SSIM constants: C1=(0.01L)^2, C2=(0.03L)^2 for L=255. Windows are non-overlapping
-     * because the blocks here are already only 160px and an overlapping pass would triple the work
-     * for no decision the thresholds could tell apart.
-     */
-    fun ssim(a: GrayFrame, b: GrayFrame): Double {
-        if (a.width != b.width || a.height != b.height) return 1.0
-        val window = 8
-        var total = 0.0
-        var windows = 0
-        var y = 0
-        while (y + window <= a.height) {
-            var x = 0
-            while (x + window <= a.width) {
-                var sumA = 0.0
-                var sumB = 0.0
-                var sumAA = 0.0
-                var sumBB = 0.0
-                var sumAB = 0.0
-                for (row in 0 until window) {
-                    val base = (y + row) * a.width + x
-                    for (col in 0 until window) {
-                        val va = a.pixels[base + col].toDouble()
-                        val vb = b.pixels[base + col].toDouble()
-                        sumA += va
-                        sumB += vb
-                        sumAA += va * va
-                        sumBB += vb * vb
-                        sumAB += va * vb
-                    }
-                }
-                val n = (window * window).toDouble()
-                val meanA = sumA / n
-                val meanB = sumB / n
-                val varA = sumAA / n - meanA * meanA
-                val varB = sumBB / n - meanB * meanB
-                val cov = sumAB / n - meanA * meanB
-                val c1 = (0.01 * 255) * (0.01 * 255)
-                val c2 = (0.03 * 255) * (0.03 * 255)
-                total += ((2 * meanA * meanB + c1) * (2 * cov + c2)) /
-                    ((meanA * meanA + meanB * meanB + c1) * (varA + varB + c2))
-                windows++
-                x += window
-            }
-            y += window
-        }
-        return if (windows == 0) 1.0 else total / windows
-    }
-
-    /** True when the touched block repainted enough to count as a local change (L1). */
-    fun localChanged(before: GrayFrame?, after: GrayFrame?): Boolean? {
-        if (before == null || after == null) return null
-        return ssim(before, after) < SSIM_CHANGED_BELOW
-    }
-
-    /**
-     * L2: the share of pixels outside [mask] whose value moved by more than [PIXEL_DELTA].
-     *
-     * The touched block is masked out on purpose: a button that highlights under the finger would
-     * otherwise make every tap look like the page moved, which is precisely the false positive this
-     * signal exists to avoid.
-     */
-    fun pageChangedRatio(before: GrayFrame, after: GrayFrame, mask: PixelRect? = null): Double? {
-        if (before.width != after.width || before.height != after.height) return null
-        var changed = 0L
-        var counted = 0L
-        for (y in 0 until before.height) {
-            for (x in 0 until before.width) {
-                if (mask != null && mask.contains(x, y)) continue
-                counted++
-                val delta = before.pixels[y * before.width + x] - after.pixels[y * before.width + x]
-                if (delta > PIXEL_DELTA || delta < -PIXEL_DELTA) changed++
-            }
-        }
-        if (counted == 0L) return null
-        return changed.toDouble() / counted
-    }
-
-    fun pageChanged(before: GrayFrame?, after: GrayFrame?, mask: PixelRect? = null): Boolean? {
-        if (before == null || after == null) return null
-        val ratio = pageChangedRatio(before, after, mask) ?: return null
-        return ratio > PAGE_CHANGED_RATIO
-    }
-
-    /** A pixel rectangle, used to exclude the touched block from the page-wide comparison. */
-    data class PixelRect(val left: Int, val top: Int, val right: Int, val bottom: Int) {
-        fun contains(x: Int, y: Int): Boolean = x in left until right && y in top until bottom
-    }
-
-    /**
-     * L3: the tokens of [expectedEffect] that a page text can be searched for.
-     *
-     * Empty means "not checkable": a declaration made only of filler ("页面会变化") yields no token,
-     * and the classification then honestly reports UNKNOWN instead of pretending the check passed.
-     */
-    fun keywords(expectedEffect: String): List<String> {
-        val text = expectedEffect.trim()
-        if (text.isEmpty()) return emptyList()
-        val found = LinkedHashSet<String>()
-        val remaining = StringBuilder(text)
-        for (pattern in STRUCTURED) {
-            for (match in pattern.findAll(text)) {
-                found += match.value
-                for (index in match.range) remaining.setCharAt(index, ' ')
-            }
-        }
-        for (token in remaining.split(DELIMITERS)) {
-            val piece = token.trim()
-            when {
-                piece.length >= 2 && piece.any { it.code in CJK } && checkableCjk(piece) -> found += piece
-                piece.length >= 2 && piece.all(Char::isDigit) -> found += piece
-            }
-        }
-        // Filler words match almost any page and would turn L3 into a rubber stamp.
-        return found.filterNot { it in STOPWORDS }.take(MAX_KEYWORDS)
-    }
-
-    /**
-     * A Chinese run is checkable only if something survives deleting the filler from it.
-     *
-     * Chinese is not whitespace-separated, so "页面会变化" arrives as one token and a plain
-     * stopword list cannot see it. Stripping the filler out and requiring two characters of
-     * remainder is what turns that declaration into "nothing to check" instead of a keyword that
-     * matches any page.
-     */
-    private fun checkableCjk(piece: String): Boolean {
-        var rest = piece
-        for (word in STOPWORDS) rest = rest.replace(word, "")
-        return rest.length >= 2
-    }
-
-    /** L3: did any declared token turn up in the page text the model was shown after the action? */
-    fun expectedTextSeen(afterText: String, expectedEffect: String): Boolean? {
-        val keys = keywords(expectedEffect)
-        if (keys.isEmpty()) return null
-        return keys.any { afterText.contains(it) }
-    }
-
-    /**
-     * The decision table of mechanism A, as one pure function.
-     *
-     * @param l1Changed L1, null when no before/after blocks were available.
-     * @param l2Changed L2, null when no before/after frames were available.
-     * @param l3Seen L3, null when the declaration carried nothing checkable.
-     * @param revisionChanged L4, the platform's own revision comparison.
-     */
-    fun classify(
-        expectedEffect: String,
-        l1Changed: Boolean?,
-        l2Changed: Boolean?,
-        l3Seen: Boolean?,
-        revisionChanged: Boolean?,
-    ): ActionEffect {
-        if (expectedEffect.isBlank()) return ActionEffect.UNKNOWN
-        if (l2Changed != null) {
-            if (l2Changed) {
-                return when (l3Seen) {
-                    true -> ActionEffect.APPLIED
-                    false -> ActionEffect.CHANGED_OTHER
-                    null -> ActionEffect.UNKNOWN
-                }
-            }
-            return if (l1Changed == true) ActionEffect.LOCAL_ONLY else ActionEffect.NO_EFFECT
-        }
-        // No pixels in hand: fall back to the platform's own revision and the declared words. This is
-        // the degraded path the host reports in `effectDetail`; it can still catch a no-op, which is
-        // the failure the ladder cares about, but it cannot tell APPLIED from CHANGED_OTHER as well.
-        return when (revisionChanged) {
-            false -> ActionEffect.NO_EFFECT
-            true -> when (l3Seen) {
-                true -> ActionEffect.APPLIED
-                false -> ActionEffect.CHANGED_OTHER
-                null -> ActionEffect.UNKNOWN
-            }
-            null -> ActionEffect.UNKNOWN
-        }
-    }
-
-    /** A one-line, quotable explanation of the verdict, for the model and the person. */
-    fun describe(effect: ActionEffect, detail: String): String =
-        "${effect.name}${if (detail.isBlank()) "" else "（$detail）"}"
-
-    private val CJK = 0x2E80..0x9FFF
-    private val DELIMITERS = Regex("[^0-9A-Za-z\\u2E80-\\u9FFF]+")
-    private val STRUCTURED = listOf(
-        Regex("\\d{4}-\\d{1,2}-\\d{1,2}"),
-        Regex("\\d{1,2}月\\d{1,2}日"),
-        Regex("\\d{1,2}月\\d{1,2}"),
-        Regex("\\d{1,2}/\\d{1,2}"),
-        Regex("\\d{1,2}:\\d{2}"),
-        Regex("[¥￥]?\\d+(?:\\.\\d+)?元"),
-        Regex("[¥￥]\\d+(?:\\.\\d+)?"),
-    )
-    private const val MAX_KEYWORDS = 8
-
-    /** Declarations made only of these carry no information a page could confirm. */
-    private val STOPWORDS = setOf(
-        "页面", "会变", "变化", "变成", "出现", "显示", "内容", "文字", "应该", "然后", "这里",
-        "一下", "一个", "这个", "那个", "现在", "已经", "可能", "看到",
-    )
 }
 
 /**

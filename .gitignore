@@ -1,5 +1,6 @@
 .gradle/
 .idea/
+.backup/
 .kotlin/
 **/build/
 local.properties
@@ -9,6 +10,11 @@ local.properties
 !.env.example
 *.jks
 *.keystore
+*.bak
+*.bak-*
+*~
+.DS_Store
+node_modules/
 
 # 服务端本地开发
 server/.venv/
@@ -28,6 +34,9 @@ docs/aic-2026/deck/*.pdf
 docs/aic-2026/figures/fig*.mmd
 docs/aic-2026/figures/puppeteer.json
 docs/aic-2026/refs/**/cache/
+docs/aic-2026/preview-gemini/
+docs/aic-2026/deck-image-v*/previews/
+docs/aic-2026/deck-image-v*/*.pdf
 
 # 真机评测日志与结果（含页面文字，勿入库）
 tasks/runs/

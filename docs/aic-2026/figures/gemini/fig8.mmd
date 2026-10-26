@@ -1,0 +1,16 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart LR
+  subgraph R1["第一轮 · 结构化失效 (9步 · PAUSED)"]
+    direction TB
+    A1["tap_text 无法命中课表入口"] --> A2["降级尝试盲目坐标<br/>tap_xy(0.37,0.96)"] --> A3["触发 stale_screen 版本熔断"] --> A4["翻页后结论仍 Unverified"]
+  end
+  subgraph R2["第二轮 · 事实锚点核验 (9步 · PAUSED)"]
+    direction TB
+    B1["修复观察层，改用 tap_text"] --> B2["成功点中「我的课表」→ 周次切换"] --> B3["页面确实完成物理刷新"] --> B4["结论日期「10月5日」本轮界面从未出现<br/>→ 完成核验强制拒绝报结"]
+  end
+  subgraph R3["第三轮 · 预期声明与停滞保护 (13步 · STUCK)"]
+    direction TB
+    C1["每一步强制执行预期效果声明"] --> C2["本地核验捕获到真实状态跃迁 APPLIED"] --> C3["页面反复来回振荡"] --> C4["动作停滞算法主动熔断，安全交还"]
+  end
+  R1 --> R2 --> R3
+  N["三个批次均保留失败原因"] -.-> R2

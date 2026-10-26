@@ -1,0 +1,800 @@
+{
+  "project": "银龄智办",
+  "page_count": 17,
+  "canvas": [
+    3840,
+    2160
+  ],
+  "workflow": "Preserve user-provided text-free backgrounds, add editable HTML lettering, validate and assemble the complete 17-page PDF.",
+  "generation_mode": "user_provided_backgrounds_with_html_lettering",
+  "completion_status": "all_17_pages_typeset_exported_and_validated",
+  "next_page": null,
+  "next_new_page": null,
+  "prepared_prompt": null,
+  "visual_standardization": {
+    "baseline_pages": [
+      6,
+      8
+    ],
+    "style": "porcelain-white, pale ice-blue, translucent technology-blue, restrained warm-gold; open flowing composition with thin functional panels",
+    "requested_pages": [
+      2,
+      3,
+      4,
+      5,
+      7
+    ],
+    "pending_pages": [],
+    "active_page": null,
+    "prepared_prompt": null,
+    "workflow": "Use user-provided text-free backgrounds, typeset editable HTML and export reviewed PDF. Small labels remain unframed; reserve one key information panel per revised page.",
+    "completed_pages": [
+      2,
+      3,
+      4,
+      5,
+      7
+    ],
+    "typography_adjusted_pages": [
+      2,
+      3,
+      4,
+      5,
+      7,
+      8
+    ],
+    "latest_feedback": "Reduce visible copy and visual complexity; do not frame small text or individual process labels."
+  },
+  "slides": [
+    {
+      "page": 1,
+      "status": "html_cover_validated",
+      "revision": "html-v01",
+      "local_file": "assets/cover-background.png",
+      "html": "cover.html",
+      "css": "cover.css",
+      "preview": "previews/cover-4k.png",
+      "pdf": "银龄智办-封面.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960,
+          540
+        ],
+        "fonts_embedded": true,
+        "chinese_text_extractable": true,
+        "preview_and_pdf_visually_checked": true
+      },
+      "provided_source": "/tmp/codex-clipboard-kOyOpV.png",
+      "prompt": "prompts/p01-background.txt",
+      "lettering": "HTML text with local subset Chinese fonts"
+    },
+    {
+      "page": 2,
+      "status": "html_page_validated",
+      "revision": "html-unified-v03-light",
+      "local_file": "assets/p02-background-unified-v01.png",
+      "provided_source": "/home/lhx/Downloads/image-14324250-1.png",
+      "html": "p02.html",
+      "css": "p02.css",
+      "preview": "previews/p02-4k.png",
+      "pdf": "银龄智办-第02页-需求与价值.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960.0,
+          540.0
+        ],
+        "fonts_embedded": true,
+        "font_glyph_coverage_complete": true,
+        "chinese_text_extractable": true,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "responsive_viewports_checked": 5,
+        "text_overflow_count": 0,
+        "previous_slide_navigation": "passed",
+        "report": "previews/p02-validation.json",
+        "text_overlap_count": 0,
+        "added_html_panel_count": 1,
+        "small_labels_unframed": true,
+        "fullscreen_toggle": "passed",
+        "artifacts_report": "previews/unified-artifacts.json"
+      },
+      "prompt": "prompts/p02-background.txt",
+      "theme": "需求价值：数字适老化，正在走向任务级服务",
+      "lettering": "HTML text with local subset Chinese fonts",
+      "data_source": {
+        "publisher": "国家统计局",
+        "title": "中华人民共和国2025年国民经济和社会发展统计公报",
+        "url": "https://www.stats.gov.cn/sj/zxfbhjd/202602/t20260228_1962662.html",
+        "published": "2026-02-28",
+        "reference_date": "2025-12-31",
+        "population_age_60_plus_ten_thousands": 32338,
+        "population_age_60_plus_share_percent": 23.0,
+        "verified": "2026-10-23"
+      },
+      "superseded_background": {
+        "local_file": "assets/p02-background.png",
+        "provided_source": "/home/lhx/Downloads/image-14279882-1.png"
+      },
+      "background_revision": "background-unified-v01",
+      "layout": "One main conclusion; unframed small labels; one porcelain-blue key information panel."
+    },
+    {
+      "page": 3,
+      "status": "html_page_validated",
+      "revision": "html-unified-v03-light",
+      "local_file": "assets/p03-background-unified-v01.png",
+      "provided_source": "/home/lhx/Downloads/image-14324485-1.png",
+      "html": "p03.html",
+      "css": "p03.css",
+      "preview": "previews/p03-4k.png",
+      "pdf": "银龄智办-第03页-产品全景.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960.0,
+          540.0
+        ],
+        "fonts_embedded": true,
+        "font_glyph_coverage_complete": true,
+        "chinese_text_extractable": true,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "responsive_viewports_checked": 5,
+        "text_overflow_count": 0,
+        "capability_count": 6,
+        "deployment_part_count": 3,
+        "fullscreen_toggle": "passed",
+        "previous_slide_navigation": "passed",
+        "second_to_third_navigation": "passed",
+        "report": "previews/p03-validation.json",
+        "text_overlap_count": 0,
+        "added_html_panel_count": 1,
+        "small_labels_unframed": true,
+        "artifacts_report": "previews/unified-artifacts.json"
+      },
+      "prompt": "prompts/p03-background.txt",
+      "theme": "产品全景：一句话，调动完整的手机办事能力",
+      "lettering": "HTML text with local subset Chinese fonts",
+      "ui_sources": [
+        "app/src/main/java/com/yinling/hotline/MainActivity.kt:321",
+        "app/src/main/java/com/yinling/hotline/Ui.kt:134",
+        "app/src/main/java/com/yinling/hotline/Ui.kt:190"
+      ],
+      "reference_images": false,
+      "superseded_background": {
+        "local_file": "assets/p03-background.png",
+        "provided_source": "/home/lhx/Downloads/image-14284507-1.png"
+      },
+      "background_revision": "background-unified-v01",
+      "layout": "One main conclusion; unframed small labels; one porcelain-blue key information panel."
+    },
+    {
+      "page": 4,
+      "status": "html_page_validated",
+      "revision": "html-unified-v03-light",
+      "local_file": "assets/p04-background-unified-v01.png",
+      "provided_source": "/home/lhx/Downloads/613230b8-6209-41f5-844f-956b53ee60f9.png",
+      "html": "p04.html",
+      "css": "p04.css",
+      "preview": "previews/p04-4k.png",
+      "pdf": "银龄智办-第04页-场景闭环.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960.0,
+          540.0
+        ],
+        "fonts_embedded": true,
+        "font_glyph_coverage_complete": true,
+        "chinese_text_extractable": true,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "responsive_viewports_checked": 5,
+        "text_overflow_count": 0,
+        "story_frame_count": 5,
+        "case_results": {
+          "orders_total": 4,
+          "orders_awaiting_pickup": 1,
+          "orders_received": 3
+        },
+        "fullscreen_toggle": "passed",
+        "previous_slide_navigation": "passed",
+        "third_to_fourth_navigation": "passed",
+        "report": "previews/p04-validation.json",
+        "text_overlap_count": 0,
+        "added_html_panel_count": 1,
+        "small_labels_unframed": true,
+        "artifacts_report": "previews/unified-artifacts.json"
+      },
+      "prompt": "prompts/p04-background.txt",
+      "theme": "场景闭环：从一句需求，到一张清楚的结果卡",
+      "case": "快递查询：理解目标、进入应用、定位物流、读取核对、清楚交付",
+      "lettering": "HTML text with local subset Chinese fonts",
+      "case_source": "docs/aic-2026/experiments/真机实验R1-R3-结果.md:11",
+      "case_data": {
+        "date": "2026-10-03",
+        "app": "拼多多",
+        "execution_steps": 5,
+        "orders_total": 4,
+        "orders_awaiting_pickup": 1,
+        "orders_received": 3,
+        "facts_cross_checked_with_app_page": true,
+        "story_frames_are_service_phases_not_literal_action_logs": true
+      },
+      "reference_images": false,
+      "superseded_background": {
+        "local_file": "assets/p04-background.png",
+        "provided_source": "/home/lhx/Downloads/image-14286534-1.png"
+      },
+      "background_revision": "background-unified-v01",
+      "layout": "One main conclusion; unframed small labels; one porcelain-blue key information panel."
+    },
+    {
+      "page": 5,
+      "status": "html_page_validated",
+      "revision": "html-unified-v03-light",
+      "local_file": "assets/p05-background-unified-v01.png",
+      "provided_source": "/home/lhx/Downloads/270fa38d-4868-44ff-8bf5-5f31d3b5b04f.png",
+      "html": "p05.html",
+      "css": "p05.css",
+      "preview": "previews/p05-4k.png",
+      "pdf": "银龄智办-第05页-总体架构.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960.0,
+          540.0
+        ],
+        "fonts_embedded": true,
+        "font_glyph_coverage_complete": true,
+        "chinese_text_extractable": true,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "responsive_viewports_checked": 5,
+        "text_overflow_count": 0,
+        "plane_count": 3,
+        "execution_node_count": 5,
+        "deployment_module_count": 4,
+        "fullscreen_toggle": "passed",
+        "previous_slide_navigation": "passed",
+        "fourth_to_fifth_navigation": "passed",
+        "report": "previews/p05-validation.json",
+        "text_overlap_count": 0,
+        "added_html_panel_count": 1,
+        "small_labels_unframed": true,
+        "artifacts_report": "previews/unified-artifacts.json"
+      },
+      "prompt": "prompts/p05-background.txt",
+      "theme": "总体架构：3PA，让智能执行拥有系统级可信底座",
+      "trust_planes": [
+        "绑定面",
+        "授权面",
+        "证据面"
+      ],
+      "execution_backbone": [
+        "观察",
+        "规划",
+        "派发",
+        "执行",
+        "收尾"
+      ],
+      "deployment_modules": [
+        "交互层",
+        "核心层",
+        "Android 平台层",
+        "协作服务层"
+      ],
+      "lettering": "HTML text with local subset Chinese fonts",
+      "sources": [
+        "docs/aic-2026/架构创新声明-3PA-2026-10-18.md:21",
+        "docs/architecture.md"
+      ],
+      "reference_images": false,
+      "superseded_background": {
+        "local_file": "assets/p05-background.png",
+        "provided_source": "/home/lhx/Downloads/image-14289696-1.png"
+      },
+      "background_revision": "background-unified-v01",
+      "layout": "One main conclusion; unframed small labels; one porcelain-blue key information panel."
+    },
+    {
+      "page": 6,
+      "status": "html_page_validated",
+      "revision": "html-v01",
+      "background_revision": "background-v03",
+      "local_file": "assets/p06-background.png",
+      "provided_source": "/home/lhx/Downloads/image-14295919-1.png",
+      "html": "p06.html",
+      "css": "p06.css",
+      "preview": "previews/p06-4k.png",
+      "pdf": "银龄智办-第06页-绑定创新.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960,
+          540
+        ],
+        "fonts_embedded": true,
+        "font_glyph_coverage_complete": true,
+        "chinese_text_extractable": true,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "responsive_viewports_checked": 5,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "insight_count": 3,
+        "flow_step_count": 4,
+        "target_caption_count": 2,
+        "fullscreen_toggle": "passed",
+        "previous_slide_navigation": "passed",
+        "fifth_to_sixth_navigation": "passed",
+        "report": "previews/p06-validation.json"
+      },
+      "prompt": "prompts/p06-background-v03.txt",
+      "superseded_prompt": "prompts/p06-background-v02.txt",
+      "superseded_preview": "/home/lhx/Downloads/image-14293136-1.png",
+      "theme": "绑定创新：让每次操作，都对准当前页面",
+      "mechanisms": [
+        "页面版本绑定",
+        "派发前再观察",
+        "唯一控件重绑定"
+      ],
+      "diagram_stages": [
+        "轻盈的旧页面切片",
+        "曲线上的唯一身份锚点",
+        "重定位后的当前页面切片"
+      ],
+      "planned_flow": [
+        "动作绑定快照",
+        "派发前再观察",
+        "唯一身份重绑",
+        "更新绑定再执行"
+      ],
+      "visual_priority": "Open, harmonious composition with a flowing blue-gold target-binding path; two lightweight page slices, clear target displacement, no information-card grid.",
+      "lettering": "HTML text with local subset Chinese fonts",
+      "sources": [
+        "docs/aic-2026/deck-image-v1/storyboard.md:64",
+        "core/src/main/kotlin/com/yinling/core/ScreenActionGuard.kt:9",
+        "core/src/main/kotlin/com/yinling/core/AgentLoop.kt:1341"
+      ],
+      "reference_images": false
+    },
+    {
+      "page": 7,
+      "status": "html_page_validated",
+      "revision": "html-unified-v03-light",
+      "background_revision": "background-unified-v01",
+      "local_file": "assets/p07-background-unified-v01.png",
+      "provided_source": "/home/lhx/Downloads/91e2b2b5-5a50-42a4-b2b0-538406cbf929.png",
+      "html": "p07.html",
+      "css": "p07.css",
+      "preview": "previews/p07-4k.png",
+      "pdf": "银龄智办-第07页-授权创新.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960.0,
+          540.0
+        ],
+        "fonts_embedded": true,
+        "font_glyph_coverage_complete": true,
+        "chinese_text_extractable": true,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "responsive_viewports_checked": 5,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "stage_count": 3,
+        "draft_input_count": 2,
+        "fullscreen_toggle": "passed",
+        "previous_slide_navigation": "passed",
+        "sixth_to_seventh_navigation": "passed",
+        "report": "previews/p07-validation.json",
+        "added_html_panel_count": 1,
+        "small_labels_unframed": true,
+        "artifacts_report": "previews/unified-artifacts.json"
+      },
+      "prompt": "prompts/p07-background-v02.txt",
+      "superseded_prompt": "prompts/p07-background.txt",
+      "theme": "授权创新：高效自主推进，关键决定由本人掌握",
+      "mechanisms": [
+        "常规导航与草稿准备连续推进",
+        "对外发送由本人完成",
+        "工具类型与页面策略协同"
+      ],
+      "planned_flow": [
+        "打开会话",
+        "填写草稿",
+        "由本人发送"
+      ],
+      "scene_type": "Generic illustrative message flow, not a recorded product screenshot or a measured benchmark.",
+      "confirmation_metric_scope": "10-to-1 is the separately documented ten-step software-policy comparison, not the count of stages in this illustration.",
+      "visual_priority": "Concrete message UI stages with one warm-gold person-owned send control; no authorization crystals or abstract execution rail.",
+      "lettering": "HTML text with local subset Chinese fonts",
+      "software_policy_comparison": {
+        "task_steps": 10,
+        "stepwise_confirmations": 10,
+        "graded_confirmations": 1,
+        "source": "harness/src/main/kotlin/Harness.kt:1637"
+      },
+      "sources": [
+        "docs/aic-2026/deck-image-v1/storyboard.md:72",
+        "core/src/main/kotlin/com/yinling/core/ManualActionPolicy.kt:1",
+        "core/src/main/kotlin/com/yinling/core/AgentLoop.kt:1341"
+      ],
+      "reference_images": false,
+      "superseded_background": {
+        "local_file": "assets/p07-background.png",
+        "provided_source": "/home/lhx/Downloads/image-14302646-1.png"
+      },
+      "layout": "One main conclusion; unframed small labels; one porcelain-blue key information panel."
+    },
+    {
+      "page": 8,
+      "status": "html_page_validated",
+      "revision": "html-unified-v03-light",
+      "background_revision": "background-v01",
+      "local_file": "assets/p08-background.png",
+      "provided_source": "/home/lhx/Downloads/image-14317047-1.png",
+      "html": "p08.html",
+      "css": "p08.css",
+      "preview": "previews/p08-4k.png",
+      "pdf": "银龄智办-第08页-证据创新.pdf",
+      "validation": {
+        "preview_dimensions": [
+          3840,
+          2160
+        ],
+        "pdf_pages": 1,
+        "pdf_page_points": [
+          960.0,
+          540.0
+        ],
+        "fonts_embedded": true,
+        "font_glyph_coverage_complete": true,
+        "chinese_text_extractable": true,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "responsive_viewports_checked": 5,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "review_stage_count": 3,
+        "ledger_field_count": 4,
+        "fullscreen_toggle": "passed",
+        "previous_slide_navigation": "passed",
+        "seventh_to_eighth_navigation": "passed",
+        "report": "previews/p08-validation.json",
+        "added_html_panel_count": 1,
+        "small_labels_unframed": true,
+        "artifacts_report": "previews/unified-artifacts.json"
+      },
+      "prompt": "prompts/p08-background.txt",
+      "theme": "证据创新：每一个办结，都有事实依据",
+      "mechanisms": [
+        "页面与工具事实来源分型",
+        "应用、页面版本、执行步骤与来源归档",
+        "动作一致性与文本证据先行、模型语义复核随后"
+      ],
+      "planned_flow": [
+        "页面与工具事实",
+        "来源分型账本",
+        "动作一致性核验",
+        "文本证据核验",
+        "模型语义复核",
+        "清楚呈现结果"
+      ],
+      "scene_type": "Generic evidence-and-completion mechanism illustration, not a recorded screenshot or measured benchmark.",
+      "visual_priority": "Porcelain-white open composition with concrete logistics-list evidence, a clock-tool receipt, one provenance ledger, three small sequential validation gestures, and a warm-gold-edged result sheet; no card grid or abstract machinery.",
+      "lettering": "HTML text with local subset Chinese fonts",
+      "example_counts": {
+        "awaiting_pickup": 1,
+        "signed": 3,
+        "source_page": 4
+      },
+      "sources": [
+        "docs/aic-2026/deck-image-v1/storyboard.md:80",
+        "core/src/main/kotlin/com/yinling/core/EvidenceCheck.kt:20",
+        "core/src/main/kotlin/com/yinling/core/EvidenceCheck.kt:31",
+        "core/src/main/kotlin/com/yinling/core/EvidenceCheck.kt:57",
+        "core/src/main/kotlin/com/yinling/core/OutcomeCheck.kt:603",
+        "core/src/main/kotlin/com/yinling/core/OutcomeCheck.kt:675"
+      ],
+      "reference_images": false,
+      "layout": "One main conclusion; unframed small labels; one porcelain-blue key information panel."
+    },
+    {
+      "page": 9,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "双通道感知：结构读得准，视觉补得全",
+      "local_file": "assets/p09-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-e7e23a92-fef5-43e3-8777-c03f404566cd-1.png",
+      "html": "p09.html",
+      "css": "continuation.css",
+      "preview": "previews/p09-4k.png",
+      "pdf": "银龄智办-第09页-双通道感知.pdf",
+      "prompt": "prompts/p09-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "mechanisms": ["无障碍控件树", "按需截图补充", "统一目标派发与同一执行内核"],
+      "sources": ["app/src/main/java/com/yinling/hotline/ScreenAccessService.kt", "app/src/main/java/com/yinling/hotline/AndroidPhoneTools.kt"],
+      "validation": {
+        "report": "previews/p09-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 10,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "经验演进：把一次成功，沉淀为下一次能力",
+      "local_file": "assets/p10-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-d317c1dc-16a8-4212-a1b4-c6553d15c8b4-1.png",
+      "html": "p10.html",
+      "css": "continuation.css",
+      "preview": "previews/p10-4k.png",
+      "pdf": "银龄智办-第10页-经验演进.pdf",
+      "prompt": "prompts/p10-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "mechanisms": ["任务成功形成候选", "内容与条件绑定", "独立验证", "人工采用", "按需复用与版本回退"],
+      "sources": ["docs/skill-validation.md", "core/src/main/kotlin/com/yinling/core/SkillGate.kt", "core/src/main/kotlin/com/yinling/core/SkillValidation.kt", "app/src/main/java/com/yinling/hotline/SkillCatalog.kt"],
+      "validation": {
+        "report": "previews/p10-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 11,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "亲友协作：求助有人接，留言有回音",
+      "local_file": "assets/p11-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-2344fca6-494f-4ffd-9559-202afbaca67f-1.png",
+      "html": "p11.html",
+      "css": "continuation.css",
+      "preview": "previews/p11-4k.png",
+      "pdf": "银龄智办-第11页-亲友协作.pdf",
+      "prompt": "prompts/p11-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "mechanisms": ["求助携带任务上下文", "亲友网页认领", "留言送达", "长者已读回执"],
+      "sources": ["server/app/family.py", "server/app/family_view.py", "server/app/watch.py"],
+      "validation": {
+        "report": "previews/p11-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 12,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "机制实证：机制增益，清楚可见",
+      "local_file": "assets/p12-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-12f0a8b8-d8e2-44a8-be8d-ed72a7347082-1.png",
+      "html": "p12.html",
+      "css": "continuation.css",
+      "preview": "previews/p12-4k.png",
+      "pdf": "银龄智办-第12页-机制实证.pdf",
+      "prompt": "prompts/p12-background-v01.txt",
+      "lettering": "Editable HTML text and accurately scaled CSS vector charts",
+      "archived_comparison_samples": {
+        "risk_actions": {"total": 20, "fixed_vocabulary": 6, "graded_execution": 15},
+        "forged_completion_statements": {"total": 22, "no_review": 0, "mechanical": 12, "mechanical_and_text": 22}
+      },
+      "sources": ["docs/aic-2026/deck-image-v1/sources.md", "docs/aic-2026/deck-image-v1/storyboard.md"],
+      "validation": {
+        "report": "previews/p12-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "chart_proportions_and_zero_value": "passed",
+        "shared_chart_baseline": "passed",
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 13,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "工程交付：可信机制，落地成完整工程",
+      "local_file": "assets/p13-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-c5fd2b44-1705-4834-8b09-24deab4cddfb-1.png",
+      "html": "p13.html",
+      "css": "continuation.css",
+      "preview": "previews/p13-4k.png",
+      "pdf": "银龄智办-第13页-工程交付.pdf",
+      "prompt": "prompts/p13-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "archived_metrics": {"core_tests_passed": 233, "chain_assertions_passed": 209, "server_tests_passed": 58, "third_party_apps": 8, "device_runs": 31},
+      "sources": ["docs/aic-2026/deck-image-v1/sources.md", "docs/aic-2026/experiments/raw/测试输出摘录-2026-10-18.txt", "tasks/runs/results.csv"],
+      "validation": {
+        "report": "previews/p13-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 1,
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 14,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "产品竞争力：一个入口，贯通完整办事链",
+      "local_file": "assets/p14-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-a956ca21-bf95-47e7-a918-f5365a10a7aa-1.png",
+      "html": "p14.html",
+      "css": "continuation.css",
+      "preview": "previews/p14-4k.png",
+      "pdf": "银龄智办-第14页-完整办事链.pdf",
+      "prompt": "prompts/p14-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "mechanisms": ["理解目标", "跨应用执行", "事实核验", "清楚交付", "亲友接力"],
+      "sources": ["docs/architecture.md", "docs/aic-2026/deck-image-v2/prompts/后九页-生图提示词.md"],
+      "validation": {
+        "report": "previews/p14-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 15,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "应用价值：把技术能力，变成长者的从容",
+      "local_file": "assets/p15-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-7f61ef52-776f-4f76-9b98-b87c411cc9d8-1.png",
+      "html": "p15.html",
+      "css": "continuation.css",
+      "preview": "previews/p15-4k.png",
+      "pdf": "银龄智办-第15页-应用价值.pdf",
+      "prompt": "prompts/p15-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "value_dimensions": ["个人自主", "家庭安心", "社区可复制"],
+      "scene_type": "Application value and future service replication direction",
+      "validation": {
+        "report": "previews/p15-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 16,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "推广路径：纯软件起步，面向规模化复制",
+      "local_file": "assets/p16-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-59f4ee42-c81e-456e-8c49-9c7e3bfb3766-1.png",
+      "html": "p16.html",
+      "css": "continuation.css",
+      "preview": "previews/p16-4k.png",
+      "pdf": "银龄智办-第16页-推广路径.pdf",
+      "prompt": "prompts/p16-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "roadmap": ["家庭打磨", "社区复制", "生态拓展"],
+      "advantages": ["无需专用硬件", "网页轻量接入", "模型灵活配置"],
+      "scene_type": "Product distribution and ecosystem roadmap",
+      "validation": {
+        "report": "previews/p16-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "fullscreen_toggle": "passed"
+      }
+    },
+    {
+      "page": 17,
+      "status": "html_typeset_exported_validated",
+      "revision": "html-v01",
+      "theme": "终场：让科技多走一步，让银龄从容每一步",
+      "local_file": "assets/p17-background.png",
+      "provided_source": "/home/lhx/Downloads/playground-batch-0d0debb5-5fba-4908-b629-e607e0723e3e-1.png",
+      "html": "p17.html",
+      "css": "continuation.css",
+      "preview": "previews/p17-4k.png",
+      "pdf": "银龄智办-第17页-终场.pdf",
+      "prompt": "prompts/p17-background-v01.txt",
+      "lettering": "Editable HTML with offline Simplified Chinese font subsets",
+      "team": "能工智人团队",
+      "entry": "AIC-2026-86471901",
+      "validation": {
+        "report": "previews/p17-validation.json",
+        "artifacts_report": "previews/full-deck-artifacts.json",
+        "responsive_viewports_checked": 5,
+        "original_background_unchanged": true,
+        "preview_and_pdf_visually_checked": true,
+        "text_overflow_count": 0,
+        "text_overlap_count": 0,
+        "added_html_panel_count": 0,
+        "fullscreen_toggle": "passed",
+        "terminal_right_arrow": "passed"
+      }
+    }
+  ],
+  "updated": "2026-10-24",
+  "deliverables": {
+    "overview": "previews/full-deck-review.png",
+    "pdf_overview": "previews/full-deck-pdf-review.png",
+    "merged_pdf": "银龄智办-完整17页-答辩.pdf",
+    "continuation_pdf": "银龄智办-后09页-机制与价值.pdf",
+    "continuation_overview": "previews/continuation-review.png",
+    "html_entry": "cover.html",
+    "browser_validation": "previews/continuation-validation.json",
+    "previous_browser_validation": "previews/unified-validation.json",
+    "artifact_validation": "previews/full-deck-artifacts.json",
+    "full_deck_bidirectional_navigation": "passed",
+    "preview_and_pdf_visually_checked": true
+  }
+}

@@ -33,11 +33,12 @@ def main() -> int:
         return 1
     ok = runner.update_result(run_id, {
         "real_outcome": outcome,
-        "false_done": "yes" if (row["system_status"] == "COMPLETED" and outcome == "not_done") else "",
+        "false_done": "yes" if (row["system_status"] == "COMPLETED" and outcome == "not_done") else ("no" if outcome != "unknown" else ""),
         "elder_understood": understood,
         "operator_notes": notes,
     })
-    print(f"{run_id}: 真值={outcome} 看懂={understood or '未记'} 谎报={'是' if row['system_status']=='COMPLETED' and outcome=='not_done' else '否'}" if ok else "回填失败")
+    false_done = "未知" if outcome == "unknown" else ("是" if row["system_status"] == "COMPLETED" and outcome == "not_done" else "否")
+    print(f"{run_id}: 真值={outcome} 看懂={understood or '未记'} 谎报={false_done}" if ok else "回填失败")
     return 0 if ok else 1
 
 

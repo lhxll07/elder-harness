@@ -1,0 +1,155 @@
+{
+  "page": 4,
+  "viewports": [
+    {
+      "viewport": [
+        3840,
+        2160
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Four Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Four Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "storyFrameCount": 5,
+      "evidenceCount": 3,
+      "result": {
+        "awaitingPickup": "1",
+        "received": "3"
+      },
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Four Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Four Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "storyFrameCount": 5,
+      "evidenceCount": 3,
+      "result": {
+        "awaitingPickup": "1",
+        "received": "3"
+      },
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Four Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Four Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "storyFrameCount": 5,
+      "evidenceCount": 3,
+      "result": {
+        "awaitingPickup": "1",
+        "received": "3"
+      },
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1024,
+        768
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Four Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Four Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "storyFrameCount": 5,
+      "evidenceCount": 3,
+      "result": {
+        "awaitingPickup": "1",
+        "received": "3"
+      },
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Four Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Four Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "storyFrameCount": 5,
+      "evidenceCount": 3,
+      "result": {
+        "awaitingPickup": "1",
+        "received": "3"
+      },
+      "overflowingCards": [],
+      "textIssues": []
+    }
+  ],
+  "runtimeErrors": [],
+  "fullscreenToggle": "passed",
+  "previousSlideNavigation": "passed",
+  "thirdToFourthNavigation": "passed",
+  "passed": true
+}

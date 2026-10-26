@@ -1,0 +1,17 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TB
+  subgraph L3["第三层 · 真机与用户"]
+    direction LR
+    T31["31 条真机运行"] --- T20["20 人试用"] --- T8["8 款应用任务"]
+  end
+  subgraph L2["第二层 · 平台与服务"]
+    direction LR
+    T58["58 项 pytest 服务端鉴权"] --- TKeep["进程保活看门狗"] --- TLint["API 兼容性与构建检查"]
+  end
+  subgraph L1["第一层 · 规则与执行链路"]
+    direction LR
+    T233["233 项核心单元测试"] --- T209["209 项场景回归断言"] --- TMock["Mock 规划器对抗注入"]
+  end
+  L1 -->|规则回归| L2
+  L2 -->|接口检查| L3
+  L3 -.->|真实数据回流| L1

@@ -1,0 +1,15 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TD
+  S[每日平安信标判定] --> G1{"① 端侧守望服务<br/>是否在正常运行?"}
+  G1 -->|服务未运行| N[显示「未在守望」]
+  G1 -->|正常运行| G2{"② 今日是否已捕获<br/>首次有效用机行为?"}
+  G2 -->|已捕获| OK[到发送时刻后<br/>发送每日状态]
+  G2 -->|未捕获| G3{"③ 是否已有<br/>3 天历史记录？"}
+  G3 -->|基线不足| NB[仅后台记录<br/>不发声打扰家人]
+  G3 -->|基线充足| G4{"④ 是否晚于<br/>历史中位数 90 分钟？"}
+  G4 -->|未到阈值| W[继续静默观察]
+  G4 -->|达到阈值| AL[发送用机提醒<br/>可能只是没电或关机]
+  classDef calm fill:#eef4f3,stroke:#0f7b6c,stroke-width:1px;
+  classDef warn fill:#fdf3e3,stroke:#c9a227,stroke-width:1px;
+  class N,NB,W calm;
+  class OK,AL warn;

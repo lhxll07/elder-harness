@@ -1,0 +1,123 @@
+{
+  "page": 2,
+  "viewports": [
+    {
+      "viewport": [
+        3840,
+        2160
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Two Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Two Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Two Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Two Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Two Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Two Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1024,
+        768
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Two Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Two Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "overflowingCards": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Two Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Two Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "overflowingCards": [],
+      "textIssues": []
+    }
+  ],
+  "runtimeErrors": [],
+  "previousSlideNavigation": "passed",
+  "passed": true
+}

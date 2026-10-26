@@ -5,6 +5,7 @@ import com.yinling.core.GoalFamily
 import com.yinling.core.SkillMeta
 import com.yinling.core.SkillSelect
 import com.yinling.core.SkillShadow
+import com.yinling.core.SkillLint
 import com.yinling.core.ToolCall
 import com.yinling.core.ToolResult
 
@@ -29,6 +30,9 @@ object SkillCatalog {
      */
     @Volatile
     var generated: List<Skill> = emptyList()
+
+    @Volatile
+    internal var trial: Skill? = null
 
     private val builtin: List<Skill> = listOf(
         Skill(
@@ -73,22 +77,72 @@ object SkillCatalog {
             description = "微信里如何把文字填进输入框（它不接受程序写入和外部注入）",
             apps = setOf("com.tencent.mm"),
             body = """
-微信不接受程序写入文字（input_text）也不接受外部注入（input text），但输入法可以帮忙：
+微信不接受程序写入文字（input_text）也不接受外部注入（input text），但剪贴板可以帮忙：
 0. 截图上有 **10% 主刻度 + 5% 辅助网格**（横竖红线标着 0.1~0.9），用它定位，不要靠目测：
    - 没有键盘时，输入框是屏幕**最底部那条细长框**（约 y=0.95）。
    - **键盘弹出后输入框会被顶到键盘上方**（约 y=0.55~0.6），之前算的坐标立刻失效，要重新截图。
    - 不要点键盘上的字母键找字——键盘又小又密，点不准；输入法候选栏才是要点的目标。
 1. 用 tap_xy 点中底部输入框，让键盘弹出。
-2. 调用 paste_text 把文字写进系统剪贴板。它很可能返回"不接受程序粘贴"，这不影响下一步。
+2. 调用一次 paste_text 把文字写进系统剪贴板。**它多半会说"读不到当前输入框"或"不接受程序粘贴"——
+   这是正常的，不是失败，文字已经在剪贴板里了：不要重试 paste_text，直接做第 3 步。**
 3. 输入法通常把剪贴板内容显示为**键盘上方候选栏的第一项**。用 tap_xy 点那一栏靠左的第一项，
-   文字就进入输入框了。
+   文字就进入输入框了。截图看清楚候选栏的确切位置再点。
 
 输入框里已有旧文字时先清空：用 tap_xy 点键盘右下角的删除键（退格），每点一次删一个字，
 连续点是允许的；也可以长按输入框选"全选"再删除。
 
-如果点候选栏没有效果，说明这台手机的输入法不支持这个做法：不要继续试，也不要一个键一个键地
-敲屏幕键盘，用 ask_person 请老人自己输入。发送消息同理，由老人自己完成。
+如果点候选栏没有效果（截图里输入框仍然是空的），说明这台手机的输入法不支持这个做法：
+**不要继续试，也不要一个键一个键地敲屏幕键盘。** 文字已经在剪贴板里了，用 ask_person 告诉老人
+「长按输入框选粘贴」或「点键盘上方那句话」，请他补上最后一下。发送消息一律由老人自己完成。
 """.trimIndent(),
+        ),
+        Skill(
+            name = "weather_by_day",
+            id = "weather_by_day",
+            goalFamily = "weather",
+            hint = "天气页上最显眼的温度常常是**未来几小时的逐小时预报**，不是明天全天。" +
+                "问明天/某天，就去找**那一天的日期标签**（如「10月16日」或「多日天气预报」），" +
+                "读它旁边成对的高低温；找不到先滑到那一段，不要拿逐小时凑一个区间。",
+            description = "问某一天的天气时，怎么在天气页上读到那一天的真实预报",
+            body = """
+天气页上并排存在两种完全不同的数据，**别把它们弄混**：
+
+- **逐小时预报**：一串「00:00 / 01:00 / 02:00 …」配小图标和单个温度。它只覆盖**接下来的几个小时**
+  （往往就是今天凌晨）。这里出现的"多云""2°"都**不能**当作某一天的全天天气。
+- **多日预报**：按天排列，每天一个日期标签 + **一对高低温**（如「10月15日 周四 0℃到12℃」）。
+  **回答"明天/某天"只能用这一种。**
+
+## 适用条件
+
+- 老人问的是某一天（明天、后天、周三）的天气、气温、下不下雨；
+- 页面上能看到日期标签，或入口写着「多日天气预报」「15天」「40天」。
+
+## 流程
+
+1. 先 `current_time` 确认今天日期，算出目标日期是哪一天（如今天 10月15日 → 明天 = 10月16日）。
+2. `screenshot` 看清页面结构。注意有**两处**可能藏着入口：
+   - 「多日天气预报」这类文字区块（`[可点按]` 时点进去）；
+   - 「每日」标签页，或「后一天/前一天」箭头（`e39`/`e41` 那种），点它切到目标日期。
+3. 滑动找**目标日期那一行/那一页**，把它连同它的**高低温成对**读下来：
+   - 页面写「10月16日 阴 0℃到12℃」→ 报「明天阴，0℃到12℃」。
+   - 点了「后一天」会进到详情页，标题可能写作「10月 16日」（日期中间有空格）。
+4. 只有在**目标日期那一行被读到之后**才能下结论，并且**照抄页面上的数字和天气词**，
+   不要自己换算、不要合并不同时段的值。
+5. 结论里把日期、天气、高低温说全，例如「明天（10月16日）阴，0℃到12℃，不下雨，出门多穿点」。
+
+## 失败恢复
+
+- 点进详情页后是 WebView，用 `scroll` 上下滑，不要只靠一屏。
+- 找不到目标日期：先滑到页面最底部再往回找；仍找不到就用 `ask_user` 说明
+  「我只看到今天的天气」，不要用逐小时数据顶替。
+- 页面正在刷新、数据缺失时，如实说"这一屏还没有明天的数据"，不要猜。
+
+## 安全边界
+
+- 只读查看，不点任何"订阅""开启定位""登录"之类会改变账号或权限的控件。
+- 天气结论只作为出行建议，不代替医疗或出行决策；不涉及支付、发送、身份验证。
+""".trimIndent(),
+            version = 1,
         ),
         Skill(
             name = "meituan_order",
@@ -125,7 +179,9 @@ object SkillCatalog {
 
     /** Built-in knowledge plus generated skills the family has adopted. */
     val skills: List<Skill>
-        get() = builtin + generated
+        get() = builtin.map { it.copy(goalFamily = "") } +
+            generated.filter { it.stableId != trial?.stableId && SkillSelect.eligible(it) && !SkillLint.lint(it).rejected } +
+            listOfNotNull(trial.takeIf { BuildConfig.DEBUG })
 
     /**
      * Skills are listed once, in the [toolSpec] description: the model must read that schema to
@@ -148,34 +204,11 @@ object SkillCatalog {
      * silently falling back to `apps` alone — the same expression Tier 1 replays.
      */
     fun hintFor(app: String?, goalFamily: String? = null, observation: String = ""): String {
-        val relevant = skills
-            .filter { app != null && app in it.apps }
-            .filter { SkillShadow.requiresSatisfied(it.requires, observation) }
-        val matched = if (goalFamily.isNullOrBlank()) {
-            relevant
-        } else {
-            relevant.filter { SkillSelect.matches(it, app, goalFamily) }
-        }
-        val pool = matched.ifEmpty { relevant }
+        val pool = skills.filter { SkillSelect.surfaced(it, app, goalFamily, observation) }
         if (pool.isEmpty()) return ""
         pool.firstOrNull { it.hint.isNotBlank() }?.let { return "提示：${it.hint}" }
         return "提示：当前应用有可用技巧 " + pool.joinToString("、") { it.stableId } +
             "，遇到困难时可用 load_skill 查看。\n"
-    }
-
-    /**
-     * Rule-based automatic choice, in the order written down in [SkillSelect]: app package, then
-     * `goal_family`, then `requires` against [observation], then the passing version with the lowest
-     * shadow rate (newest on a tie), only if at least two independent runs verified it. This is a
-     * **gate, not a learned router** — there is deliberately no embedding ranker and no model in this
-     * path.
-     *
-     * The `requires` half goes through [SkillSelect.surfaced], the exact predicate Tier 1 counts
-     * exposed points with; passing an empty [observation] can only hide a `requires`-bearing skill.
-     */
-    fun selectFor(app: String?, goalFamily: String? = null, observation: String = ""): Skill? {
-        val candidates = skills.filter { SkillSelect.surfaced(it, app, goalFamily, observation) }
-        return SkillSelect.chooseActive(candidates)
     }
 
     fun find(name: String): Skill? = skills.find { it.stableId == name || it.name == name }
@@ -199,12 +232,17 @@ object SkillCatalog {
         )
 
     /** @return the skill body, or a failure explaining what names exist. */
-    fun load(call: ToolCall): ToolResult {
+    fun load(call: ToolCall, screen: com.yinling.core.ScreenSnapshot, goalFamily: String): ToolResult {
         val skill = find(call.argument) ?: return ToolResult(
             false,
             "没有名为“${call.argument}”的技巧。可用：" + skills.joinToString("、") { it.stableId },
             "unknown_skill",
         )
+        val observation = SkillShadow.observationFor(com.yinling.core.PhoneToolCatalog.render(screen))
+        if (!SkillSelect.surfaced(skill, screen.app, goalFamily, observation)) {
+            return ToolResult(false, "当前应用、任务或页面不满足技巧条件，请重新观察。", "skill_not_applicable")
+        }
+        LoopLog.event("[skill] loaded id=${skill.stableId} version=${skill.version} hash=${skill.contentHash} contract=${com.yinling.core.SkillValidation.contractHash(skill)}")
         return ToolResult(true, skill.body)
     }
 

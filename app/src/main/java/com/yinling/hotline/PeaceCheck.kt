@@ -146,7 +146,7 @@ class PeaceCheck(private val context: Context) {
         }
         scope.launch {
             try {
-                if (server.postEvent(kind, title, message)) {
+                if (server.postEvent(kind, title, message) != null) {
                     markTold(today)
                 } else if (session.familyPhone.isNotBlank() && tell(message)) {
                     markTold(today)
@@ -159,7 +159,7 @@ class PeaceCheck(private val context: Context) {
 
     private fun markTold(today: LocalDate) {
         prefs.edit().putLong(KEY_LAST_ALERT_DAY, today.toEpochDay()).apply()
-        LoopLog.event("[peace] 已给家人发消息：${today}")
+        LoopLog.event("[peace] 已登记提醒或打开短信草稿：${today}")
     }
 
     /** What would happen right now, without sending anything. Used by the settings screen. */

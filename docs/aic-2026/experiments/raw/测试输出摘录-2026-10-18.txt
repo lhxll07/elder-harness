@@ -1,0 +1,28 @@
+=== harness ===
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unna
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+…（中略 541 行）…
+  [msg] 结果还需要您核对：结论中的数字「1234」还没有在这一轮看到过。您看原页面确认一下，或者让我接着办。
+  PASS 有没试过的控件时给一次有界重试
+  PASS 重试提示点名了没试过的控件
+  PASS 重试提示不重复已经试过的控件
+  PASS 重试提示给出翻页的具体做法
+  PASS 重试一次后仍不成立就停下
+  PASS 重试是有界的：planner 只被多叫了一次
+  [msg] 结果还需要您核对：这一轮没有读到可供核对的页面文字。您看原页面确认一下，或者让我接着办。
+  PASS 看不清（PERCEPTUAL_BLIND）时不重试
+  PASS 也不提示去试没试过的控件
+===== 全部通过 =====
+断言 209 项，通过 209 项，失败 0 项。
+BUILD SUCCESSFUL in 3s
+4 actionable tasks: 1 executed, 3 up-to-date
+=== pytest ===
+..........................................................               [100%]
+=============================== warnings summary ===============================
+…（中略 1 行）…
+  …/site-packages/fastapi/testclient.py:1: StarletteDepreca
+    from starlette.testclient import TestClient as TestClient  # noqa
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+58 passed, 1 warning in 1.11s

@@ -65,20 +65,11 @@ class ScreenAccessService : AccessibilityService() {
         @Volatile
         private var lastActivityNoteAt = 0L
 
-        /** Size of the newest screenshot as the model sees it, for tap_xy accuracy checks. */
-        @Volatile
-        var lastScreenshotSize: Pair<Int, Int>? = null
-            private set
-
         /** One-line summary of what the tree offered versus what we kept. Diagnostic only. */
         @Volatile
         var lastTreeCensus: String? = null
             private set
 
-        /** Newest screenshot, for the developer log. Purely diagnostic. */
-        @Volatile
-        var lastScreenshot: ByteArray? = null
-            private set
         var active: ScreenAccessService? = null
             private set
 
@@ -217,7 +208,18 @@ class ScreenAccessService : AccessibilityService() {
                 "$kind:${window.title}:a=${window.isActive}:nodes=$nodes"
             },
         )
-        val root = active?.root ?: rootInActiveWindow
+        // Which window to read. `isActive` is not enough: during a page transition the outgoing
+        // window can still be the active one, and on the real device that meant a WebView in the
+        // background browser was read while 显示与亮度 was opening. The browser had a password field
+        // in it, so the *foreground* page was reported as 涉及身份或支付验证 and the action that was
+        // about to run on it was handed back to the person for no reason.
+        //
+        // A focused application window is the page the person is actually looking at, so prefer that
+        // and only fall back to the active one.
+        val focusedApp = windows.firstOrNull {
+            it.isFocused && it.type == AccessibilityWindowInfo.TYPE_APPLICATION
+        }
+        val root = focusedApp?.root ?: active?.root ?: rootInActiveWindow
         val metrics = resources.displayMetrics
         val width = metrics.widthPixels
         val height = metrics.heightPixels
@@ -235,6 +237,8 @@ class ScreenAccessService : AccessibilityService() {
         var filteredNoText = 0
         var filteredWithText = 0
         var hiddenUnderInvisible = 0
+        /** Password fields seen in another window: counted, never used to condemn this page. */
+        var foreignPasswordFields = 0
         val droppedRoles = HashMap<String, Int>()
 
         /**
@@ -259,8 +263,18 @@ class ScreenAccessService : AccessibilityService() {
             val shown = visibleToUser && !bounds.isEmpty
             if (shown) {
                 if (node.isPassword && !fromKeyboard) {
-                    sensitiveReason = "密码框 role=${node.className?.toString()?.substringAfterLast('.')}"
-                    sensitive = true
+                    // Only a password field belonging to the page being read makes *that page*
+                    // sensitive. A field inside another window on screen (a WebView left open in the
+                    // browser, a password manager popup) is not evidence about this app, and letting
+                    // it quarantine the whole page is how 显示与亮度 once came back as
+                    // 涉及身份或支付验证.
+                    val owner = node.packageName?.toString()
+                    if (owner == null || owner == root.packageName?.toString()) {
+                        sensitive = true
+                        sensitiveReason = "密码框 role=${node.className?.toString()?.substringAfterLast('.')}"
+                    } else {
+                        foreignPasswordFields++
+                    }
                 }
                 val text = if (node.isPassword) "" else node.text?.toString().orEmpty().take(300)
                 val description = if (node.isPassword) "" else node.contentDescription?.toString().orEmpty().take(300)
@@ -319,6 +333,26 @@ class ScreenAccessService : AccessibilityService() {
                 }
                 LoopLog.event("[ime] 节点=$visitedBefore→$visited 收录=${elements.size - before} 样本=[$added]")
             }
+        val ancestry = elements.associate { element ->
+            element.id to generateSequence(element.parentId) { parents[it] }.take(24).toSet()
+        }
+        elements.indices.forEach { index ->
+            val slider = elements[index]
+            if (slider.isSlider && slider.description.isBlank()) {
+                for (group in ancestry[slider.id].orEmpty()) {
+                    val siblings = elements.filter { element ->
+                        group in ancestry[element.id].orEmpty()
+                    }
+                    if (siblings.count { it.isSlider } != 1) break
+                    val label = siblings.map { it.text.trim() }
+                        .filter { it in ManualActionPolicy.displaySliderLabels }.distinct().singleOrNull()
+                    if (label != null) {
+                        elements[index] = slider.copy(description = label)
+                        break
+                    }
+                }
+            }
+        }
         val labels = elements.flatMap { listOf(it.text, it.description) }.filter(String::isNotBlank).distinct()
         // Page-level sensitivity needs strong evidence. Scanning every visible string made a news
         // banner ("关于铁路收款方变更的公告") mark the whole 12306 home page as sensitive, which
@@ -338,7 +372,7 @@ class ScreenAccessService : AccessibilityService() {
         if (sensitive) {
             LoopLog.event(
                 "[sensitive] $sensitiveReason ｜ 窗口=${root.packageName} " +
-                    "元素=${elements.size} 可见节点=$visited",
+                    "元素=${elements.size} 可见节点=$visited 外窗口密码框=$foreignPasswordFields",
             )
         }
         val topDropped = droppedRoles.entries.sortedByDescending { it.value }.take(4)
@@ -349,9 +383,10 @@ class ScreenAccessService : AccessibilityService() {
         val signature = "${root.windowId}:${root.packageName}:$width:$height:$sensitive:$elements"
         val revision = MessageDigest.getInstance("SHA-256").digest(signature.toByteArray())
             .joinToString("") { "%02x".format(it) }
-        return Page(ScreenSnapshot(root.packageName?.toString(), labels.take(200), revision = revision,
+        val observed = ScreenSnapshot(root.packageName?.toString(), labels.take(200), revision = revision,
             elements = elements.take(250), width = width, height = height, sensitive = sensitive,
-            windowId = root.windowId), nodes, parents)
+            windowId = root.windowId)
+        return Page(com.yinling.core.PrivacyFilter.screen(observed, (application as HotlineApp).session.excludedApps), nodes, parents)
     }
 
     fun snapshot(): ScreenSnapshot = readPage().use { it.screen }
@@ -385,6 +420,10 @@ class ScreenAccessService : AccessibilityService() {
         }
         call = com.yinling.core.ScreenActionGuard.rebind(call, screen)
             ?: return failure("stale_screen", "操作目标已变化，请重新观察后再操作。")
+        com.yinling.core.ManualActionPolicy.checkScreen(
+            com.yinling.core.ToolInvocation("platform", call.name, mapOf("target" to call.target, "argument" to call.argument)),
+            screen,
+        )?.let { return it }
         // Coordinate tapping exists for pages that expose no accessibility tree (WeChat and
         // friends), where there is nothing to look up by node at all.
         if (call.name == "tap") {
@@ -546,12 +585,60 @@ class ScreenAccessService : AccessibilityService() {
         return null
     }
 
+    /**
+     * The text field that currently owns input focus, looked up across every window.
+     *
+     * `AccessibilityService.findFocus(FOCUS_INPUT)` is not enough on its own: it answers for the
+     * *active* window, and once a keyboard is up the active window is the input method. That is how
+     * this returned a node describing the IME rather than the field — `editable=false,
+     * visible=false` — which the safety check then read as "cannot confirm the input box is safe",
+     * refusing every attempt to type or paste into it.
+     *
+     * So: walk the windows, skip the IME's own, and among what is left prefer a node that really is
+     * an editable field. Anything found here is still checked by [ManualActionPolicy.checkFocusedInput];
+     * this only decides *which* node that check is asked about.
+     */
+    private fun findFocusedInputNode(): AccessibilityNodeInfo? {
+        // Every root and focused node obtained here is recycled before returning; the value handed
+        // back is a fresh copy, so the caller owns exactly one node to recycle and nothing points at
+        // a recycled one.
+        val roots = mutableListOf<AccessibilityNodeInfo>()
+        try {
+            for (window in windows) {
+                window.root?.let { roots += it }
+            }
+            // A focused editable is the answer when one exists.
+            for (root in roots) {
+                for (focus in intArrayOf(
+                    AccessibilityNodeInfo.FOCUS_INPUT,
+                    AccessibilityNodeInfo.FOCUS_ACCESSIBILITY,
+                )) {
+                    val focused = root.findFocus(focus) ?: continue
+                    if (focused.isEditable && focused.isVisibleToUser) return AccessibilityNodeInfo.obtain(focused)
+                    focused.recycle()
+                }
+            }
+            // Nothing editable anywhere. Prefer a root belonging to the app on screen over whichever
+            // window happened to be enumerated first — that ordering is how the diagnostic ended up
+            // reporting `app=com.android.systemui`, which describes the status bar, not the field.
+            val wanted = rootInActiveWindow?.packageName?.toString()
+            val chosen = roots.firstOrNull { wanted != null && it.packageName?.toString() == wanted }
+                ?: roots.firstOrNull()
+            return chosen?.let { AccessibilityNodeInfo.obtain(it) }
+        } catch (ignored: Exception) {
+            return null
+        } finally {
+            roots.forEach { runCatching { it.recycle() } }
+        }
+    }
+
     fun validateFocusedInput(expectedRevision: String): ToolResult? {
         val screen = snapshot()
         if (expectedRevision.isBlank() || expectedRevision != screen.revision) {
+            LoopLog.event("[input] 拒绝输入：revision 不符 expected=${expectedRevision.take(8)} now=${screen.revision.take(8)}")
             return failure("stale_screen", "页面已变化，请重新观察后再输入。")
         }
-        val focused = findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+        val focused = findFocusedInputNode()
         return try {
             val target = focused?.let {
                 TextInputTarget(
@@ -559,6 +646,12 @@ class ScreenAccessService : AccessibilityService() {
                     enabled = it.isEnabled, visible = it.isVisibleToUser, password = it.isPassword,
                 )
             }
+            // Diagnostic for the blind-page input path: which of the six conditions in
+            // checkFocusedInput actually failed. Without it, "无法确认当前输入框是否安全" is a
+            // dead end — it names five different causes.
+            LoopLog.event(
+                "[input] focused=${focused != null} target=$target screenApp=${screen.app} sensitive=${screen.sensitive}",
+            )
             ManualActionPolicy.checkFocusedInput(screen, target)
         } finally {
             focused?.recycle()
@@ -566,28 +659,59 @@ class ScreenAccessService : AccessibilityService() {
     }
 
     /**
+     * What happened to a clipboard paste, in the form the caller needs to decide about the clipboard.
+     *
+     * The distinction that matters: [NotPastedClipboardKept] means the *text is already on the
+     * clipboard* and the person or the input method can still paste it. Treating that as a plain
+     * failure is what made the `wechat_input` skill unreachable — the skill's next step is to tap the
+     * keyboard's clipboard suggestion, and the old code had already wiped the clipboard by then.
+     */
+    sealed interface PasteOutcome {
+        data class Pasted(val detail: String) : PasteOutcome
+        data class NotPastedClipboardKept(val detail: String) : PasteOutcome
+        data class Failed(val detail: String) : PasteOutcome
+    }
+
+    /**
      * Pastes into whatever field currently has input focus.
      *
      * Apps like WeChat refuse node-level text writing and external input injection, but they do
      * honour a paste performed by their own focused field. That only works when the focused view
-     * is reachable through accessibility; when it is not, the person has to paste manually.
+     * is reachable through accessibility; when it is not — WeChat exposes nothing at all — the
+     * caller keeps the clipboard so the person, or the input method's clipboard suggestion, can
+     * still complete the paste. See `wechat_input` in SkillCatalog for how the loop uses that.
      */
-    suspend fun pasteIntoFocusedField(expectedRevision: String): ToolResult {
-        validateFocusedInput(expectedRevision)?.let { return it }
-        val focused = findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+    suspend fun pasteIntoFocusedField(expectedRevision: String): PasteOutcome {
+        // A stale revision is a real refusal: something moved, so the focused field is not the one
+        // the action was planned against. The clipboard is still left usable by the caller.
+        if (expectedRevision.isBlank() || expectedRevision != snapshot().revision) {
+            return PasteOutcome.Failed("页面已变化，请重新观察后再输入。")
+        }
+        val focused = findFocusedInputNode()
         try {
-            val target = focused?.let {
-                TextInputTarget(
-                    app = it.packageName?.toString(), editable = it.isEditable,
-                    enabled = it.isEnabled, visible = it.isVisibleToUser, password = it.isPassword,
+            if (focused == null || !focused.isEditable) {
+                return PasteOutcome.NotPastedClipboardKept(
+                    "读不到当前输入框（这类应用不提供无障碍控件），文字已放进剪贴板：" +
+                        "长按输入框选「粘贴」，或点键盘上方候选栏里的那句话。",
                 )
             }
-            ManualActionPolicy.checkFocusedInput(snapshot(), target)?.let { return it }
-            val ok = focused?.performAction(AccessibilityNodeInfo.ACTION_PASTE) == true
-            return if (ok) {
-                ToolResult(true, "已粘贴文字，等待检查页面。", screenChanged = true)
+            val target = TextInputTarget(
+                app = focused.packageName?.toString(), editable = focused.isEditable,
+                enabled = focused.isEnabled, visible = focused.isVisibleToUser,
+                password = focused.isPassword,
+            )
+            ManualActionPolicy.checkFocusedInput(snapshot(), target)?.let { refusal ->
+                return PasteOutcome.NotPastedClipboardKept(
+                    refusal.detail.trimEnd('。') + "；文字已放进剪贴板，可以自己粘贴。",
+                )
+            }
+            return if (focused.performAction(AccessibilityNodeInfo.ACTION_PASTE)) {
+                PasteOutcome.Pasted("已粘贴文字，等待检查页面。")
             } else {
-                failure("requires_user", "这个应用不接受程序粘贴，请您自己输入后按继续。")
+                PasteOutcome.NotPastedClipboardKept(
+                    "这个应用不接受程序粘贴，文字已放进剪贴板：" +
+                        "长按输入框选「粘贴」，或点键盘上方候选栏里的那句话。",
+                )
             }
         } finally {
             focused?.recycle()
@@ -805,8 +929,6 @@ class ScreenAccessService : AccessibilityService() {
                     encoded.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it)
                 }.toByteArray()
                 if (encoded !== target) encoded.recycle()
-                lastScreenshot = bytes
-                lastScreenshotSize = target.width to target.height
                 return ToolResult(
                     true,
                     "已读取屏幕图像（${target.width}x${target.height}，图上有 10% 主刻度 + 5% 辅助网格，坐标按屏幕比例给出）。",
@@ -830,8 +952,6 @@ class ScreenAccessService : AccessibilityService() {
                 if (smaller !== target) smaller.recycle()
                 mime = "image/jpeg"
             }
-            lastScreenshot = bytes
-            lastScreenshotSize = target.width to target.height
             return ToolResult(
                 true,
                 "已读取屏幕图像（${target.width}x${target.height}，图上有 10% 主刻度 + 5% 辅助网格，坐标按屏幕比例给出）。",

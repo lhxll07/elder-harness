@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>银龄智办 · 证据创新</title>
+    <link rel="stylesheet" href="p08.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第八页：来源分型账本与三层完成核验">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p08-background.png" alt="瓷白蓝金流程：物流页面与时钟工具凭据汇入事实账本，依次经过动作、文本和语义核验，连接到金边结果单">
+
+        <header class="heading">
+          <p class="chapter">证据创新<span>来源分型 · 三层核验</span></p>
+          <h1 id="slide-title">每一个办结，都有<span>事实依据</span></h1>
+          <p class="lead">来源留痕 · 本地先核验 · 语义再复核</p>
+        </header>
+
+        <p class="brand">银龄智办</p>
+        <p class="diagram-label">证据核验机制示意</p>
+
+        <section class="fact-sources" aria-label="本轮页面事实与工具事实；物流状态沿用第四页归档案例">
+          <h2 class="group-title source-title soft-panel">采集本轮事实</h2>
+          <p class="source-page-title" data-zone="source-header">本轮物流页面</p>
+          <p class="package-status package-first" data-zone="package-first">待取件</p>
+          <p class="package-status package-second" data-zone="package-second">已签收</p>
+          <p class="package-status package-third" data-zone="package-third">已签收</p>
+          <p class="package-status package-fourth" data-zone="package-fourth">已签收</p>
+          <p class="source-caption page-source-caption soft-panel">页面事实</p>
+          <div class="tool-copy" data-zone="tool-receipt">
+            <h3>本地工具</h3>
+            <p class="tool-fact">当前时间</p>
+            <p class="tool-role">辅助事实</p>
+          </div>
+          <p class="source-caption tool-source-caption soft-panel">工具事实</p>
+        </section>
+
+        <section class="provenance" aria-label="本轮事实账本：应用、页面版本、执行步骤、事实来源">
+          <h2 class="group-title ledger-title soft-panel">绑定事实来源</h2>
+          <p class="ledger-heading" data-zone="ledger-header">本轮事实归档</p>
+          <div class="ledger-field field-app" data-zone="ledger-app"><h3>应用</h3><p>当前目标应用</p></div>
+          <div class="ledger-field field-revision" data-zone="ledger-revision"><h3>页面版本</h3><p>本次观察快照</p></div>
+          <div class="ledger-field field-step" data-zone="ledger-step"><h3>执行步骤</h3><p>任务内序列</p></div>
+          <div class="ledger-field field-origin" data-zone="ledger-origin"><h3>事实来源</h3><p>页面 · 工具</p></div>
+          <div class="ledger-caption soft-panel"><h3>来源全程留痕</h3><p>应用 · 页面 · 步骤 · 来源</p></div>
+        </section>
+
+        <section class="review-chain" aria-label="先动作一致性，再文本证据，随后模型语义复核">
+          <h2 class="group-title review-title soft-panel">三层顺序核验</h2>
+          <div class="review-stage review-action soft-panel"><h3><span>01</span>动作一致性</h3><p>对照动作记录</p></div>
+          <div class="review-stage review-evidence soft-panel"><h3><span>02</span>文本证据</h3><p>匹配页面事实</p></div>
+          <div class="review-stage review-semantic soft-panel"><h3><span>03</span>语义复核</h3><p>复核办结结论</p></div>
+          <p class="review-order soft-panel">先核对动作与事实，再复核语义</p>
+        </section>
+
+        <section class="result" aria-label="物流查询结果示意：1单待取件，另有3单已签收">
+          <h2 class="group-title result-title soft-panel">交付清楚结果</h2>
+          <p class="result-service" data-zone="result-header">快递查询</p>
+          <div class="result-body" data-zone="result-body">
+            <h3>状态已核对</h3>
+            <p class="result-primary"><strong>1</strong><span>单待取件</span></p>
+            <p class="result-secondary">另有 <strong>3</strong> 单已签收</p>
+            <p class="result-note">与本轮页面事实对应</p>
+          </div>
+        </section>
+
+        <section class="values soft-panel" aria-label="证据机制的三项价值">
+          <div class="value-copy value-source"><h2>来源可追溯</h2><p>页面、工具分型归档</p></div>
+          <div class="value-copy value-order"><h2>核验可执行</h2><p>动作 → 事实 → 语义</p></div>
+          <div class="value-copy value-result"><h2>结果可核对</h2><p>结论逐项对应事实</p></div>
+        </section>
+
+        <footer class="footer">
+          <p class="footer-note">机制示意<span>·</span>快递状态沿用第 4 页归档案例</p>
+          <p class="page-number" aria-label="第8页，共17页"><strong>08</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "p07.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

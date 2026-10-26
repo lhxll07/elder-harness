@@ -47,12 +47,33 @@ object ManualActionPolicy {
     )
 
     /** 全部本人操作词：两族取并集。Android 层复用同一份列表，避免两处实现漂移。 */
-    val manualActionWords = commitmentWords + irreversibleWords
+    val deviceSecurityWords = listOf(
+        "查找手机", "查找设备", "未知应用", "未知来源", "开发者", "手机号", "定位服务", "定位权限",
+        "设备管理员", "安装权限", "USB调试", "USB 调试", "远程控制", "添加证书", "VPN", "关闭保护",
+    )
+
+    val manualActionWords = commitmentWords + irreversibleWords + deviceSecurityWords
+
+    val displaySliderLabels = setOf("字体大小", "文字大小", "字号", "屏幕亮度", "亮度", "显示大小", "屏幕缩放")
+
+    private val settingsRiskWords = manualActionWords + listOf(
+        "账号", "账户", "密码", "权限", "隐私", "安全", "管理员", "证书", "恢复出厂", "无障碍",
+    )
+    private val genericControls = setOf(
+        "开启", "关闭", "打开", "允许", "拒绝", "禁止", "确认", "确定", "应用", "继续", "下一步", "开关", "启用", "ON", "OFF",
+    )
 
     private val screenTools = PhoneTool.screenTools
 
     /** Actions that press a specific control: the control's own label decides if it is person-only. */
     private val tapTools = PhoneTool.tapTools
+
+    fun hasReadableDisplaySlider(screen: ScreenSnapshot): Boolean =
+        isSystemSettings(screen.app) && !screen.sensitive &&
+            (screen.labels + screen.elements.map { it.text }).any { it.trim() in displaySliderLabels } &&
+            screen.elements.any { element ->
+                element.isSlider && element.enabled && element.rangeCurrent != null
+            }
 
     fun textHit(text: String): String? = manualActionWords.firstOrNull(text::contains)
 
@@ -112,14 +133,28 @@ object ManualActionPolicy {
         words: List<String> = manualActionWords,
     ): ToolResult? {
         checkSensitiveScreen(invocation.tool, screen)?.let { return it }
-        if (invocation.tool !in tapTools) return null
-        val hit = targetTexts(invocation, screen)
-            .firstNotNullOfOrNull { text -> words.firstOrNull(text::contains) } ?: return null
-        return ToolResult(
-            false,
-            "「$hit」这一步需要您亲自操作，完成后按继续。",
-            "requires_user",
-        )
+        val target = screen.elements.singleOrNull { it.id == invocation.arguments["target"] }
+        val changesRange = invocation.tool == "scroll" && target?.isSlider == true
+        val changesInput = invocation.tool in textTools
+        val positional = invocation.tool in PhoneTool.positional
+        if (invocation.tool !in tapTools && !changesRange && !changesInput && !positional) return null
+        val labels = targetTexts(invocation, screen)
+        val hit = labels.firstNotNullOfOrNull { text -> words.firstOrNull(text::contains) }
+        if (hit != null) {
+            return ToolResult(false, "「$hit」这一步需要您亲自操作，完成后按继续。", "requires_user")
+        }
+        if (words == manualActionWords && isSystemSettings(screen.app)) {
+            val genericTarget = labels.isEmpty() || labels.all { it.trim() in genericControls }
+            val toggle = target?.role?.let { role ->
+                listOf("Switch", "CheckBox", "ToggleButton", "RadioButton").any(role::endsWith)
+            } == true
+            val context = screen.labels + screen.elements.flatMap { listOf(it.text, it.description) }
+            val securityContext = context.any { text -> settingsRiskWords.any(text::contains) }
+            if (securityContext && (changesRange || changesInput || genericTarget || toggle)) {
+                return ToolResult(false, "当前这一步涉及账户、安全或权限更改，请您亲自操作，完成后按继续。", "requires_user")
+            }
+        }
+        return null
     }
 
     /** Page sensitivity can be checked before a revision-local target id has been rebound. */
@@ -128,16 +163,43 @@ object ManualActionPolicy {
             ToolResult(false, "当前页面涉及身份或支付验证，请您自己操作，完成后按继续。", "requires_user")
         } else null
 
+    /**
+     * The remaining, narrow guard in front of typing or pasting into a focused field.
+     *
+     * It used to also refuse whenever the field could not be *confirmed*: no app name, no node,
+     * app name mismatch, not editable, not enabled, not visible. On a page that exposes no
+     * accessibility tree — WeChat, and the rest of the apps this route exists for — every one of
+     * those is unanswerable, so the guard refused every single attempt with "无法确认当前输入框是否
+     * 安全". The person was then told to do it themselves, pressed 继续, and the loop retried the
+     * same blocked action; on the real device that repeated 15 times before giving up.
+     *
+     * "I cannot read it" is not the same as "it is unsafe", and the judgement was answering the
+     * first question while claiming the second.
+     *
+     * What is left is what can still be answered without reading the page:
+     *  - [ScreenSnapshot.sensitive] — the page is already known to be an identity or payment screen.
+     *    Checked independently by [checkSensitiveScreen] on every screen-touching tool as well.
+     *  - a *positive* password reading. Absence of evidence is not evidence here: an unreadable
+     *    field is not treated as a password field.
+     */
     fun checkFocusedInput(screen: ScreenSnapshot, target: TextInputTarget?): ToolResult? {
-        if (screen.sensitive || screen.app == null || target == null || target.app != screen.app ||
-            !target.editable || !target.enabled || !target.visible || target.password
-        ) {
+        if (screen.sensitive) {
             return ToolResult(
                 false,
-                "无法确认当前输入框是否安全，请您自己输入后按继续。",
+                "当前页面涉及身份或支付验证，请您自己操作，完成后按继续。",
+                "requires_user",
+            )
+        }
+        if (target?.password == true) {
+            return ToolResult(
+                false,
+                "这是密码输入框，请您自己输入，完成后按继续。",
                 "requires_user",
             )
         }
         return null
     }
+
+    private fun isSystemSettings(app: String?): Boolean = app != null &&
+        (app.endsWith(".settings") || app.contains("permissioncontroller") || app.contains("securitycenter"))
 }

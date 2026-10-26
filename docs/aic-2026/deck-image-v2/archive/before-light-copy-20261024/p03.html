@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>银龄智办 · 产品全景</title>
+    <link rel="stylesheet" href="p03.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第三页：产品全景">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p03-background-unified-v01.png" alt="瓷白浅蓝产品全景：正常细长比例手机保留白绿语音入口，左右六项具体能力通过轻盈曲线连接">
+
+        <header class="heading">
+          <p class="chapter">产品全景<span>六大能力 · 一体协同</span></p>
+          <h1 id="slide-title"><span>一句话，</span>调动完整的手机办事能力</h1>
+        </header>
+
+        <p class="brand">银龄智办</p>
+
+        <section class="capabilities" aria-label="六项核心能力">
+          <div class="capability capability-voice soft-panel">
+            <h2>语音发起</h2>
+            <p>一句话发起任务</p>
+          </div>
+          <div class="capability capability-execution soft-panel">
+            <h2>跨应用执行</h2>
+            <p>跨应用连续办理</p>
+          </div>
+          <div class="capability capability-evidence soft-panel">
+            <h2>结果核验</h2>
+            <p>事实核对办结</p>
+          </div>
+          <div class="capability capability-experience soft-panel">
+            <h2>经验复用</h2>
+            <p>验证技巧复用</p>
+          </div>
+          <div class="capability capability-family soft-panel">
+            <h2>亲友协作</h2>
+            <p>浏览器轻量协作</p>
+          </div>
+          <div class="capability capability-care soft-panel">
+            <h2>状态关怀</h2>
+            <p>静默超时联动</p>
+          </div>
+        </section>
+
+        <section class="phone-copy" aria-label="老人端首页交互示意">
+          <p class="phone-status">我在</p>
+          <p class="phone-caption">说给接线员听</p>
+          <p class="phone-hint">点一下开始说话</p>
+          <div class="phone-entries" aria-label="首页辅助入口">
+            <span>打字</span><span>请家人帮忙</span><span>给家人打电话</span>
+          </div>
+        </section>
+
+        <section class="deployment soft-panel" aria-label="老人端、执行内核、亲友端协同架构">
+          <div class="deployment-part deployment-android">
+            <h2><span class="platform">Android</span> 老人端</h2>
+            <p>语音交互 · 跨应用执行</p>
+          </div>
+          <div class="deployment-part deployment-kotlin">
+            <h2><span class="platform">Kotlin</span> 执行内核</h2>
+            <p><span class="architecture">3PA</span> 可信架构</p>
+          </div>
+          <div class="deployment-part deployment-web">
+            <h2><span class="platform">Web</span> 亲友端</h2>
+            <p>轻量接入 · 家庭协同</p>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p class="footer-note">能工智人团队<span>·</span>产品交互示意</p>
+          <p class="page-number" aria-label="第3页，共17页"><strong>03</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "p02.html";
+        }
+        if (event.key === "ArrowRight") {
+          window.location.href = "p04.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

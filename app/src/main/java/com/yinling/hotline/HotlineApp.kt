@@ -3,6 +3,7 @@ package com.yinling.hotline
 import android.app.Application
 import android.content.Intent
 import android.provider.Settings
+import com.yinling.core.SkillStore
 
 class HotlineApp : Application() {
     lateinit var session: SessionController
@@ -15,7 +16,7 @@ class HotlineApp : Application() {
     val recorder: VoiceRecorder by lazy { VoiceRecorder() }
 
     /** Reads/writes generated skills under files/skills/. */
-    val skills: SkillStore by lazy { SkillStore(this) }
+    val skills: SkillStore by lazy { SkillStore(filesDir) }
 
     /** One shared judge for the daily peace check, used by the service and settings. */
     val peace: PeaceCheck by lazy { PeaceCheck(this) }

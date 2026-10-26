@@ -1,0 +1,30 @@
+@import url("unified.css");
+
+@font-face { font-family: "Page Five Unified SC"; src: url("assets/fonts/p05-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Page Five Unified SC"; src: url("assets/fonts/p05-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-style: normal; font-display: block; }
+:root { --slide-font: "Page Five Unified SC"; }
+.plane-copy { position: absolute; top: 203px; width: 420px; height: 330px; text-align: center; }
+.plane-heading { position: relative; height: 108px; padding: 13px 16px; border-radius: 18px; }
+.plane-binding { left: 491px; }
+.plane-authorization { left: 986px; }
+.plane-evidence { left: 1421px; }
+.plane-copy h2 { font-size: 32px; line-height: 1.4; letter-spacing: 1px; white-space: nowrap; }
+.plane-copy h2 span { margin-right: 14px; color: var(--gold); font-size: 22px; font-variant-numeric: tabular-nums; }
+.plane-mechanism { margin-top: 5px; color: #41677f; font-size: 19px; line-height: 1.5; white-space: nowrap; }
+.plane-value { position: absolute; top: 282px; left: 102px; width: 216px; padding: 3px 0; border: 1px solid rgba(117, 164, 196, 0.28); border-radius: 13px; background: rgba(248, 252, 255, 0.92); color: #235a86; font-size: 26px; font-weight: 700; line-height: 1.4; letter-spacing: 1px; white-space: nowrap; }
+.section-label { position: absolute; left: 94px; height: 48px; padding: 8px 17px; border-radius: 14px; color: var(--gold); font-size: 20px; font-weight: 700; line-height: 1.5; letter-spacing: 2px; white-space: nowrap; }
+.execution-label { top: 468px; }
+.deployment-label { top: 825px; }
+.execution-node { position: absolute; top: 721px; width: 300px; height: 96px; padding: 11px 12px; border-radius: 18px; text-align: center; }
+.node-observe { left: 75px; }
+.node-plan { left: 479px; }
+.node-dispatch { left: 876px; }
+.node-execute { left: 1250px; }
+.node-finish { left: 1677px; }
+.execution-node h2 { color: var(--navy); font-size: 28px; line-height: 1.4; letter-spacing: 2px; white-space: nowrap; }
+.execution-node p { margin-top: 5px; color: #4a6a82; font-size: 18px; line-height: 1.5; white-space: nowrap; }
+.deployment { position: absolute; top: 969px; left: 269px; display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; width: 1461px; height: 88px; padding: 9px 14px; border-radius: 18px; }
+.deployment-part { text-align: center; }
+.deployment-part + .deployment-part { border-left: 1px solid rgba(104, 155, 191, 0.23); }
+.deployment-part h2 { color: #245b86; font-size: 25px; line-height: 1.4; letter-spacing: 0.5px; white-space: nowrap; }
+.deployment-part p { margin-top: 4px; color: var(--muted); font-size: 18px; line-height: 1.5; white-space: nowrap; }

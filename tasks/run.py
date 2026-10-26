@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
+import json
 import os
 import re
 import shlex
@@ -397,6 +399,38 @@ def append_result(row: dict[str, str]) -> None:
         writer.writerow({key: row.get(key, "") for key in COLUMNS})
 
 
+def freeze_run(log_path: Path, env: dict[str, str]) -> None:
+    def git(*arguments: str) -> str:
+        result = subprocess.run(["git", *arguments], cwd=ROOT, capture_output=True, text=True)
+        return result.stdout.strip() if result.returncode == 0 else "unknown"
+
+    source = hashlib.sha256()
+    files = sorted(path for folder in (ROOT / "app/src", ROOT / "core/src/main")
+                   for path in folder.rglob("*") if path.is_file())
+    for path in files:
+        source.update(str(path.relative_to(ROOT)).encode() + b"\0" + path.read_bytes() + b"\0")
+    log = log_path.read_text(encoding="utf-8")
+    loaded = re.findall(r"\[skill\] loaded id=(\S+) version=(\d+) hash=(\S+) contract=(\S+)", log)
+    confirmation = re.findall(r"\[session\] mode auto_confirm=(true|false)", log)
+    apk_path = next((line.removeprefix("package:") for line in shell("pm", "path", PKG).splitlines() if line.endswith("/base.apk")), "")
+    apk_hash = shell("sha256sum", apk_path).split() if apk_path else []
+    metadata = {
+        "schema_version": 1, "run_id": log_path.stem,
+        "collected_at": datetime.now().astimezone().isoformat(),
+        "commit": git("rev-parse", "HEAD"), "dirty": bool(git("status", "--porcelain", "--", "app", "core")),
+        "source_sha256": source.hexdigest(), "taskset_sha256": hashlib.sha256(TASKS_CSV.read_bytes()).hexdigest(),
+        "log_sha256": hashlib.sha256(log_path.read_bytes()).hexdigest(),
+        "model": env.get("DEEPSEEK_MODEL", "deepseek-chat"),
+        "effective_auto_confirm": confirmation[-1] == "true" if confirmation else None,
+        "installed_apk_sha256": apk_hash[0] if apk_hash and re.fullmatch(r"[0-9a-f]{64}", apk_hash[0]) else "unknown",
+        "device_build": shell("getprop", "ro.build.fingerprint"),
+        "app_build": [line.strip() for line in shell("dumpsys", "package", PKG).splitlines()
+                      if "versionName=" in line or "versionCode=" in line],
+        "skills_loaded": [dict(zip(("id", "version", "hash", "contract_hash"), entry)) for entry in loaded],
+    }
+    log_path.with_suffix(".manifest.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 def update_result(run_id: str, fields: dict[str, str]) -> bool:
     """Rewrite the truth columns of an already-recorded run.
 
@@ -538,6 +572,7 @@ def main() -> int:
             log_path = RUNS_DIR / f"{run_id}.log"
             RUNS_DIR.mkdir(parents=True, exist_ok=True)
             log_path.write_text(current_scope(fresh), encoding="utf-8")
+            freeze_run(log_path, env)
 
             truth = auto_truth(task["id"], before)
             print(f"  系统报告：{parsed['system_status']}  步数={parsed['steps']}  模型调用={parsed['model_calls']}  耗时={wall}s")
@@ -596,7 +631,7 @@ def main() -> int:
                         "real_outcome": real_outcome,
                         "false_done": "yes" if (
                             parsed["system_status"] == "COMPLETED" and real_outcome == "not_done"
-                        ) else "",
+                        ) else ("no" if real_outcome != "unknown" else ""),
                         "elder_understood": understood,
                         "operator_notes": notes,
                     })

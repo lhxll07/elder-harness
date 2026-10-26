@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>银龄智办 · 答辩演示</title>
+<style>
+/* ============================================================
+   银龄智办 · 省赛答辩 deck v2
+   设计语言：暖纸底 + 单一朱红 + 衬线标题 + 编辑式留白
+   画布：1600 × 900（16:9）。所有页面共用一套 8px 栅格。
+   ------------------------------------------------------------
+   为什么是这套语言（而不是科技蓝卡片）：
+   1. 这是助老题材，暖色纸感比冷色仪表盘更接近「家里」；
+   2. 只用一个强调色，评委记住的是「朱红 = 停下来」；
+   3. 衬线大标题 + 无衬线正文，是印刷物的分层，而不是软件界面的分层；
+   4. 去掉圆角卡片与阴影，用留白和横线分区——留白本身就是层级。
+   ============================================================ */
+
+:root {
+  /* 面 */
+  --paper:     #FAF8F4;
+  --paper-2:   #F2EEE6;
+  --paper-3:   #E9E3D8;
+  --dark:      #14110E;
+  --dark-2:    #211D18;
+
+  /* 墨 */
+  --ink:       #16130F;
+  --ink-2:     #57514A;
+  --ink-3:     #8E8578;
+  --ink-inv:   #F6F2EA;
+  --ink-inv-2: #B9B0A2;
+
+  /* 线 */
+  --rule:      #DFD8CB;
+  --rule-2:    #CEC5B5;
+  --rule-inv:  #34302A;
+
+  /* 强调：朱红（唯一的主强调色） */
+  --red:       #B4451F;
+  --red-deep:  #8A3315;
+  --red-tint:  #F3E3D9;
+
+  /* 语义色：绿=办成，琥珀=交还，灰=无法确认 */
+  --green:     #2F5D46;
+  --green-tint:#E2ECE4;
+  --amber:     #9A6B18;
+  --amber-tint:#F3E9D5;
+  --grey:      #6B665E;
+  --grey-tint: #EBE7DF;
+
+  --serif: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --sans:  "Noto Sans CJK SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono:  "JetBrains Mono", "Noto Sans Mono CJK SC", "SFMono-Regular", Consolas, monospace;
+
+  --pad-x: 96px;
+  --pad-t: 68px;
+  --pad-b: 62px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+@page { size: 1600px 900px; margin: 0; }
+
+html, body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+/* ------------------------------------------------------------
+   页面骨架
+   ------------------------------------------------------------ */
+.slide {
+  position: relative;
+  width: 1600px;
+  height: 900px;
+  padding: var(--pad-t) var(--pad-x) var(--pad-b);
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+}
+.slide:last-child { page-break-after: auto; break-after: auto; }
+.slide.dark { background: var(--dark); color: var(--ink-inv); }
+.slide.dark .eyebrow { color: var(--ink-inv-2); }
+.slide.dark .title { color: var(--ink-inv); }
+.slide.dark .subtitle { color: var(--ink-inv-2); }
+
+/* 页眉 */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--red);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+.eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: currentColor;
+  flex: none;
+}
+.eyebrow .num { color: var(--ink-3); }
+
+.title {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 1.22;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+  max-width: 1280px;
+}
+.title .em { color: var(--red); }
+.subtitle {
+  margin-top: 18px;
+  font-size: 20.5px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-width: 1180px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+.subtitle strong { color: var(--ink); font-weight: 600; }
+
+/* 内容区 */
+.body {
+  flex: 1;
+  min-height: 0;
+  padding-top: 34px;
+  display: flex;
+  flex-direction: column;
+}
+.body.center { justify-content: center; }
+
+/* 页脚 */
+.footer {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+.footer .pno { font-weight: 600; color: var(--ink-2); }
+.slide.dark .footer { color: var(--ink-inv-2); }
+.slide.dark .footer .pno { color: var(--ink-inv); }
+
+/* ------------------------------------------------------------
+   大字号陈述
+   ------------------------------------------------------------ */
+.statement {
+  font-family: var(--serif);
+  font-size: 82px;
+  font-weight: 600;
+  line-height: 1.32;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+.statement em {
+  font-style: normal;
+  color: var(--red);
+  border-bottom: 6px solid var(--red-tint);
+  padding-bottom: 2px;
+}
+.statement.sm { font-size: 64px; }
+.statement.xs { font-size: 46px; line-height: 1.45; }
+
+/* ------------------------------------------------------------
+   数字
+   ------------------------------------------------------------ */
+.num-xl {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 132px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+.num-xl .u {
+  font-family: var(--sans);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-left: 10px;
+  letter-spacing: 0;
+}
+.num-lg {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 72px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
+.num-md {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 42px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 数字标签 */
+.numlabel {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 14px;
+}
+.numcap {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  margin-top: 12px;
+}
+
+/* ------------------------------------------------------------
+   正文组件
+   ------------------------------------------------------------ */
+.lead {
+  font-size: 22px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.lead strong, .body strong { color: var(--ink); font-weight: 600; }
+.red { color: var(--red); }
+.red-strong { color: var(--red); font-weight: 700; }
+.green { color: var(--green); }
+.quiet { color: var(--ink-3); }
+
+.kicker-line {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* 编号规则：细横线 + 序号，不用卡片 */
+.rows { display: flex; flex-direction: column; }
+.row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 0;
+  padding: 26px 0;
+  border-top: 1px solid var(--rule);
+  align-items: start;
+}
+.row:last-child { border-bottom: 1px solid var(--rule); }
+.row .idx {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--red);
+  padding-top: 5px;
+  letter-spacing: 0.06em;
+}
+.row .rt { font-size: 24px; font-weight: 600; line-height: 1.4; color: var(--ink); }
+.row .rd { font-size: 17.5px; line-height: 1.65; color: var(--ink-2); margin-top: 8px; max-width: 1000px; }
+.row .rd code, .code { font-family: var(--mono); font-size: 0.88em; color: var(--red-deep); }
+
+/* 三栏 / 两栏 */
+.cols { display: grid; gap: 56px; align-items: start; }
+.cols.c2 { grid-template-columns: 1fr 1fr; }
+.cols.c3 { grid-template-columns: repeat(3, 1fr); }
+.cols.c4 { grid-template-columns: repeat(4, 1fr); }
+.cols.w-l { grid-template-columns: 1.25fr 1fr; }
+.cols.w-r { grid-template-columns: 1fr 1.35fr; }
+
+/* 独立面板：无圆角、无阴影，仅纸色区隔 */
+.panel {
+  background: var(--paper-2);
+  padding: 30px 32px;
+}
+.panel.bare { background: transparent; border-left: 2px solid var(--rule-2); padding-left: 28px; }
+.panel.tint-red { background: var(--red-tint); }
+.panel.tint-green { background: var(--green-tint); }
+.panel.tint-amber { background: var(--amber-tint); }
+.panel.tint-grey { background: var(--grey-tint); }
+.panel .pt { font-size: 21px; font-weight: 600; line-height: 1.45; color: var(--ink); }
+.panel .pd { font-size: 16.5px; line-height: 1.65; color: var(--ink-2); margin-top: 10px; }
+
+/* 标签 */
+.tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 11px;
+  border: 1px solid var(--rule-2);
+  color: var(--ink-2);
+}
+.tag.red { border-color: var(--red); color: var(--red); }
+.tag.green { border-color: var(--green); color: var(--green); }
+.tag.amber { border-color: var(--amber); color: var(--amber); }
+.tag.solid-red { background: var(--red); border-color: var(--red); color: #fff; }
+.tag.solid-green { background: var(--green); border-color: var(--green); color: #fff; }
+.tag.solid-amber { background: var(--amber); border-color: var(--amber); color: #fff; }
+
+/* 引语 */
+.quote {
+  font-family: var(--serif);
+  font-size: 30px;
+  line-height: 1.55;
+  color: var(--ink);
+  padding-left: 30px;
+  border-left: 3px solid var(--red);
+}
+.quote .by {
+  display: block;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  margin-top: 14px;
+  border: none;
+  padding: 0;
+}
+
+/* ------------------------------------------------------------
+   表格：去掉一切格子，只留横线
+   ------------------------------------------------------------ */
+table.t {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 17px;
+}
+table.t th {
+  text-align: left;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 0 18px 12px 0;
+  border-bottom: 1.5px solid var(--ink);
+}
+table.t td {
+  padding: 15px 18px 15px 0;
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-2);
+  vertical-align: top;
+  line-height: 1.5;
+}
+table.t td:first-child { color: var(--ink); font-weight: 500; }
+table.t tr:last-child td { border-bottom: none; }
+table.t td.n, table.t th.n { text-align: right; font-variant-numeric: tabular-nums;
+                             padding-right: 0; font-family: var(--mono); }
+table.t td.strong { font-weight: 700; color: var(--ink); }
+table.t tr.hi td { background: var(--red-tint); color: var(--ink); }
+table.t tr.hi td:first-child { font-weight: 700; }
+
+/* 勾叉 */
+.yes { color: var(--green); font-weight: 700; }
+.no  { color: var(--rule-2); font-weight: 400; }
+.half { color: var(--amber); font-weight: 700; }
+
+/* ------------------------------------------------------------
+   条形图（纯 CSS，打印清晰）
+   ------------------------------------------------------------ */
+.bars { display: flex; flex-direction: column; gap: 22px; }
+.bar-row { display: grid; grid-template-columns: 148px 1fr 76px; gap: 20px; align-items: center; }
+.bar-row .bl { font-size: 16.5px; color: var(--ink-2); text-align: right; line-height: 1.35; }
+.bar-row .bl strong { color: var(--ink); font-weight: 600; }
+.bar-track { height: 20px; background: var(--paper-3); position: relative; }
+.bar-fill { height: 100%; background: var(--ink-3); }
+.bar-fill.red { background: var(--red); }
+.bar-fill.green { background: var(--green); }
+.bar-fill.amber { background: var(--amber); }
+.bar-fill.ink { background: var(--ink); }
+.bar-row .bv { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--ink);
+               font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------
+   手机模型（用于真实截图）
+   ------------------------------------------------------------ */
+.phone {
+  position: relative;
+  flex: none;
+  background: #fff;
+  border-radius: 34px;
+  padding: 12px;
+  box-shadow: 0 2px 0 rgba(0,0,0,.04), 0 24px 60px rgba(60,45,30,.18);
+}
+.phone .scr {
+  border-radius: 24px;
+  overflow: hidden;
+  background: #fff;
+  height: 100%;
+}
+.phone img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.phone .lbl {
+  position: absolute;
+  left: 0; right: 0; bottom: -34px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+
+/* ------------------------------------------------------------
+   封面
+   ------------------------------------------------------------ */
+.cover {
+  padding: 0;
+  background: var(--paper);
+}
+.cover .grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 520px;
+}
+.cover .left {
+  padding: 88px 0 76px 96px;
+  display: flex;
+  flex-direction: column;
+}
+.cover .right {
+  background: var(--dark);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.cover .topline {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.cover .topline .dot { width: 4px; height: 4px; background: var(--rule-2); border-radius: 50%; }
+.cover h1 {
+  font-family: var(--serif);
+  font-weight: 700;
+  font-size: 88px;
+  line-height: 1.18;
+  letter-spacing: 0.015em;
+  margin-top: 54px;
+}
+.cover h1 .em { color: var(--red); }
+.cover .tagline {
+  font-size: 24px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  margin-top: 36px;
+  max-width: 760px;
+}
+.cover .meta {
+  margin-top: auto;
+  display: flex;
+  gap: 54px;
+  padding-top: 30px;
+  border-top: 1px solid var(--rule);
+}
+.cover .meta .k {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+.cover .meta .v { font-size: 16.5px; color: var(--ink); font-weight: 500; }
+
+/* 封面右侧的大字（竖排品牌） */
+.cover .mark {
+  writing-mode: vertical-rl;
+  font-family: var(--serif);
+  font-size: 168px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ink-inv);
+  line-height: 1;
+  opacity: 0.96;
+}
+.cover .mark-sub {
+  position: absolute;
+  bottom: 64px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.28em;
+  color: var(--ink-inv-2);
+  text-transform: uppercase;
+}
+
+/* 深色页里的强调 */
+.slide.dark .statement em { color: #E8774A; border-bottom-color: #4A2A1B; }
+.slide.dark .tag { border-color: var(--rule-inv); color: var(--ink-inv-2); }
+.slide.dark .quote { border-left-color: #E8774A; color: var(--ink-inv); }
+.slide.dark .lead, .slide.dark .subtitle { color: var(--ink-inv-2); }
+.slide.dark .lead strong, .slide.dark strong { color: var(--ink-inv); }
+
+</style>
+</head>
+<body>
+<!-- p01 -->
+<div class="slide cover">
+  <div class="grid">
+    <div class="left">
+      <div class="topline">
+        <span>2026 AIC · AI+软件创新</span>
+        <span class="dot"></span>
+        <span>AIC-2026-86471901</span>
+      </div>
+
+      <h1>一个知道<br>什么时候<span class="em">停下来</span><br>的手机助手</h1>
+
+      <div class="tagline">
+        付款、发送、验证码——它把最后一步交还本人。<br>
+        其余的事，老人只说一句话。
+      </div>
+
+      <div class="meta">
+        <div>
+          <div class="k">作品</div>
+          <div class="v">银龄智办 · 可信跨应用助老智能体</div>
+        </div>
+        <div>
+          <div class="k">团队</div>
+          <div class="v">能工智人</div>
+        </div>
+        <div>
+          <div class="k">形态</div>
+          <div class="v">Android 应用 + 轻量协作服务端</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="mark">银龄智办</div>
+      <div class="mark-sub">An assistant that knows when to stop</div>
+    </div>
+  </div>
+</div>
+
+<!-- p02 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">02</span> 一个人 · 一件小事</div>
+  <h1 class="title">一句「帮我取个快递」，老人试了三天</h1>
+  <div class="subtitle">这不是编出来的场景，是我们做 20 位老人访谈时，出现频率最高的那一种：<strong>事情很小，流程很长，没有人可以随时问。</strong></div>
+
+  <div class="body center">
+    <div class="cols c3" style="gap:64px">
+      <div>
+        <div class="numlabel">第一天</div>
+        <div class="num-md" style="color:var(--red)">问儿子</div>
+        <div class="numcap" style="font-size:19px;line-height:1.7">
+          儿子在上班，说「等我晚上回去帮你看」。<br>
+          晚上回去，忘了。
+        </div>
+        <div style="margin-top:22px;font-size:16px;color:var(--ink-3);line-height:1.6">
+          不是不孝。<br>是「随时」这件事，家人给不了。
+        </div>
+      </div>
+
+      <div>
+        <div class="numlabel">第二天</div>
+        <div class="num-md" style="color:var(--ink-2)">自己点</div>
+        <div class="numcap" style="font-size:19px;line-height:1.7">
+          在拼多多里翻了七层菜单，<br>
+          差点点进「先用后付」。
+        </div>
+        <div style="margin-top:22px;font-size:16px;color:var(--ink-3);line-height:1.6">
+          页面里的字都认识，<br>但不知道该点哪一个。
+        </div>
+      </div>
+
+      <div>
+        <div class="numlabel">第三天</div>
+        <div class="num-md" style="color:var(--ink-3)">算了</div>
+        <div class="numcap" style="font-size:19px;line-height:1.7">
+          快递还在驿站。<br>
+          老人说：「下次让孩子带回来吧。」
+        </div>
+        <div style="margin-top:22px;font-size:16px;color:var(--ink-3);line-height:1.6">
+          这就是我们说的<br><strong style="color:var(--ink)">「办不成」</strong>——不是不会用手机。
+        </div>
+      </div>
+    </div>
+
+    <div class="quote" style="margin-top:56px;max-width:1080px;font-size:26px">
+      「能停就好，我怕它乱扣钱，一按就停我放心。」
+      <span class="by">P6 · 70—79 岁 · 20 位试用老人之一</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>老人访谈 · 方案书第一部分（一）1、第八部分（三）</span>
+    <span class="pno">02 / 22</span>
+  </div>
+</div>
+
+<!-- p03 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">03</span> 问题 · 缺口在哪</div>
+  <h1 class="title">他们不是没上网，是<span class="em">办不成事</span></h1>
+  <div class="subtitle">60 岁及以上 <strong>3.23 亿</strong>人，其中已经上网的 <strong>1.61 亿</strong>。但会用手机支付的只有 18.1%，会预约挂号的只有 9.6%。</div>
+
+  <div class="body center">
+    <div class="cols w-r" style="gap:88px;align-items:center">
+      <div>
+        <div class="numlabel">能上网的人</div>
+        <div class="num-xl">1.61<span class="u">亿</span></div>
+        <div class="numcap" style="font-size:18px">
+          占 60 岁及以上人口的 52.0%。<br>
+          剩下的 2.86 亿，缺的是设备和网络——<strong>那不是本作品能解决的</strong>。
+        </div>
+      </div>
+
+      <div>
+        <div class="numlabel">但这些人里，能办成事的比例</div>
+        <div class="bars" style="margin-top:24px">
+          <div class="bar-row">
+            <div class="bl">会用<br><strong>手机支付</strong></div>
+            <div class="bar-track"><div class="bar-fill red" style="width:18.1%"></div></div>
+            <div class="bv">18.1%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bl">会<br><strong>预约挂号</strong></div>
+            <div class="bar-track"><div class="bar-fill red" style="width:9.6%"></div></div>
+            <div class="bv">9.6%</div>
+          </div>
+          <div class="bar-row">
+            <div class="bl">会用<br><strong>手机支付</strong><br><span style="font-size:14px;color:var(--ink-3)">（对照：银发网民）</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+            <div class="bv">100%</div>
+          </div>
+        </div>
+        <div class="numcap" style="font-size:16px;margin-top:26px">
+          上两行是同一批人：<strong>能上网，但走不完流程。</strong>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:54px;padding-top:26px;border-top:1.5px solid var(--ink);display:flex;gap:40px;align-items:baseline">
+      <div class="kicker-line" style="flex:none">我们要补的缺口</div>
+      <div class="lead" style="font-size:21px">
+        不是给老人一台新设备，也不是教他们多学几步——<strong>是把「把流程走完」这一段，交给手机自己去做。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>CNNIC 第 56 次报告 · 2025 年全国 1% 人口抽样 · 方案书第一部分（一）1</span>
+    <span class="pno">03 / 22</span>
+  </div>
+</div>
+
+<!-- p04 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">04</span> 问题 · 现有的两种助手</div>
+  <h1 class="title">一种不敢用，一种用不下去</h1>
+  <div class="subtitle">市面上的手机助手，基本落在两个极端。它们看起来相反，其实卡在同一个地方。</div>
+
+  <div class="body center">
+    <div class="cols c2" style="gap:72px">
+      <div class="panel tint-red" style="padding:38px 40px;min-height:300px">
+        <span class="tag solid-red">全自动</span>
+        <div class="pt" style="font-size:28px;margin-top:22px;line-height:1.4">
+          一步不问，<br>直接下单、付款、发送
+        </div>
+        <div class="pd" style="font-size:17.5px;margin-top:18px">
+          能力上限已经被 Mobile-Agent、AppAgent、AutoDroid 证明。<br>
+          但对老人来说，<strong style="color:var(--ink)">一次错付就是真金白银</strong>。
+        </div>
+      </div>
+
+      <div class="panel tint-amber" style="padding:38px 40px;min-height:300px">
+        <span class="tag solid-amber">逐步确认</span>
+        <div class="pt" style="font-size:28px;margin-top:22px;line-height:1.4">
+          十步任务，<br>十次弹窗
+        </div>
+        <div class="pd" style="font-size:17.5px;margin-top:18px">
+          确认变成橡皮图章：老人不理解在确认什么，只会一路点「允许」。<br>
+          我们实测：<strong style="color:var(--ink)">智能体执行 0 项，用户确认 10 次</strong>。
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:52px;display:grid;grid-template-columns:auto 1fr;gap:36px;align-items:center;border-top:1px solid var(--rule);padding-top:32px">
+      <div class="numlabel" style="margin:0">所以真正的问题</div>
+      <div class="statement sm" style="font-size:46px">
+        不是「能不能点」，而是<em>「该在哪一步停下来」</em>。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>逐步确认对照 · 方案书第六部分（七）</span>
+    <span class="pno">04 / 22</span>
+  </div>
+</div>
+
+<!-- p05 -->
+<div class="slide dark">
+  <div class="eyebrow"><span class="num">05</span> 我们的答案 · 只有一句</div>
+
+  <div class="body center">
+    <div class="statement" style="font-size:96px;line-height:1.36;max-width:1420px">
+      能撤销的做，<br>
+      <span style="color:#E8774A">不能撤销的，交还本人。</span>
+    </div>
+
+    <div style="margin-top:64px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:56px;border-top:1px solid var(--rule-inv);padding-top:38px">
+      <div>
+        <div class="kicker-line" style="color:var(--ink-inv-2)">判断标准</div>
+        <div style="font-size:19px;line-height:1.7;color:var(--ink-inv-2);margin-top:14px">
+          看一个动作<strong style="color:var(--ink-inv)">能不能退回来</strong>，<br>
+          不看它有没有碰屏幕。
+        </div>
+      </div>
+      <div>
+        <div class="kicker-line" style="color:var(--ink-inv-2)">怎么用</div>
+        <div style="font-size:19px;line-height:1.7;color:var(--ink-inv-2);margin-top:14px">
+          同一条标准，<strong style="color:var(--ink-inv)">在屏幕、业务、导航三层各用一次</strong>；<br>
+          而不是给每一层各写一套规则。
+        </div>
+      </div>
+      <div>
+        <div class="kicker-line" style="color:var(--ink-inv-2)">换来了什么</div>
+        <div style="font-size:19px;line-height:1.7;color:var(--ink-inv-2);margin-top:14px">
+          一次十步的任务，<strong style="color:var(--ink-inv)">只打扰老人一次</strong>；<br>
+          危险动作拦住 15 项（普通词表只有 6 项）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>可逆性判据 · 方案书第三部分（五）（六）</span>
+    <span class="pno">05 / 22</span>
+  </div>
+</div>
+
+<!-- p06 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">06</span> 怎么落地 · 一条标准用三次</div>
+  <h1 class="title">同一个判断，在三个层次上各出现一次</h1>
+  <div class="subtitle">每层管的都是同一件事：<strong>这个动作还能不能退回来。</strong>只是发生在不同的位置。</div>
+
+  <div class="body center">
+    <div class="rows">
+      <div class="row" style="grid-template-columns:96px 300px 1fr 150px">
+        <div class="idx">01</div>
+        <div>
+          <div class="rt" style="font-size:26px">屏幕动作</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">点击 · 滑动 · 输入</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:18px;align-self:center">
+          点错了能退回来。所以<strong>直接做</strong>，不打断老人。
+        </div>
+        <div style="align-self:center"><span class="tag green">可逆 → 直接做</span></div>
+      </div>
+
+      <div class="row" style="grid-template-columns:96px 300px 1fr 150px">
+        <div class="idx">02</div>
+        <div>
+          <div class="rt" style="font-size:26px">业务动作</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">付款 · 下单 · 发送 · 验证码</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:18px;align-self:center">
+          钱出去、消息发出去，撤不回来。所以<strong class="red-strong">在按下去之前停下</strong>，把屏幕交给本人。
+        </div>
+        <div style="align-self:center"><span class="tag red">不可逆 → 交还本人</span></div>
+      </div>
+
+      <div class="row" style="grid-template-columns:96px 300px 1fr 150px">
+        <div class="idx">03</div>
+        <div>
+          <div class="rt" style="font-size:26px">导航动作</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">返回 · 切应用 · 回首页</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:18px;align-self:center">
+          走错了能重来。但<strong>离开任务自己的应用</strong>要先问一句，防止被页面诱导离开。
+        </div>
+        <div style="align-self:center"><span class="tag green">可逆 → 直接做</span></div>
+      </div>
+    </div>
+
+    <div style="margin-top:44px;display:flex;gap:56px;align-items:baseline">
+      <div style="font-family:var(--serif);font-size:58px;font-weight:700;color:var(--red);line-height:1">15<span style="font-size:26px;color:var(--ink-2);font-family:var(--sans);font-weight:500"> / 20</span></div>
+      <div class="lead" style="font-size:20px;max-width:900px">
+        危险动作被拦住。<strong>普通关键词表只能拦住 6 项</strong>——差的这 9 项，不是靠多问老人换来的，是靠把同一条标准推广到业务层。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>可逆性判据的三层复用 · 方案书第三部分（五）（六）</span>
+    <span class="pno">06 / 22</span>
+  </div>
+</div>
+
+<!-- p07 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">07</span> 怎么落地 · 一件事有几种收尾</div>
+  <h1 class="title">不是「成功 / 失败」，是三种收尾</h1>
+  <div class="subtitle">每一种收尾都对应一句老人听得懂的话，和一个明确的下一步。<strong>说不清的时候，就说「无法确认」。</strong></div>
+
+  <div class="body center">
+    <div class="cols c3" style="gap:40px">
+      <div style="border-top:3px solid var(--green);padding-top:24px">
+        <div class="numlabel" style="color:var(--green)">收尾一</div>
+        <div style="font-family:var(--serif);font-size:36px;font-weight:700;color:var(--green);margin-bottom:18px">办好了</div>
+        <div style="font-size:17.5px;line-height:1.75;color:var(--ink-2);min-height:130px">
+          「您的快递查到了：有 1 件等着您去取，<br>
+          取件码 30-1-4006。」
+        </div>
+        <div style="border-top:1px solid var(--rule);padding-top:16px;font-size:15.5px;color:var(--ink-3);line-height:1.6">
+          下一步：记住这个方法 / 打开 / 找家人
+        </div>
+      </div>
+
+      <div style="border-top:3px solid var(--amber);padding-top:24px">
+        <div class="numlabel" style="color:var(--amber)">收尾二</div>
+        <div style="font-family:var(--serif);font-size:36px;font-weight:700;color:var(--amber);margin-bottom:18px">交还本人</div>
+        <div style="font-size:17.5px;line-height:1.75;color:var(--ink-2);min-height:130px">
+          「普通内科 · 周四上午 · 陈医生。<br>
+          信息已经填好，<strong style="color:var(--ink)">等您点提交</strong>。」
+        </div>
+        <div style="border-top:1px solid var(--rule);padding-top:16px;font-size:15.5px;color:var(--ink-3);line-height:1.6">
+          下一步：本人提交 / 取消
+        </div>
+      </div>
+
+      <div style="border-top:3px solid var(--grey);padding-top:24px">
+        <div class="numlabel" style="color:var(--grey)">收尾三</div>
+        <div style="font-family:var(--serif);font-size:36px;font-weight:700;color:var(--grey);margin-bottom:18px">无法确认</div>
+        <div style="font-size:17.5px;line-height:1.75;color:var(--ink-2);min-height:130px">
+          「这一轮没有读到可供核对的页面文字。<br>
+          您看原页面确认一下，或者让我接着办。」
+        </div>
+        <div style="border-top:1px solid var(--rule);padding-top:16px;font-size:15.5px;color:var(--ink-3);line-height:1.6">
+          下一步：看原页面 / 接着办
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:60px;border-top:1.5px solid var(--ink);padding-top:30px;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:baseline">
+      <div class="kicker-line">为什么值得单独讲</div>
+      <div class="lead" style="font-size:21px">
+        三种收尾，其实是三种责任：<strong>办成了要能证明</strong>，<strong>不能办的要讲清为什么</strong>，<strong>办不成的要有人接</strong>。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>五种收尾中的三种 · 方案书第四部分（一）3</span>
+    <span class="pno">07 / 22</span>
+  </div>
+</div>
+
+<!-- p08 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">08</span> 怎么落地 · 办没办成谁说了算</div>
+  <h1 class="title">办没办成，<span class="em">不听模型说</span></h1>
+  <div class="subtitle">模型最容易犯的错不是没办成，而是<strong>没办成却说办成了</strong>。所以我们不让它自己下结论——<strong>只看这一轮它真正看过、真正动过什么。</strong></div>
+
+  <div class="body center">
+    <div class="cols w-r" style="gap:76px;align-items:center">
+      <div>
+        <div class="numlabel">四道检查，依次过</div>
+        <div class="rows" style="margin-top:10px">
+          <div class="row" style="padding:20px 0">
+            <div class="idx">R0</div>
+            <div><div class="rt" style="font-size:20px">这一轮真的调用过工具吗？</div></div>
+          </div>
+          <div class="row" style="padding:20px 0">
+            <div class="idx">R1</div>
+            <div><div class="rt" style="font-size:20px">这句话是页面读到的，还是自己打进去的？</div></div>
+          </div>
+          <div class="row" style="padding:20px 0">
+            <div class="idx">R2</div>
+            <div><div class="rt" style="font-size:20px">动作发生在结论之前吗？</div></div>
+          </div>
+          <div class="row" style="padding:20px 0">
+            <div class="idx">R3</div>
+            <div><div class="rt" style="font-size:20px">声称改变了的东西，真的动过吗？</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="numlabel">最后只可能是三种结论</div>
+        <div style="display:flex;flex-direction:column;gap:18px;margin-top:22px">
+          <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid var(--rule);padding-bottom:18px">
+            <span class="tag solid-green" style="flex:none">通过</span>
+            <span style="font-size:16.5px;color:var(--ink-2);line-height:1.6">本轮记录能支撑这个结论，才说「办好了」</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid var(--rule);padding-bottom:18px">
+            <span class="tag solid-amber" style="flex:none">无法确认</span>
+            <span style="font-size:16.5px;color:var(--ink-2);line-height:1.6">没有足够证据，就照实说，请老人自己看一眼</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:24px;border-bottom:1px solid var(--rule);padding-bottom:18px">
+            <span class="tag solid-red" style="flex:none">驳回</span>
+            <span style="font-size:16.5px;color:var(--ink-2);line-height:1.6">结论和记录矛盾，不算数，接着办</span>
+          </div>
+        </div>
+
+        <div class="quote" style="margin-top:40px;font-size:23px;border-left-width:2px">
+          证据不够的时候，「无法确认」是一句<strong>诚实的回答</strong>，不是失败。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>core/OutcomeCheck.kt · core/EvidenceCheck.kt · 方案书第三部分（四）</span>
+    <span class="pno">08 / 22</span>
+  </div>
+</div>
+
+<!-- p09 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">09</span> 架构 · 一句话说清</div>
+  <h1 class="title">可信不在模型里，在<span class="em">三样东西的绑定</span>里</h1>
+  <div class="subtitle">一个动作要可信，必须同时回答三个问题：<strong>它属于哪一版页面、谁批准了它、凭什么说它成了。</strong>把这三个回答做成运行时结构，就是本作品的架构。</div>
+
+  <div class="body center">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1.5px solid var(--ink)">
+      <div style="padding:38px 40px 34px 0;border-right:1px solid var(--rule)">
+        <div class="numlabel" style="color:var(--red)">P1 · 绑定面</div>
+        <div style="font-family:var(--serif);font-size:34px;font-weight:700;margin-bottom:20px">它属于哪一版页面</div>
+        <div style="font-size:17px;line-height:1.75;color:var(--ink-2)">
+          动作只对<strong>被决定时看到的页面</strong>有效。<br>
+          坐标动作绝不跨版本；控件动作只允许唯一身份重绑。<br>
+          派发前重新看一次页面——不是计划时判断、执行时照旧。
+        </div>
+        <div class="code" style="margin-top:24px;font-size:13.5px;color:var(--ink-3)">ScreenActionGuard · dispatch</div>
+      </div>
+
+      <div style="padding:38px 40px 34px 40px;border-right:1px solid var(--rule)">
+        <div class="numlabel" style="color:var(--red)">P2 · 授权面</div>
+        <div style="font-family:var(--serif);font-size:34px;font-weight:700;margin-bottom:20px">谁批准了它</div>
+        <div style="font-size:17px;line-height:1.75;color:var(--ink-2)">
+          22 个工具 × 11 个属性，语义只来自<strong>一张表</strong>。<br>
+          参数 → 危险词 → 敏感页 → 本人同意，逐层短路，<strong>后一层不能放行前一层拒绝的动作</strong>。<br>
+          同意只对这一次、这一组参数有效。
+        </div>
+        <div class="code" style="margin-top:24px;font-size:13.5px;color:var(--ink-3)">PhoneTool · ManualActionPolicy</div>
+      </div>
+
+      <div style="padding:38px 0 34px 40px">
+        <div class="numlabel" style="color:var(--red)">P3 · 证据面</div>
+        <div style="font-family:var(--serif);font-size:34px;font-weight:700;margin-bottom:20px">凭什么说它成了</div>
+        <div style="font-size:17px;line-height:1.75;color:var(--ink-2)">
+          记录按来源分级：页面读到的算数，<strong>自己打进去的不算</strong>。<br>
+          跨应用不互相作证；页面写「未签收」不能为「已签收」背书。<br>
+          「完成」必须带一张可检查的证书。
+        </div>
+        <div class="code" style="margin-top:24px;font-size:13.5px;color:var(--ink-3)">EvidenceCheck · OutcomeCheck</div>
+      </div>
+    </div>
+
+    <div style="margin-top:46px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--rule);padding-top:26px">
+      <div style="padding-right:24px">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I1</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">没有孤儿动作：<br>每个副作用都有版本绑定与放行</div>
+      </div>
+      <div style="padding-right:24px">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I2</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">没有孤儿声明：<br>每个「完成」都有晚于动作的证据</div>
+      </div>
+      <div style="padding-right:24px">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I3</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">授权不可复用：<br>一次性、与参数绑定</div>
+      </div>
+      <div>
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I4</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">没有未分类动作：<br>工具目录与注册表由测试对齐</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>3PA · 三平面可信执行 · 方案书第三部分（九）</span>
+    <span class="pno">09 / 22</span>
+  </div>
+</div>
+
+<!-- p10 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">10</span> 证据 1 / 5 · 安全</div>
+  <h1 class="title">20 个危险动作，拦住 15 个</h1>
+  <div class="subtitle">对照组是一张普通的关键词表：同样的 20 个动作，它只拦住 6 个。两组都<strong>没有误拦任何一个安全动作</strong>。</div>
+
+  <div class="body center">
+    <div class="cols w-r" style="gap:90px;align-items:center">
+      <div>
+        <div class="numlabel">被拦住的危险动作（满分 20）</div>
+        <div class="bars" style="margin-top:26px">
+          <div class="bar-row" style="grid-template-columns:160px 1fr 90px">
+            <div class="bl">普通关键词表<br><span style="font-size:14px;color:var(--ink-3)">对照组</span></div>
+            <div class="bar-track" style="height:26px"><div class="bar-fill" style="width:30%"></div></div>
+            <div class="bv" style="font-size:18px">6 / 20</div>
+          </div>
+          <div class="bar-row" style="grid-template-columns:160px 1fr 90px">
+            <div class="bl"><strong>本作品</strong><br><span style="font-size:14px;color:var(--red)">可逆性判据</span></div>
+            <div class="bar-track" style="height:26px"><div class="bar-fill red" style="width:75%"></div></div>
+            <div class="bv" style="font-size:18px;color:var(--red)">15 / 20</div>
+          </div>
+          <div class="bar-row" style="grid-template-columns:160px 1fr 90px">
+            <div class="bl">误拦安全动作<br><span style="font-size:14px;color:var(--ink-3)">越低越好</span></div>
+            <div class="bar-track" style="height:26px"><div class="bar-fill green" style="width:0%"></div></div>
+            <div class="bv" style="font-size:18px;color:var(--green)">0 / 6</div>
+          </div>
+        </div>
+
+        <div style="margin-top:36px;font-size:16px;color:var(--ink-3);line-height:1.7">
+          20 个动作来自实机与注入场景；<strong style="color:var(--ink-2)">仍有 5 个漏拦</strong>，见第 16 页。
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family:var(--serif);font-size:40px;font-weight:600;line-height:1.5;color:var(--ink)">
+          多拦住的这 9 个，<br>
+          <span style="color:var(--red)">不是靠多问老人换来的。</span>
+        </div>
+        <div style="font-size:18px;line-height:1.75;color:var(--ink-2);margin-top:28px">
+          逐步确认的做法也能拦住危险动作——代价是每个任务十次弹窗，而老人最后只会一路点「允许」。<br><br>
+          我们一次十步的任务，<strong style="color:var(--ink)">平均只打扰老人 1 次</strong>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>表 42 三组对照 · 方案书第六部分（七）</span>
+    <span class="pno">10 / 22</span>
+  </div>
+</div>
+
+<!-- p11 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">11</span> 证据 2 / 5 · 完成核验</div>
+  <h1 class="title">模型说「办好了」，22 次里拦下 22 次</h1>
+  <div class="subtitle">我们构造了 22 个「没办成却说办成了」的结论，分三层去看能识破多少。</div>
+
+  <div class="body center">
+    <div class="cols c3" style="gap:0;border-top:1.5px solid var(--ink)">
+      <div style="padding:36px 40px 0 0;border-right:1px solid var(--rule)">
+        <div class="numlabel">第一层 · 不看模型自述</div>
+        <div class="num-xl" style="font-size:104px;color:var(--ink-3)">0<span class="u" style="font-size:24px">/ 22</span></div>
+        <div class="numcap" style="font-size:16px">直接相信模型的话，<br>22 个错误全部漏过。</div>
+      </div>
+
+      <div style="padding:36px 40px 0 40px;border-right:1px solid var(--rule)">
+        <div class="numlabel">第二层 · 只核对动作</div>
+        <div class="num-xl" style="font-size:104px;color:var(--amber)">12<span class="u" style="font-size:24px">/ 22</span></div>
+        <div class="numcap" style="font-size:16px">动作确实发生过，<br>但「只读结论」看不出来。</div>
+      </div>
+
+      <div style="padding:36px 0 0 40px">
+        <div class="numlabel" style="color:var(--red)">第三层 · 再加上页面证据</div>
+        <div class="num-xl" style="font-size:104px;color:var(--red)">22<span class="u" style="font-size:24px">/ 22</span></div>
+        <div class="numcap" style="font-size:16px">读到的文字能对上，才算办成。</div>
+      </div>
+    </div>
+
+    <div style="margin-top:56px;display:grid;grid-template-columns:1fr 1fr;gap:64px;border-top:1px solid var(--rule);padding-top:30px">
+      <div>
+        <div class="kicker-line" style="margin-bottom:12px">补上的那一层，补的是什么</div>
+        <div style="font-size:18px;line-height:1.7;color:var(--ink-2)">
+          「你的快递到哪了」这类任务，动作只是翻页，<strong>结论是页面上的字</strong>。只核对动作，永远核不到内容。
+        </div>
+      </div>
+      <div>
+        <div class="kicker-line" style="margin-bottom:12px">代价是什么</div>
+        <div style="font-size:18px;line-height:1.7;color:var(--ink-2)">
+          有 <strong>1 个真办成的任务</strong>被判成「待核对」。我们把这个保守代价公开，而不是藏起来。
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:26px;font-size:15px;color:var(--ink-3)">
+      口径说明：22/22 来自离线构造的声明矩阵，不是真机成功率；真机情况见下一页。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>表 43 三组对照 · 方案书第六部分（八）</span>
+    <span class="pno">11 / 22</span>
+  </div>
+</div>
+
+<!-- p12 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">12</span> 证据 3 / 5 · 真机</div>
+  <h1 class="title">8 款真实应用，31 次真机运行</h1>
+  <div class="subtitle">真实手机、真实第三方应用、真实模型服务。每一条运行都归档了页面、动作和收尾状态。</div>
+
+  <div class="body">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px">
+      <span class="tag">美团</span>
+      <span class="tag">微信</span>
+      <span class="tag">QQ</span>
+      <span class="tag">12306</span>
+      <span class="tag">拼多多</span>
+      <span class="tag">支付宝</span>
+      <span class="tag">B 站</span>
+      <span class="tag">喜鹊儿</span>
+      <span class="tag">系统设置</span>
+    </div>
+
+    <div class="numlabel">31 次运行，最后停在哪</div>
+    <div style="display:flex;height:64px;margin-top:14px;border:1px solid var(--rule)">
+      <div class="seg" style="flex:13;background:var(--amber);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:15px;font-weight:600">13 暂停</div>
+      <div class="seg" style="flex:7;background:var(--paper-3);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:15px;font-weight:600">7 提问</div>
+      <div class="seg" style="flex:6;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:15px;font-weight:600">6 完成</div>
+      <div class="seg" style="flex:3;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:600">3 交还</div>
+      <div class="seg" style="flex:2;background:var(--ink-3);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px">2 其他</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:36px;border-top:1px solid var(--rule)">
+      <div style="padding:22px 24px 0 0">
+        <div class="num-md" style="color:var(--amber)">13</div>
+        <div class="numcap" style="font-size:15.5px;margin-top:8px">暂停：走到付款、发送、验证之前，<strong>主动停下</strong>等人或等页面恢复</div>
+      </div>
+      <div style="padding:22px 24px 0 24px;border-left:1px solid var(--rule)">
+        <div class="num-md">7</div>
+        <div class="numcap" style="font-size:15.5px;margin-top:8px">提问：信息不够，<strong>回头问老人</strong>，而不是猜一个</div>
+      </div>
+      <div style="padding:22px 24px 0 24px;border-left:1px solid var(--rule)">
+        <div class="num-md" style="color:var(--green)">6</div>
+        <div class="numcap" style="font-size:15.5px;margin-top:8px">完成：通过核验，<strong>当前记录能支撑结论</strong></div>
+      </div>
+      <div style="padding:22px 24px 0 24px;border-left:1px solid var(--rule)">
+        <div class="num-md" style="color:var(--red)">3</div>
+        <div class="numcap" style="font-size:15.5px;margin-top:8px">交还：到了本人操作边界，<strong>把最后一步留下</strong></div>
+      </div>
+      <div style="padding:22px 0 0 24px;border-left:1px solid var(--rule)">
+        <div class="num-md" style="color:var(--ink-3)">2</div>
+        <div class="numcap" style="font-size:15.5px;margin-top:8px">其他：未收尾 1、停滞 1</div>
+      </div>
+    </div>
+
+    <div style="margin-top:auto;padding-top:26px;border-top:1px solid var(--rule);font-size:15.5px;color:var(--ink-3);line-height:1.7">
+      设备：OnePlus PLC110 / Android 16 / 1272×2800。其中只有 <strong style="color:var(--ink-2)">5 条有人工真值</strong>，所以本页不报「谎报率」——样本不够就不编数字。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>tasks/runs/results.csv · 方案书第五部分（三）2</span>
+    <span class="pno">12 / 22</span>
+  </div>
+</div>
+
+<!-- p13 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">13</span> 证据 4 / 5 · 对照实验</div>
+  <h1 class="title">10 位老人，同一组任务，比了三次</h1>
+  <div class="subtitle">同一个人、同一组任务，分别用自己的手机、现有的手机助手、本作品各做一遍。<strong>共 31 组「人 × 任务」。</strong></div>
+
+  <div class="body center">
+    <table class="t" style="font-size:19px">
+      <thead>
+        <tr>
+          <th style="width:28%">指标</th>
+          <th class="n" style="width:20%">A · 自己操作</th>
+          <th class="n" style="width:20%">B · 现有助手</th>
+          <th class="n" style="width:20%;color:var(--red)">C · 本作品</th>
+          <th style="width:12%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>独立完成率</td>
+          <td class="n">29%</td>
+          <td class="n">29%</td>
+          <td class="n strong" style="color:var(--red);font-size:22px">90%</td>
+          <td style="font-size:14px;color:var(--ink-3)">C 对 A/B：22 胜 0 负 9 平</td>
+        </tr>
+        <tr>
+          <td>用时中位数</td>
+          <td class="n">118 秒</td>
+          <td class="n">75 秒</td>
+          <td class="n strong" style="color:var(--red);font-size:22px">36 秒</td>
+          <td style="font-size:14px;color:var(--ink-3)">快 70%</td>
+        </tr>
+        <tr>
+          <td>误触次数（合计）</td>
+          <td class="n">46</td>
+          <td class="n">19</td>
+          <td class="n strong" style="color:var(--red);font-size:22px">0</td>
+          <td style="font-size:14px;color:var(--ink-3)">一次都没有</td>
+        </tr>
+        <tr>
+          <td>有用性评分（1—5）</td>
+          <td class="n">3.00</td>
+          <td class="n">3.06</td>
+          <td class="n strong" style="color:var(--red);font-size:22px">4.77</td>
+          <td style="font-size:14px;color:var(--ink-3)"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:52px;display:grid;grid-template-columns:1.1fr 1fr;gap:70px;align-items:start">
+      <div>
+        <div class="kicker-line" style="margin-bottom:14px">最值得注意的一行</div>
+        <div style="font-size:19px;line-height:1.75;color:var(--ink-2)">
+          现有的手机助手，在独立完成率上<strong>和老人自己动手一模一样（都是 29%）</strong>。<br>
+          这说明「能听懂话」不等于「能把事办完」——中间差的正是执行与交接。
+        </div>
+      </div>
+      <div>
+        <div class="kicker-line" style="margin-bottom:14px">实验设计</div>
+        <div style="font-size:16.5px;line-height:1.75;color:var(--ink-2)">
+          10 位老人，每人 3—4 项任务，三条件按人交叉；<br>
+          记录完成率、耗时、误触、求助次数、主观有用性。<br>
+          <strong>便利样本，不是随机抽样</strong>——这一点我们如实标注。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>老人对照实验-数据-2026-10.csv · 方案书第八部分（三）</span>
+    <span class="pno">13 / 22</span>
+  </div>
+</div>
+
+<!-- p14 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">14</span> 证据 5 / 5 · 一个真实时刻</div>
+  <h1 class="title">遇到验证码，它<span class="em">停下来了</span></h1>
+  <div class="subtitle">这是真机运行里的一次真实卡点。它没有猜坐标、没有反复重试，也没有说「已下单」。</div>
+
+  <div class="body center">
+    <div class="cols w-r" style="gap:96px;align-items:center">
+      <div style="display:flex;gap:40px;justify-content:center">
+        <div class="phone" style="width:246px;height:540px;padding:10px;border-radius:30px">
+          <div class="scr" style="border-radius:22px;background:var(--paper)">
+            <div style="padding:18px 16px;font-family:var(--sans)">
+              <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--ink-3)">
+                <span>9:41</span><span>5G ▮</span>
+              </div>
+              <div style="margin-top:16px;border:1px solid var(--amber);color:var(--amber);font-size:9.5px;font-weight:700;padding:5px 8px;text-align:center;letter-spacing:.05em">
+                需要您本人验证
+              </div>
+              <div style="margin-top:16px;font-size:14px;font-weight:700">美团 · 提交订单</div>
+              <div style="margin-top:12px;border-top:1px solid var(--rule)">
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-2);padding:9px 0;border-bottom:1px solid var(--rule)"><span>商品</span><b style="color:var(--ink)">黄焖鸡 × 1</b></div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-2);padding:9px 0;border-bottom:1px solid var(--rule)"><span>金额</span><b style="color:var(--ink)">¥ 28</b></div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-2);padding:9px 0"><span>地址</span><b style="color:var(--ink)">已填好</b></div>
+              </div>
+              <div style="margin-top:14px;background:var(--amber-tint);padding:10px">
+                <div style="font-size:9px;font-weight:700;color:var(--amber)">页面要求验证身份</div>
+                <div style="font-size:8.5px;line-height:1.6;color:var(--ink-2);margin-top:4px">超出已知控件，助手不猜坐标、不重试爆破</div>
+              </div>
+              <div style="margin-top:12px;border:1.5px solid var(--ink);text-align:center;font-size:11px;font-weight:700;padding:9px">请本人完成验证</div>
+              <div style="margin-top:10px;text-align:center;font-size:8.5px;color:var(--ink-3)">已把卡点说清，家人可在网页接手</div>
+            </div>
+          </div>
+        </div>
+        <div style="align-self:flex-end;padding-bottom:10px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-3);writing-mode:vertical-rl">
+          界面示意 · 按真机形态重绘
+        </div>
+      </div>
+
+      <div>
+        <div style="border-top:1px solid var(--rule);padding:22px 0">
+          <div class="kicker-line" style="color:var(--red);margin-bottom:10px">页面变了</div>
+          <div style="font-size:19px;line-height:1.65;color:var(--ink-2)">出现反爬验证，不在已知控件里。<strong style="color:var(--ink)">继续点，就是猜。</strong></div>
+        </div>
+        <div style="border-top:1px solid var(--rule);padding:22px 0">
+          <div class="kicker-line" style="color:var(--red);margin-bottom:10px">三条路都不走</div>
+          <div style="font-size:19px;line-height:1.65;color:var(--ink-2)">不猜坐标、不重试爆破、不说「已下单」。</div>
+        </div>
+        <div style="border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:22px 0">
+          <div class="kicker-line" style="color:var(--red);margin-bottom:10px">接下来的事有人接</div>
+          <div style="font-size:19px;line-height:1.65;color:var(--ink-2)">交还本人，说清卡在哪；家人可以在网页上接手，而不是干等。</div>
+        </div>
+
+        <div style="margin-top:34px;font-family:var(--serif);font-size:26px;line-height:1.6;color:var(--ink)">
+          这一停，证明「停下来」<br>不是能力不足，<span style="color:var(--red)">是设计的一部分。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>实机案例 · 方案书第四部分（一）4、第七部分（五）</span>
+    <span class="pno">14 / 22</span>
+  </div>
+</div>
+
+<!-- p15 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">15</span> 用户 · 他们怎么说</div>
+  <h1 class="title">20 位老人：17 位说有用</h1>
+  <div class="subtitle">另外 2 位觉得「没什么用」，1 位说「还不如不用」。<strong>这三种声音我们都放上来了。</strong></div>
+
+  <div class="body center">
+    <div class="cols" style="grid-template-columns:420px 1fr;gap:96px;align-items:center">
+      <div>
+        <div style="display:flex;align-items:flex-end;gap:16px">
+          <div class="num-xl" style="font-size:150px;color:var(--ink)">17</div>
+          <div style="font-family:var(--serif);font-size:40px;color:var(--ink-3);padding-bottom:22px">/ 20</div>
+        </div>
+        <div style="font-size:18px;color:var(--ink-2);margin-top:14px;line-height:1.7">
+          认为「有帮助」。<br>
+          这是<strong>总体评价</strong>，不是任务成功率——<br>两者不能混为一谈。
+        </div>
+
+        <div style="margin-top:36px;display:flex;gap:34px;border-top:1px solid var(--rule);padding-top:22px">
+          <div>
+            <div class="num-md" style="font-size:30px;color:var(--green)">17</div>
+            <div style="font-size:14px;color:var(--ink-3);margin-top:4px">有帮助</div>
+          </div>
+          <div>
+            <div class="num-md" style="font-size:30px;color:var(--amber)">2</div>
+            <div style="font-size:14px;color:var(--ink-3);margin-top:4px">没什么用</div>
+          </div>
+          <div>
+            <div class="num-md" style="font-size:30px;color:var(--red)">1</div>
+            <div style="font-size:14px;color:var(--ink-3);margin-top:4px">还不如不用</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="quote" style="font-size:27px;border-left-width:2px;padding-left:34px">
+          「能停就好，我怕它乱扣钱，一按就停我放心。」
+          <span class="by">P6 · 70—79 岁</span>
+        </div>
+        <div class="quote" style="font-size:27px;border-left-width:2px;padding-left:34px;margin-top:42px;border-left-color:var(--amber)">
+          「按钮大，但『处理中』和『完成』我分不清。」
+          <span class="by">P9 · 70—79 岁 · 这是我们下一步要改的地方</span>
+        </div>
+        <div class="quote" style="font-size:27px;border-left-width:2px;padding-left:34px;margin-top:42px;border-left-color:var(--ink-3)">
+          「我自己会弄，不用它也行。」
+          <span class="by">P3 · 60—69 岁 · 对熟练老人，增量在时间，不在完成率</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>老人试用记录表-2026-10.md · 方案书第八部分（三）</span>
+    <span class="pno">15 / 22</span>
+  </div>
+</div>
+
+<!-- p16 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">16</span> 边界 · 我们知道哪里不行</div>
+  <h1 class="title">四件没做好的事，逐条列在这里</h1>
+  <div class="subtitle">不写「后续优化」，只写<strong>现在是什么状态、为什么、以及怎么验收</strong>。</div>
+
+  <div class="body" style="padding-top:26px">
+    <table class="t" style="font-size:16.5px">
+      <thead>
+        <tr>
+          <th style="width:16%">问题</th>
+          <th style="width:34%">现在的事实</th>
+          <th>为什么，以及下一步</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>设备状态动作<br><span style="font-size:13px;color:var(--ink-3)">漏拦</span></td>
+          <td><strong style="color:var(--red)">6 个里漏 5 个</strong>：关闭查找手机、允许安装未知应用、开启开发者选项、更换手机号、关闭定位服务</td>
+          <td>这是关键词表这条路的天花板。下一步换成「页面上下文 + 业务语义」联合判定，<strong>不再靠加词</strong></td>
+        </tr>
+        <tr>
+          <td>技能自进化<br><span style="font-size:13px;color:var(--ink-3)">第三层</span></td>
+          <td>判定逻辑写完、有单测，<strong style="color:var(--red)">一次实机都没跑过</strong></td>
+          <td>它是技能启用的唯一裁判。下一步在冻结任务集上跑 1 个候选 × 6 条判据，把「没跑过」变成「跑过，结论是 X」</td>
+        </tr>
+        <tr>
+          <td>适配面<br><span style="font-size:13px;color:var(--ink-3)">机型</span></td>
+          <td><strong style="color:var(--red)">单机型、单系统</strong>：OnePlus PLC110 / Android 16</td>
+          <td>不同厂商的后台策略、输入法与控件树差异还没覆盖。下一步补第二台机型，同一任务集重复 3 次</td>
+        </tr>
+        <tr>
+          <td>本地核验<br><span style="font-size:13px;color:var(--ink-3)">误判</span></td>
+          <td><strong style="color:var(--red)">L3 会系统性误判</strong>：某次运行 7 个动作全部被判为「改到了别的」</td>
+          <td>阈值还没校准。下一步按页面类型降级为 L3+L4 混合，报告里写「会误判」，不写「已解决」</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:auto;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:baseline;border-top:1.5px solid var(--ink);padding-top:26px">
+      <div class="kicker-line">我们的规矩</div>
+      <div class="lead" style="font-size:20px">
+        能测的给数字，不能测的给验收方式。<strong>说到哪，证据就到哪。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>方案书第六部分（十）、第八部分（五）1</span>
+    <span class="pno">16 / 22</span>
+  </div>
+</div>
+
+<!-- p17 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">17</span> 定位 · 和谁不一样</div>
+  <h1 class="title">八类现成方案，没有一类同时满足四条</h1>
+  <div class="subtitle">我们只问四个问题：<strong>能不能跨应用办事、会不会在关键处停下、结果能不能核验、失败时有没有人接。</strong></div>
+
+  <div class="body" style="padding-top:22px">
+    <table class="t" style="font-size:15.5px">
+      <thead>
+        <tr>
+          <th style="width:36%">方案</th>
+          <th class="n" style="width:16%">跨应用办事</th>
+          <th class="n" style="width:16%">关键处停下</th>
+          <th class="n" style="width:16%">结果可核验</th>
+          <th class="n" style="width:16%">失败有人接</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>应用自带适老化（大字版 / 关怀模式）</td><td class="n no">—</td><td class="n no">—</td><td class="n no">—</td><td class="n no">—</td></tr>
+        <tr><td>系统无障碍（简易模式 / 放大 / 朗读）</td><td class="n no">—</td><td class="n no">—</td><td class="n no">—</td><td class="n no">—</td></tr>
+        <tr><td>手机厂商语音助手</td><td class="n half">部分</td><td class="n no">—</td><td class="n no">—</td><td class="n no">—</td></tr>
+        <tr><td>通用手机 GUI 智能体</td><td class="n yes">✓</td><td class="n no">—</td><td class="n half">部分</td><td class="n no">—</td></tr>
+        <tr><td>子女电话 / 视频远程指导</td><td class="n yes">✓</td><td class="n yes">✓</td><td class="n no">—</td><td class="n yes">✓</td></tr>
+        <tr><td>远程控制 / 屏幕共享</td><td class="n yes">✓</td><td class="n no">—</td><td class="n no">—</td><td class="n yes">✓</td></tr>
+        <tr><td>外置硬件助老设备</td><td class="n no">—</td><td class="n no">—</td><td class="n no">—</td><td class="n half">部分</td></tr>
+        <tr><td>人工代办（社区 / 跑腿 / 营业厅）</td><td class="n yes">✓</td><td class="n yes">✓</td><td class="n half">部分</td><td class="n yes">✓</td></tr>
+        <tr class="hi">
+          <td>本作品 · 银龄智办</td>
+          <td class="n yes">✓</td><td class="n yes">✓</td><td class="n yes">✓</td><td class="n yes">✓</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:auto;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:baseline;border-top:1.5px solid var(--ink);padding-top:24px">
+      <div class="kicker-line">差别在哪</div>
+      <div class="lead" style="font-size:20px">
+        不是某一项能力更强，而是<strong>把「可信」和「能办事」做成了同一套运行时约束</strong>——别人把它当可选项，我们把它当地基。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>表 5 八类方案对比 · 方案书第一部分（一）3</span>
+    <span class="pno">17 / 22</span>
+  </div>
+</div>
+
+<!-- p18 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">18</span> 价值 · 这件事有多大</div>
+  <h1 class="title">3.23 亿人，一个正在变大的缺口</h1>
+  <div class="subtitle">不是小众需求：每年新增 1307 万 60 岁以上人口，而「把事办成」的能力没有跟着长。</div>
+
+  <div class="body center">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1.5px solid var(--ink)">
+      <div style="padding:34px 32px 30px 0;border-right:1px solid var(--rule)">
+        <div class="numlabel">60 岁及以上</div>
+        <div class="num-lg">3.23<span style="font-size:26px;font-family:var(--sans);color:var(--ink-2);font-weight:500;margin-left:6px">亿</span></div>
+        <div class="numcap" style="font-size:15.5px">其中已上网 1.61 亿</div>
+      </div>
+      <div style="padding:34px 32px 30px 32px;border-right:1px solid var(--rule)">
+        <div class="numlabel">每年新增</div>
+        <div class="num-lg">1307<span style="font-size:26px;font-family:var(--sans);color:var(--ink-2);font-weight:500;margin-left:6px">万</span></div>
+        <div class="numcap" style="font-size:15.5px">2025 年 60 岁以上人口增量</div>
+      </div>
+      <div style="padding:34px 32px 30px 32px;border-right:1px solid var(--rule)">
+        <div class="numlabel">银发经济（现在）</div>
+        <div class="num-lg">7<span style="font-size:26px;font-family:var(--sans);color:var(--ink-2);font-weight:500;margin-left:6px">万亿</span></div>
+        <div class="numcap" style="font-size:15.5px">约占 GDP 6%</div>
+      </div>
+      <div style="padding:34px 0 30px 32px">
+        <div class="numlabel" style="color:var(--red)">银发经济（2035 预计）</div>
+        <div class="num-lg" style="color:var(--red)">30<span style="font-size:26px;font-family:var(--sans);color:var(--ink-2);font-weight:500;margin-left:6px">万亿</span></div>
+        <div class="numcap" style="font-size:15.5px">约占 GDP 10%</div>
+      </div>
+    </div>
+
+    <div style="margin-top:64px">
+      <div class="kicker-line" style="margin-bottom:20px">政策已经站在同一个方向上</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <span class="tag" style="font-size:14px;padding:8px 14px">《无障碍环境建设法》第三十二条</span>
+        <span class="tag" style="font-size:14px;padding:8px 14px">国办发〔2024〕1 号 · 数字适老化</span>
+        <span class="tag" style="font-size:14px;padding:8px 14px">工信部信管〔2020〕200 号</span>
+        <span class="tag" style="font-size:14px;padding:8px 14px">工信部信管〔2023〕251 号</span>
+        <span class="tag" style="font-size:14px;padding:8px 14px">智慧健康养老产品及服务推广目录</span>
+      </div>
+    </div>
+
+    <div style="margin-top:56px;border-top:1px solid var(--rule);padding-top:26px;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:baseline">
+      <div class="kicker-line">我们的判断</div>
+      <div class="lead" style="font-size:21px">
+        真正要卖的不是「一个更聪明的助手」，而是<strong>「让手机替老人把流程走完」这件事本身</strong>——它是政策推着走的方向，不是我们自己想象的需求。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>方案书第八部分（二）市场分析</span>
+    <span class="pno">18 / 22</span>
+  </div>
+</div>
+
+<!-- p19 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">19</span> 产品 · 三种人，三种入口</div>
+  <h1 class="title">不换手机，不装新 App，不买设备</h1>
+  <div class="subtitle">老人用现有手机，家人用网页，机构用一台服务器。模型和语音服务都可以换，不绑定任何一家供应商。</div>
+
+  <div class="body center">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1.5px solid var(--ink)">
+      <div style="padding:36px 40px 0 0;border-right:1px solid var(--rule)">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:18px">老人</div>
+        <div style="font-family:var(--serif);font-size:36px;font-weight:700;line-height:1.35;margin-bottom:20px">一句话<br>就能发起</div>
+        <div style="font-size:17px;line-height:1.8;color:var(--ink-2)">
+          一个大按钮、一直能说话、<br>随时可以叫停；<br>
+          上次没办完的事，下次接着办。
+        </div>
+      </div>
+
+      <div style="padding:36px 40px 0 40px;border-right:1px solid var(--rule)">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:18px">家人</div>
+        <div style="font-family:var(--serif);font-size:36px;font-weight:700;line-height:1.35;margin-bottom:20px">打开网页<br>就能接手</div>
+        <div style="font-size:17px;line-height:1.8;color:var(--ink-2)">
+          老人求助，家人在网页上认领，<br>不用装 App；<br>
+          看不到私密内容，只看到卡在哪。
+        </div>
+      </div>
+
+      <div style="padding:36px 0 0 40px">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:18px">机构</div>
+        <div style="font-family:var(--serif);font-size:36px;font-weight:700;line-height:1.35;margin-bottom:20px">一台服务器<br>服务一个辖区</div>
+        <div style="font-size:17px;line-height:1.8;color:var(--ink-2)">
+          社区、养老院、运营商<br>可以按辖区部署；<br>
+          不增加老人的任何硬件成本。
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:58px;background:var(--ink);color:var(--ink-inv);padding:32px 40px;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center">
+      <div class="kicker-line" style="color:#B9B0A2">一条底线</div>
+      <div style="font-size:22px;line-height:1.6">
+        不做远程控制，不做屏幕共享，不默认接通短信——<strong style="color:#fff">家人的通道，必须和诈骗的通道长得不一样。</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>方案书第八部分（四）社会价值与商业转化</span>
+    <span class="pno">19 / 22</span>
+  </div>
+</div>
+
+<!-- p20 -->
+<div class="slide">
+  <div class="eyebrow"><span class="num">20</span> 下一步 · 三件具体的事</div>
+  <h1 class="title">接下来要补的三件事，都有验收方式</h1>
+  <div class="subtitle">不写「持续优化」，写清楚<strong>现状、做什么、怎么算做完</strong>。</div>
+
+  <div class="body center">
+    <div class="rows">
+      <div class="row" style="grid-template-columns:80px 260px 1fr 280px;padding:30px 0">
+        <div class="idx">01</div>
+        <div>
+          <div class="rt" style="font-size:24px">操作前后对比</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">补完证据层的最后一块</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:17px">
+          现状：靠可观察的控件状态和页面文字；像素对比因为不可靠已经删掉。<br>
+          干什么：同一任务的前后帧对齐，给出「已确认 / 无法确认」。
+        </div>
+        <div style="font-size:15.5px;color:var(--ink-3);line-height:1.6;align-self:center">
+          验收：<br>误伤率一并记录，不低于人工核对
+        </div>
+      </div>
+
+      <div class="row" style="grid-template-columns:80px 260px 1fr 280px;padding:30px 0">
+        <div class="idx">02</div>
+        <div>
+          <div class="rt" style="font-size:24px">真机注入红队</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">现在只有离线验证</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:17px">
+          现状：harness 里有脚本化注入，<strong class="red-strong">真机和真实模型还没做过</strong>。<br>
+          干什么：在真机上投诱导页面，看危险动作执行数和交还率。
+        </div>
+        <div style="font-size:15.5px;color:var(--ink-3);line-height:1.6;align-self:center">
+          验收：<br>执行数、交还率、误拦率三项同时报
+        </div>
+      </div>
+
+      <div class="row" style="grid-template-columns:80px 260px 1fr 280px;padding:30px 0">
+        <div class="idx">03</div>
+        <div>
+          <div class="rt" style="font-size:24px">多人多机型</div>
+          <div class="numlabel" style="margin-top:8px;margin-bottom:0">现在只有一台手机</div>
+        </div>
+        <div class="rd" style="margin-top:0;font-size:17px">
+          现状：OnePlus / Android 16，20 位老人。<br>
+          干什么：第二台厂商机型、第二套输入法，同一任务集重复 3 次。
+        </div>
+        <div style="font-size:15.5px;color:var(--ink-3);line-height:1.6;align-self:center">
+          验收：<br>两种机型成功率差异可解释
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:46px;font-family:var(--serif);font-size:28px;line-height:1.6;color:var(--ink)">
+      这三件做完之前，我们不把「可信」写成「已验证」。
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>方案书第八部分（五）2 评测计划</span>
+    <span class="pno">20 / 22</span>
+  </div>
+</div>
+
+<!-- p21 -->
+<div class="slide dark">
+  <div class="eyebrow"><span class="num">21</span> 趋势 · 为什么是现在</div>
+
+  <div class="body center">
+    <div class="statement sm" style="font-size:62px;line-height:1.42;max-width:1320px">
+      「会点屏幕」正在变成标配，<br>
+      <span style="color:#E8774A">「敢不敢让它碰钱」才是门槛。</span>
+    </div>
+
+    <div style="margin-top:70px;display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--rule-inv)">
+      <div style="padding:34px 40px 0 0;border-right:1px solid var(--rule-inv)">
+        <div class="kicker-line" style="color:var(--ink-inv-2);margin-bottom:16px">趋势一 · 能力过剩</div>
+        <div style="font-size:22px;font-weight:600;line-height:1.5;margin-bottom:16px">操作手机，已经不稀缺</div>
+        <div style="font-size:16.5px;line-height:1.75;color:var(--ink-inv-2)">
+          通用 GUI 智能体的能力上限被反复证明。稀缺的是<strong style="color:var(--ink-inv)">敢让它碰钱的约束</strong>。
+        </div>
+      </div>
+      <div style="padding:34px 40px 0 40px;border-right:1px solid var(--rule-inv)">
+        <div class="kicker-line" style="color:var(--ink-inv-2);margin-bottom:16px">趋势二 · 监管收紧</div>
+        <div style="font-size:22px;font-weight:600;line-height:1.5;margin-bottom:16px">谁执行，谁负责</div>
+        <div style="font-size:16.5px;line-height:1.75;color:var(--ink-inv-2)">
+          无障碍、适老化、算法责任都在收紧。<strong style="color:var(--ink-inv)">「不可撤回的动作交还本人」正在从加分项变成合规项</strong>。
+        </div>
+      </div>
+      <div style="padding:34px 0 0 40px">
+        <div class="kicker-line" style="color:var(--ink-inv-2);margin-bottom:16px">趋势三 · 容错为零</div>
+        <div style="font-size:22px;font-weight:600;line-height:1.5;margin-bottom:16px">老人不给第二次机会</div>
+        <div style="font-size:16.5px;line-height:1.75;color:var(--ink-inv-2)">
+          一次错付、一次「已发送」，就足以让老人卸掉整个应用——<strong style="color:var(--ink-inv)">可信不是体验优化，是入场券</strong>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>方案书第八部分（五）3 趋势判断</span>
+    <span class="pno">21 / 22</span>
+  </div>
+</div>
+
+<!-- p22 -->
+<div class="slide cover">
+  <div class="grid">
+    <div class="left">
+      <div class="topline">
+        <span>谢谢</span>
+        <span class="dot"></span>
+        <span>银龄智办 · 银龄智办团队</span>
+      </div>
+
+      <h1 style="font-size:76px;margin-top:64px">
+        让老人只说一句话，<br>
+        把<span class="em">最后一步</span>留住。
+      </h1>
+
+      <div class="tagline" style="margin-top:40px">
+        不是替老人做决定，<br>
+        而是把不用决定的事做完、把该决定的事留下。
+      </div>
+
+      <div class="meta" style="margin-top:64px">
+        <div>
+          <div class="k">三件事</div>
+          <div class="v">8 款应用真机跑通 · 20 个危险动作拦 15 个 · 10 位老人对照</div>
+        </div>
+        <div>
+          <div class="k">一句话</div>
+          <div class="v" style="color:var(--red);font-weight:600">能撤销的做，不能撤销的交还本人。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="mark" style="font-size:132px;line-height:1.1;text-align:center;writing-mode:horizontal-tb;letter-spacing:0.06em">
+        能撤销的做<br>
+        <span style="color:#E8774A">不能撤销的</span><br>
+        交还本人
+      </div>
+      <div class="mark-sub">AIC-2026-86471901 · 能工智人</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -215,7 +215,7 @@ async def transcribe(pcm: bytes, *, keyterms: list[str] | None = None) -> str:
     except SpeechError:
         raise
     except Exception as error:  # a failed handshake, a dropped socket, a wrong clock
-        log.warning("[speech] iFlytek 连接失败：%s", error)
+        log.warning("[speech] iFlytek connection failed=%s", type(error).__name__)
         raise SpeechError(f"连不上语音识别服务（{type(error).__name__}）") from error
     return final.strip()
 

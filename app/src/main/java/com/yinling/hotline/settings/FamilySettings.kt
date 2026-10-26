@@ -31,6 +31,7 @@ import com.yinling.core.ServiceAddress
 import com.yinling.hotline.Elder
 import com.yinling.hotline.ServerClient
 import com.yinling.hotline.ServerError
+import com.yinling.hotline.CircleMember
 import com.yinling.hotline.SessionController
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -43,6 +44,8 @@ import java.util.Date
 internal fun FamilySettings(session: SessionController) {
     val server = session.server
     val scope = rememberCoroutineScope()
+    var memberToRemove by remember { mutableStateOf<CircleMember?>(null) }
+    var confirmTokenRotation by remember { mutableStateOf(false) }
     val clipboard = LocalClipboardManager.current
     var familyName by rememberSaveable { mutableStateOf(session.familyName) }
     var familyPhone by rememberSaveable { mutableStateOf(session.familyPhone) }
@@ -51,6 +54,8 @@ internal fun FamilySettings(session: SessionController) {
     val phoneError = familyPhone.isNotBlank() && !familyPhone.trim().matches(Regex("[+0-9 ()-]{3,24}"))
     var address by rememberSaveable { mutableStateOf(server.baseUrl) }
     var elderName by rememberSaveable { mutableStateOf(server.elderName) }
+    var enrollmentToken by remember { mutableStateOf("") }
+    var members by remember { mutableStateOf(emptyList<com.yinling.hotline.CircleMember>()) }
     var busy by remember { mutableStateOf(false) }
     var feedback by remember { mutableStateOf("") }
     var attempted by remember { mutableStateOf(false) }
@@ -85,7 +90,8 @@ internal fun FamilySettings(session: SessionController) {
     }
 
     fun connect() = runAction {
-        server.connect(target, elderName.trim())
+        server.connect(target, elderName.trim(), enrollmentToken)
+        enrollmentToken = ""
         "已连接新守护圈，接下来把邀请码交给家人"
     }
 
@@ -125,6 +131,11 @@ internal fun FamilySettings(session: SessionController) {
             isError = attempted && addressError != null, enabled = !busy, singleLine = true, modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
         )
+        if (!configured || addressChanged) OutlinedTextField(
+            value = enrollmentToken, onValueChange = { enrollmentToken = it }, label = { Text("管理员注册口令（公开服务必填）") },
+            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation(),
+            singleLine = true, enabled = !busy, modifier = Modifier.fillMaxWidth(),
+        )
         if (configured && addressChanged) Text("地址修改尚未生效。切换服务会建立新的守护圈，不会迁移旧成员与记录。", fontSize = 14.sp, color = Elder.attention)
         Button(onClick = {
             attempted = true
@@ -143,6 +154,14 @@ internal fun FamilySettings(session: SessionController) {
     }
 
     if (configured) {
+        SettingsSection("成员与凭证", description = "移除成员会使其所有网页登录失效；更换凭证使旧设备令牌立即失效。") {
+            TextButton(onClick = { runAction { members = server.members(); "成员列表已刷新" } }, enabled = ready) { Text("刷新成员") }
+            members.forEach { member ->
+                Text("${member.name} · ${ServerClient.ROLE_NAMES[member.role] ?: member.role}")
+                TextButton(onClick = { memberToRemove = member }, enabled = ready) { Text("移除 ${member.name}") }
+            }
+            TextButton(onClick = { confirmTokenRotation = true }, enabled = ready) { Text("更换设备凭证") }
+        }
         SettingsSection("邀请可信的人", description = "刷新邀请码不会重新配对手机，已加入的成员不受影响；新邀请码会替换之前的未使用邀请码。") {
             Text("家人：可查看求助背景和留言；社区：接手求助与联系提醒；邻居：只接手求助。", fontSize = 14.sp, color = Elder.inkSoft)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -179,14 +198,42 @@ internal fun FamilySettings(session: SessionController) {
                 "手机已联系服务器；留言由常驻服务收取和展示，不在设置页标为送达"
             } }, enabled = ready, modifier = Modifier.fillMaxWidth()) { Text("现在联系一次") }
             OutlinedButton(onClick = { runAction {
-                if (!server.postEvent("help", "${server.elderName.ifBlank { "老人" }}需要帮忙（测试）", "这是一条家人端测试求助，请接手确认。", "来自家人设置的手动测试")) {
-                    throw ServerError("测试求助提交失败：${server.lastResult}")
-                }
-                "测试求助已提交，请在家人网页核对；不代表已读或已处理"
+                val receipt = server.postEvent("help", "${server.elderName.ifBlank { "老人" }}需要帮忙（测试）", "这是一条家人端测试求助，请接手确认。", "来自家人设置的手动测试")
+                    ?: throw ServerError("测试求助提交失败：${server.lastResult}")
+                receipt.helpMessage
             } }, enabled = ready, modifier = Modifier.fillMaxWidth()) { Text("发送测试求助（会新增记录）") }
         }
     }
 
+    memberToRemove?.let { member ->
+        AlertDialog(
+            onDismissRequest = { memberToRemove = null }, title = { Text("撤销 ${member.name} 的访问？") },
+            text = { Text("该成员所有网页登录立即失效，未完成的认领将重新开放。重新加入需要新的邀请。") },
+            confirmButton = { TextButton(onClick = {
+                memberToRemove = null
+                runAction {
+                    if (!server.removeMember(member.id)) throw ServerError("移除失败，请重试")
+                    members = server.members()
+                    "成员访问已撤销"
+                }
+            }) { Text("确认撤销") } },
+            dismissButton = { TextButton(onClick = { memberToRemove = null }) { Text("保留成员") } },
+        )
+    }
+    if (confirmTokenRotation) {
+        AlertDialog(
+            onDismissRequest = { confirmTokenRotation = false }, title = { Text("更换设备凭证？") },
+            text = { Text("旧令牌立即失效。本机保存新令牌，家人成员保持不变；若请求中断或凭证保存失败，可能需要重新配对。") },
+            confirmButton = { TextButton(onClick = {
+                confirmTokenRotation = false
+                runAction {
+                    if (!server.rotateToken()) throw ServerError("凭证更换失败，请重试")
+                    "设备凭证已更换，旧令牌失效"
+                }
+            }) { Text("确认更换") } },
+            dismissButton = { TextButton(onClick = { confirmTokenRotation = false }) { Text("取消") } },
+        )
+    }
     if (replaceServer) {
         AlertDialog(
             onDismissRequest = { replaceServer = false }, title = { Text("建立新的守护圈？") },

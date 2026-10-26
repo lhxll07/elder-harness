@@ -19,6 +19,18 @@ data class PendingMessage(
     val from: String,
 )
 
+data class CircleMember(val id: Int, val name: String, val role: String)
+
+data class EventReceipt(val id: Int, val notificationState: String) {
+    val helpMessage: String get() = when (notificationState) {
+        "accepted" -> "求助已登记，提醒服务已接收通知，还没有人接手。急事请直接打电话。"
+        "no_recipients" -> "求助已登记，但还没有可接手的成员。请直接打电话联系家人。"
+        "not_configured" -> "求助已登记在家人网页，还没有发送手机提醒。急事请直接打电话。"
+        "failed" -> "求助已登记，但手机提醒没发成功。请直接打电话联系家人。"
+        else -> "求助已登记在家人网页，等待家人接手。急事请直接打电话。"
+    }
+}
+
 /** Why a call to the server did not happen, in words a person could be shown. */
 class ServerError(message: String) : Exception(message)
 
@@ -56,7 +68,9 @@ class ServerClient(private val app: HotlineApp) {
         }
         set(value) {
             val trimmed = value.trim()
-            SecretStore.save(app, trimmed, SecretStore.DEVICE_TOKEN)
+            if (!SecretStore.save(app, trimmed, SecretStore.DEVICE_TOKEN)) {
+                throw ServerError("设备凭证未能安全保存。若已在服务端轮换，需要重新配对。")
+            }
             cachedToken = trimmed
             cachedRevision = SecretStore.revision
         }
@@ -187,10 +201,28 @@ class ServerClient(private val app: HotlineApp) {
     /** The one-time pairing: the phone asks for a token and a code the family will type in. */
     suspend fun pair(): String = connect(baseUrl, elderName)
 
-    suspend fun connect(address: String, name: String): String = withContext(Dispatchers.IO) {
+    suspend fun members(): List<CircleMember> = withContext(Dispatchers.IO) {
+        val json = request("GET", "/api/device/circle", null, token) ?: throw ServerError(lastResult)
+        val rows = json.getJSONArray("members")
+        List(rows.length()) { index -> rows.getJSONObject(index).let { CircleMember(it.getInt("id"), it.getString("name"), it.getString("role")) } }
+    }
+
+    suspend fun removeMember(id: Int): Boolean = withContext(Dispatchers.IO) {
+        request("DELETE", "/api/device/circle/$id", null, token)?.optBoolean("ok") == true
+    }
+
+    suspend fun rotateToken(): Boolean = withContext(Dispatchers.IO) {
+        val json = request("POST", "/api/device/token/rotate", "{}", token) ?: return@withContext false
+        val replacement = json.optString("token")
+        if (replacement.isBlank()) return@withContext false
+        token = replacement
+        true
+    }
+
+    suspend fun connect(address: String, name: String, enrollmentToken: String = ""): String = withContext(Dispatchers.IO) {
         com.yinling.core.ServiceAddress.error(address)?.let { throw ServerError(it) }
         val target = address.trim().trimEnd('/')
-        val body = JSONObject().put("elder_name", name.trim()).toString()
+        val body = JSONObject().put("elder_name", name.trim()).put("enrollment_token", enrollmentToken).toString()
         val json = request("POST", "/api/device/pair", body, token = null, baseAddress = target)
             ?: throw ServerError("配对失败：服务器没有回应。")
         val newToken = json.optString("token")
@@ -286,9 +318,9 @@ class ServerClient(private val app: HotlineApp) {
         ok
     }
 
-    suspend fun postEvent(kind: String, title: String, body: String, context: String = ""): Boolean =
+    suspend fun postEvent(kind: String, title: String, body: String, context: String = ""): EventReceipt? =
         withContext(Dispatchers.IO) {
-            if (!isConfigured()) return@withContext false
+            if (!isConfigured()) return@withContext null
             val payload = JSONObject()
                 .put("kind", kind)
                 .put("title", title)
@@ -296,10 +328,12 @@ class ServerClient(private val app: HotlineApp) {
                 .put("context", context)
                 .toString()
             val json = request("POST", "/api/device/events", payload, token)
-            val ok = json != null
-            lastResult = if (ok) "已上报：$title" else "上报失败"
-            LoopLog.event("[server] 上报 $kind ok=$ok")
-            ok
+            val receipt = json?.takeIf { it.optInt("id") > 0 }?.let {
+                EventReceipt(it.getInt("id"), it.optString("notification_state", "unknown"))
+            }
+            lastResult = if (receipt != null) "已登记：$title" else "上报失败"
+            LoopLog.event("[server] 上报 $kind ok=${receipt != null}")
+            receipt
         }
 
     private fun request(method: String, path: String, body: String?, token: String?, baseAddress: String = baseUrl): JSONObject? {

@@ -10,7 +10,7 @@ import android.os.Build
 import android.provider.Settings
 
 /**
- * The two notifications this app posts.
+ * The notifications this app posts.
  *
  * The常驻 one exists because keeping the process alive is what keeps the accessibility service
  * alive; it is a low-importance notification so it never makes a sound, and it doubles as the
@@ -24,6 +24,7 @@ object Notices {
     private const val CHANNEL_ATTENTION = "hotline_attention"
     const val ID_ALIVE = 1001
     const val ID_ACCESSIBILITY = 1002
+    private const val ID_TASK_ATTENTION = 1003
 
     fun ensureChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -55,6 +56,29 @@ object Notices {
     fun updateAlive(context: Context, text: String) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         manager.notify(ID_ALIVE, alive(context, text))
+    }
+
+    fun updateTaskAttention(context: Context, waiting: Boolean) {
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return
+        if (!waiting) {
+            manager.cancel(ID_TASK_ATTENTION)
+            return
+        }
+        ensureChannels(context)
+        manager.notify(
+            ID_TASK_ATTENTION,
+            Notification.Builder(context, CHANNEL_ATTENTION)
+                .setSmallIcon(R.drawable.ic_hotline)
+                .setContentTitle("有一步需要您确认或回答")
+                .setContentText("点这里打开银龄专线；即使当前页面不显示悬浮窗，也可以继续。")
+                .setStyle(Notification.BigTextStyle().bigText(
+                    "点这里打开银龄专线，查看并确认这一步。确认后会先返回原页面，再继续操作。",
+                ))
+                .setVisibility(Notification.VISIBILITY_PRIVATE)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(openApp(context))
+                .build(),
+        )
     }
 
     /** "Accessibility is off" — a problem only the person can fix, so it is worth interrupting. */

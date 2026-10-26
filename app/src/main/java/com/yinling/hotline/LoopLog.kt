@@ -31,12 +31,12 @@ object LoopLog {
         appContext = context.applicationContext
     }
 
-    /** Always goes to logcat; the file is written only in developer mode. */
     fun event(message: String) {
-        Log.d(TAG, message)
         if (!enabled) return
+        val redacted = com.yinling.core.PrivacyFilter.redact(message)
+        if (BuildConfig.DEBUG) Log.d(TAG, redacted)
         val context = appContext ?: return
-        val line = "${LocalTime.now().format(stamp)} $message\n"
+        val line = "${LocalTime.now().format(stamp)} $redacted\n"
         runCatching {
             synchronized(fileLock) {
                 val file = File(context.filesDir, FILE_NAME)
@@ -63,11 +63,4 @@ object LoopLog {
 
     fun file(): File? = appContext?.let { File(it.filesDir, FILE_NAME) }
 
-    /** Writes the newest screenshot next to the log so the run can be reviewed afterwards. */
-    fun saveScreenshot() {
-        if (!enabled) return
-        val context = appContext ?: return
-        val bytes = ScreenAccessService.lastScreenshot ?: return
-        runCatching { File(context.filesDir, "last-screen.jpg").writeBytes(bytes) }
-    }
 }

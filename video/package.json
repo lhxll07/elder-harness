@@ -1,0 +1,19 @@
+{
+  "name": "yinling-demo-video",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "《银龄智办》参赛演示短片 — Three.js/WebGL2 离线逐帧渲染",
+  "scripts": {
+    "frames": "node render/frames.mjs",
+    "encode": "node render/encode.mjs",
+    "shot": "node render/frames.mjs --only",
+    "preview": "node render/preview.mjs",
+    "ping": "node render/ping.mjs",
+    "gpu": "node render/gpuprobe.mjs",
+    "film": "node render/film.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  }
+}

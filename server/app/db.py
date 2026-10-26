@@ -18,6 +18,7 @@ from typing import Any, Iterator
 DB_PATH = os.environ.get("HOTLINE_DB", os.path.join(os.path.dirname(__file__), "..", "hotline.db"))
 # A pairing code is a setup secret, not a permanent password. The phone can always re-pair.
 PAIR_CODE_TTL_SECONDS = int(os.environ.get("HOTLINE_PAIR_TTL_SECONDS", "3600"))
+SESSION_TTL_SECONDS = max(60, int(os.environ.get("HOTLINE_SESSION_TTL_SECONDS", "2592000")))
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS devices (
@@ -70,6 +71,13 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 CREATE INDEX IF NOT EXISTS events_device_idx ON events (device_id, id);
+CREATE TABLE IF NOT EXISTS quotas (
+    subject TEXT NOT NULL,
+    bucket TEXT NOT NULL,
+    window_start INTEGER NOT NULL,
+    used INTEGER NOT NULL,
+    PRIMARY KEY (subject, bucket)
+);
 """
 
 
@@ -230,6 +238,7 @@ def add_circle_member(device_id: int, name: str, phone: str, role: str) -> dict[
 def create_session(circle_id: int) -> str:
     token = new_token()
     with db() as connection:
+        connection.execute("DELETE FROM sessions WHERE created_at <= ?", (time.time() - SESSION_TTL_SECONDS,))
         connection.execute(
             "INSERT INTO sessions (token, circle_id, created_at) VALUES (?,?,?)",
             (token, circle_id, time.time()),
@@ -247,10 +256,49 @@ def session_member(token: str) -> dict[str, Any] | None:
         row = connection.execute(
             "SELECT c.*, d.elder_name, d.id AS device_id, d.last_seen_at, d.last_seen_note, "
             "d.pair_code FROM sessions s JOIN circle c ON c.id = s.circle_id "
-            "JOIN devices d ON d.id = c.device_id WHERE s.token = ?",
-            (token,),
+            "JOIN devices d ON d.id = c.device_id WHERE s.token = ? AND s.created_at > ?",
+            (token, time.time() - SESSION_TTL_SECONDS),
         ).fetchone()
         return dict(row) if row else None
+
+
+def consume_quota(subject: str, bucket: str, limit: int, window_seconds: int, cost: int = 1) -> bool:
+    if limit <= 0 or cost <= 0:
+        return False
+    now = int(time.time())
+    window = now // window_seconds * window_seconds
+    with db() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute("DELETE FROM quotas WHERE window_start < ?", (now - 172800,))
+        row = connection.execute("SELECT used, window_start FROM quotas WHERE subject=? AND bucket=?", (subject, bucket)).fetchone()
+        used = row["used"] if row and row["window_start"] == window else 0
+        if used + cost > limit:
+            return False
+        connection.execute(
+            "INSERT INTO quotas VALUES (?,?,?,?) ON CONFLICT(subject,bucket) DO UPDATE SET window_start=excluded.window_start, used=excluded.used",
+            (subject, bucket, window, used + cost),
+        )
+        return True
+
+
+def revoke_member(device_id: int, member_id: int) -> bool:
+    with db() as connection:
+        member = connection.execute("SELECT id FROM circle WHERE id=? AND device_id=?", (member_id, device_id)).fetchone()
+        if not member:
+            return False
+        connection.execute("DELETE FROM sessions WHERE circle_id=?", (member_id,))
+        connection.execute("UPDATE events SET created_by=NULL WHERE created_by=?", (member_id,))
+        connection.execute("UPDATE events SET claimed_by=NULL, claimed_at=NULL, status='new' WHERE claimed_by=? AND status='claimed'", (member_id,))
+        connection.execute("UPDATE events SET claimed_by=NULL WHERE claimed_by=?", (member_id,))
+        connection.execute("DELETE FROM circle WHERE id=?", (member_id,))
+        return True
+
+
+def rotate_device_token(device_id: int) -> str:
+    token = new_token()
+    with db() as connection:
+        connection.execute("UPDATE devices SET token=? WHERE id=?", (token, device_id))
+    return token
 
 
 def add_event(

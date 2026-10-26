@@ -62,7 +62,7 @@ def check_silence(
         event = db.add_event(device["id"], "alert", "from_device", title=title, body=body)
         members = db.circle_of(device["id"])
         notify.notify_circle(members, "alert", title, body)
-        log.warning("[watch] %s", title)
+        log.warning("[watch] silence alert device=%s event=%s", device["id"], event["id"])
         raised.append(event)
     return raised
 

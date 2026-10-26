@@ -1,0 +1,66 @@
+<div class="slide">
+  <div class="eyebrow"><span class="num">09</span> 架构 · 一句话说清</div>
+  <h1 class="title">可信不在模型里，在<span class="em">三样东西的绑定</span>里</h1>
+  <div class="subtitle">一个动作要可信，必须同时回答三个问题：<strong>它属于哪一版页面、谁批准了它、凭什么说它成了。</strong>把这三个回答做成运行时结构，就是本作品的架构。</div>
+
+  <div class="body center">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1.5px solid var(--ink)">
+      <div style="padding:38px 40px 34px 0;border-right:1px solid var(--rule)">
+        <div class="numlabel" style="color:var(--red)">P1 · 绑定面</div>
+        <div style="font-family:var(--serif);font-size:34px;font-weight:700;margin-bottom:20px">它属于哪一版页面</div>
+        <div style="font-size:17px;line-height:1.75;color:var(--ink-2)">
+          动作只对<strong>被决定时看到的页面</strong>有效。<br>
+          坐标动作绝不跨版本；控件动作只允许唯一身份重绑。<br>
+          派发前重新看一次页面——不是计划时判断、执行时照旧。
+        </div>
+        <div class="code" style="margin-top:24px;font-size:13.5px;color:var(--ink-3)">ScreenActionGuard · dispatch</div>
+      </div>
+
+      <div style="padding:38px 40px 34px 40px;border-right:1px solid var(--rule)">
+        <div class="numlabel" style="color:var(--red)">P2 · 授权面</div>
+        <div style="font-family:var(--serif);font-size:34px;font-weight:700;margin-bottom:20px">谁批准了它</div>
+        <div style="font-size:17px;line-height:1.75;color:var(--ink-2)">
+          22 个工具 × 11 个属性，语义只来自<strong>一张表</strong>。<br>
+          参数 → 危险词 → 敏感页 → 本人同意，逐层短路，<strong>后一层不能放行前一层拒绝的动作</strong>。<br>
+          同意只对这一次、这一组参数有效。
+        </div>
+        <div class="code" style="margin-top:24px;font-size:13.5px;color:var(--ink-3)">PhoneTool · ManualActionPolicy</div>
+      </div>
+
+      <div style="padding:38px 0 34px 40px">
+        <div class="numlabel" style="color:var(--red)">P3 · 证据面</div>
+        <div style="font-family:var(--serif);font-size:34px;font-weight:700;margin-bottom:20px">凭什么说它成了</div>
+        <div style="font-size:17px;line-height:1.75;color:var(--ink-2)">
+          记录按来源分级：页面读到的算数，<strong>自己打进去的不算</strong>。<br>
+          跨应用不互相作证；页面写「未签收」不能为「已签收」背书。<br>
+          「完成」必须带一张可检查的证书。
+        </div>
+        <div class="code" style="margin-top:24px;font-size:13.5px;color:var(--ink-3)">EvidenceCheck · OutcomeCheck</div>
+      </div>
+    </div>
+
+    <div style="margin-top:46px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid var(--rule);padding-top:26px">
+      <div style="padding-right:24px">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I1</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">没有孤儿动作：<br>每个副作用都有版本绑定与放行</div>
+      </div>
+      <div style="padding-right:24px">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I2</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">没有孤儿声明：<br>每个「完成」都有晚于动作的证据</div>
+      </div>
+      <div style="padding-right:24px">
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I3</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">授权不可复用：<br>一次性、与参数绑定</div>
+      </div>
+      <div>
+        <div class="kicker-line" style="color:var(--red);margin-bottom:8px">I4</div>
+        <div style="font-size:15.5px;line-height:1.55;color:var(--ink-2)">没有未分类动作：<br>工具目录与注册表由测试对齐</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>3PA · 三平面可信执行 · 方案书第三部分（九）</span>
+    <span class="pno">09 / 22</span>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>银龄智办 · 需求与价值</title>
+    <link rel="stylesheet" href="p02.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第二页：需求与价值">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p02-background-unified-v01.png" alt="瓷白浅蓝开放空间：玻璃语音气泡、跨应用页面与金边结果单，以细蓝金曲线自然衔接">
+
+        <header class="heading">
+          <p class="chapter">需求与价值<span>从界面适配，到任务服务</span></p>
+          <h1 id="slide-title">数字适老化，正在走向<span>“任务级服务”</span></h1>
+          <p class="lead">从“看得清、点得到”，走向<strong>“说得出、办得成”</strong></p>
+        </header>
+
+        <p class="brand">银龄智办</p>
+
+        <section class="population soft-panel" aria-label="2025年末我国60岁及以上人口规模">
+          <p class="population-year">2025 年末 · 中国</p>
+          <h2>60 岁及以上人口</h2>
+          <p class="population-total"><strong>3.23</strong><span>亿</span></p>
+          <div class="population-share">
+            <p class="share-number"><strong>23.0</strong><span>%</span></p>
+            <p class="share-label">占全国人口比重</p>
+          </div>
+        </section>
+
+        <section class="service-path" aria-label="从口语到目标、从目标到行动、从行动到可核对结果">
+          <div class="stage-copy stage-goal soft-panel">
+            <h2>口语<span>→</span>目标</h2>
+            <p>一句话明确需求</p>
+          </div>
+          <div class="stage-copy stage-action soft-panel">
+            <h2>目标<span>→</span>行动</h2>
+            <p>跨应用连续办理</p>
+          </div>
+          <div class="stage-copy stage-result soft-panel">
+            <h2>行动<span>→</span>结果</h2>
+            <p>核对事实，清楚交付</p>
+          </div>
+        </section>
+
+        <section class="result-copy" aria-label="结果单交互示意">
+          <h2>结果已核对</h2>
+          <p>大字呈现</p>
+          <p>语音反馈</p>
+        </section>
+
+        <section class="value-statement soft-panel" aria-label="银龄智办的价值主张">
+          <p class="value-brand">银龄智办</p>
+          <span class="value-divider" aria-hidden="true"></span>
+          <p class="value-message">长者说需求，智能体交结果</p>
+        </section>
+
+        <footer class="footer">
+          <p class="source">数据来源：<a href="https://www.stats.gov.cn/sj/zxfbhjd/202602/t20260228_1962662.html" target="_blank" rel="noopener noreferrer">国家统计局《2025年国民经济和社会发展统计公报》</a><span>（2026.02.28）</span></p>
+          <p class="page-number" aria-label="第2页，共17页"><strong>02</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "cover.html";
+        }
+        if (event.key === "ArrowRight") {
+          window.location.href = "p03.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "project": "银龄智办",
+  "page_count": 17,
+  "canvas": [3840, 2160],
+  "tool": "built-in image generation",
+  "workflow": "Generate one complete slide per turn, then wait for the user. Archive the previous output before generating the next slide.",
+  "next_page": 4,
+  "prepared_prompt": "prompts/p04.txt",
+  "generation_mode": "generate_without_reference_images",
+  "visual_feedback": "用户继续第 04 页。第 03 页采用最新直接生图版，细长手机、白绿真实首页、大字精简说明。用户明确要求直接重新生图，不采用字体叠加方案；后续仍不传参考图。",
+  "slides": [
+    {
+      "page": 1,
+      "status": "approved_reference_available",
+      "revision": "v02",
+      "reference_image_index": 1,
+      "local_file": null,
+      "prompt": "prompts/p01-edit-v02.txt"
+    },
+    {
+      "page": 2,
+      "status": "approved_reference_available",
+      "revision": "v02",
+      "reference_image_index": 3,
+      "local_file": null,
+      "prompt": "prompts/p02-edit-v02.txt",
+      "style_reference_image_index": 2
+    },
+    {
+      "page": 3,
+      "status": "approved_reference_available",
+      "revision": "v03",
+      "reference_image_index": 6,
+      "previous_reference_image_index": 4,
+      "local_file": null,
+      "prompt": "prompts/p03-v02.txt",
+      "revision_note": "实际 v03 将副标题和六项描述精简，标题约150像素、能力标题104像素、描述78像素；完整最终提示词保存在对话中的第03页最后一次生图调用。",
+      "generation_mode": "generate_without_reference_images"
+    },
+    {
+      "page": 4,
+      "status": "generation_requested",
+      "revision": "v01",
+      "local_file": null,
+      "prompt": "prompts/p04.txt",
+      "generation_mode": "generate_without_reference_images"
+    }
+  ]
+}

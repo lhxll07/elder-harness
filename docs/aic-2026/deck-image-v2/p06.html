@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>银龄智办 · 页面绑定创新</title>
+    <link rel="stylesheet" href="p06.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第六页：页面版本绑定与唯一身份重绑定">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p06-background.png" alt="两张通透页面切片中，同一个青蓝目标控件随布局展开向下移动；蓝金曲线经稳定身份锚点，将动作连接到当前页面中的同一目标">
+
+        <header class="heading">
+          <p class="chapter">绑定创新<span>页面版本绑定 · 派发前再观察 · 唯一控件重绑</span></p>
+          <h1 id="slide-title">让每次操作，都<span>对准当前页面</span></h1>
+        </header>
+
+        <p class="brand">银龄智办</p>
+
+        <section class="insights" aria-label="页面绑定机制的三个关键环节">
+          <div class="insight insight-snapshot">
+            <span class="insight-index" aria-hidden="true">01</span>
+            <div class="insight-copy">
+              <h2>动作绑定观察快照</h2>
+              <p>动作携带页面版本与观察快照，<br>保留目标选择的上下文。</p>
+            </div>
+          </div>
+          <div class="insight insight-observe">
+            <span class="insight-index" aria-hidden="true">02</span>
+            <div class="insight-copy">
+              <h2>派发前重新观察</h2>
+              <p>执行前获取当前页面，<br>重新核对应用与窗口。</p>
+            </div>
+          </div>
+          <div class="insight insight-rebind">
+            <span class="insight-index" aria-hidden="true">03</span>
+            <div class="insight-copy">
+              <h2>唯一身份重绑定</h2>
+              <p>几何身份优先，稳定特征联合匹配；<br>唯一定位后，同步更新目标与快照。</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="binding-diagram" aria-label="同一目标在页面布局变化前后的匹配与重绑定示意">
+          <p class="diagram-label">布局重排示意</p>
+          <div class="page-caption caption-planned">
+            <h2>规划时观察快照</h2>
+          </div>
+          <div class="page-caption caption-current">
+            <h2>派发前当前页面</h2>
+          </div>
+          <p class="target-caption target-planned">同一目标控件</p>
+          <p class="target-caption target-current">同一目标控件</p>
+          <div class="identity-copy">
+            <h2>唯一身份匹配</h2>
+            <p>文字 · 角色 · 结构</p>
+          </div>
+          <div class="layout-note">
+            <h2>布局展开</h2>
+            <p>目标随页面下移</p>
+          </div>
+          <div class="binding-update">
+            <h2>绑定同步更新</h2>
+            <p>目标 · 版本 · 观察快照</p>
+          </div>
+        </section>
+
+        <section class="flow" aria-label="携带观察快照、派发前再观察、唯一身份重绑、更新绑定后执行">
+          <div class="flow-step flow-snapshot">
+            <h2>携带观察快照</h2>
+            <p>动作与页面版本关联</p>
+          </div>
+          <div class="flow-step flow-observe">
+            <h2>派发前再观察</h2>
+            <p>获取本轮最新页面</p>
+          </div>
+          <div class="flow-step flow-rebind">
+            <h2>唯一身份重绑</h2>
+            <p>几何优先 · 稳定身份匹配</p>
+          </div>
+          <div class="flow-step flow-execute">
+            <h2>更新绑定后执行</h2>
+            <p>依据当前页面派发动作</p>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p class="footer-note">页面版本<span>×</span>控件身份<span>×</span>观察快照</p>
+          <p class="page-number" aria-label="第6页，共17页"><strong>06</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "p05.html";
+        }
+        if (event.key === "ArrowRight") {
+          window.location.href = "p07.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,413 @@
+@font-face {
+  font-family: "Page Two Sans SC";
+  src: url("assets/fonts/p02-sc-regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Page Two Sans SC";
+  src: url("assets/fonts/p02-sc-bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+}
+
+:root {
+  color-scheme: light;
+  font-family: "Page Two Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --navy: #102a43;
+  --blue: #1766ad;
+  --gold: #e5c88f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #0b2338;
+}
+
+p,
+h1,
+h2 {
+  margin: 0;
+}
+
+.viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 2048px;
+  width: 2048px;
+  height: 1152px;
+  overflow: hidden;
+  color: var(--navy);
+  isolation: isolate;
+  transform: scale(var(--slide-scale, 1));
+  transform-origin: center;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
+}
+
+.heading {
+  position: absolute;
+  top: 73px;
+  left: 91px;
+  width: 1780px;
+}
+
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  color: var(--blue);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 2px;
+}
+
+.chapter::before {
+  width: 5px;
+  height: 23px;
+  border-radius: 2px;
+  background: #ba9557;
+  content: "";
+}
+
+.chapter span {
+  padding-left: 23px;
+  border-left: 1px solid #b8c7d3;
+  color: #60798d;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 1px;
+}
+
+h1 {
+  margin-top: 20px;
+  font-size: 65px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+h1 span {
+  color: var(--blue);
+}
+
+.lead {
+  margin-top: 17px;
+  color: #5c7386;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.lead strong {
+  color: #157b87;
+  font-weight: 700;
+}
+
+.brand {
+  position: absolute;
+  top: 75px;
+  right: 94px;
+  color: #506e86;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 3px;
+}
+
+.population {
+  position: absolute;
+  top: 325px;
+  left: 112px;
+  width: 458px;
+  color: #f4f8fb;
+}
+
+.population-year {
+  color: var(--gold);
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 2px;
+}
+
+.population h2 {
+  margin-top: 16px;
+  color: #e4eef5;
+  font-size: 29px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+
+.population-total {
+  display: flex;
+  align-items: baseline;
+  gap: 19px;
+  margin-top: 3px;
+  line-height: 1.15;
+}
+
+.population-total strong {
+  color: #ffffff;
+  font-size: 130px;
+  font-weight: 700;
+  letter-spacing: -3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.population-total span {
+  color: var(--gold);
+  font-size: 49px;
+  font-weight: 700;
+}
+
+.population-share {
+  margin-top: 23px;
+  padding-top: 20px;
+  border-top: 1px solid #7193aa80;
+}
+
+.share-number {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--gold);
+  line-height: 1.15;
+}
+
+.share-number strong {
+  font-size: 91px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.share-number span {
+  font-size: 47px;
+  font-weight: 700;
+}
+
+.share-label {
+  margin-top: 2px;
+  color: #d7e5ee;
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+
+.stage-copy {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.stage-goal {
+  top: 680px;
+  left: 678px;
+  width: 371px;
+  height: 131px;
+}
+
+.stage-action {
+  top: 639px;
+  left: 1099px;
+  width: 390px;
+  height: 155px;
+}
+
+.stage-result {
+  top: 572px;
+  left: 1543px;
+  width: 428px;
+  height: 185px;
+}
+
+.stage-copy h2 {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.stage-copy h2 span {
+  color: #b08b4c;
+  font-size: 29px;
+  font-weight: 400;
+}
+
+.stage-copy p {
+  margin-top: 10px;
+  color: #4c677e;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+}
+
+.value-statement {
+  position: absolute;
+  top: 888px;
+  left: 94px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+  width: 1874px;
+  height: 113px;
+  color: #f5f8fa;
+}
+
+.value-brand {
+  color: var(--gold);
+  font-size: 33px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
+
+.value-divider {
+  width: 1px;
+  height: 42px;
+  background: #a8b5b880;
+}
+
+.value-message {
+  font-size: 39px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.source {
+  position: absolute;
+  top: 1068px;
+  left: 94px;
+  color: #536e84;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.source a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.source a:hover,
+.source a:focus-visible {
+  text-decoration: underline;
+}
+
+.source span {
+  color: #6a8091;
+}
+
+.page-number {
+  position: absolute;
+  top: 1064px;
+  right: 94px;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  color: #607b91;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-number strong {
+  color: var(--navy);
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.page-number span {
+  color: #a48450;
+}
+
+@page {
+  size: 1280px 720px;
+  margin: 0;
+}
+
+@media print {
+  :root {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    width: 1280px;
+    height: 720px;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .viewport {
+    position: relative;
+    display: block;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: scale(0.625);
+    transform-origin: top left;
+  }
+}

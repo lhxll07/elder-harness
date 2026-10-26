@@ -131,6 +131,8 @@ object SkillDoc {
         appendLine("name: ${oneLine(skill.name)}")
         appendLine("description: ${oneLine(skill.description)}")
         appendLine("version: ${skill.version}")
+        appendLine("content_hash: ${skill.contentHash}")
+        appendLine("contract_hash: ${SkillValidation.contractHash(skill)}")
         appendLine("parent: ${oneLine(skill.parent)}")
         appendLine("status: ${oneLine(skill.status)}")
         appendLine("gate: ${oneLine(skill.gate)}")

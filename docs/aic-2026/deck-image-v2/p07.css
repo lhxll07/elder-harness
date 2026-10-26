@@ -1,0 +1,36 @@
+@import url("unified.css");
+
+@font-face { font-family: "Page Seven Unified SC"; src: url("assets/fonts/p07-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Page Seven Unified SC"; src: url("assets/fonts/p07-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-style: normal; font-display: block; }
+:root { --slide-font: "Page Seven Unified SC"; }
+.stage-caption { position: absolute; top: 224px; display: flex; align-items: baseline; justify-content: center; gap: 15px; width: 455px; height: 65px; padding: 12px 18px; border-radius: 18px; }
+.stage-enter { left: 141px; }
+.stage-draft { left: 785px; }
+.stage-person { left: 1418px; }
+.stage-index { color: var(--gold); font-size: 21px; font-variant-numeric: tabular-nums; }
+.stage-caption h2 { color: #1e5987; font-size: 28px; line-height: 1.4; letter-spacing: 1px; white-space: nowrap; }
+.ui-label { position: absolute; color: #416780; font-size: 24px; font-weight: 700; line-height: 1.5; white-space: nowrap; }
+.launcher-title { top: 337px; left: 179px; width: 365px; text-align: center; }
+.contact-draft { top: 366px; left: 865px; width: 230px; }
+.contact-person { top: 344px; left: 1493px; width: 230px; }
+.chat-message { position: absolute; color: #345b75; font-size: 25px; line-height: 1.5; white-space: nowrap; }
+.incoming-draft { top: 463px; left: 824px; width: 189px; }
+.reply-draft { top: 557px; left: 1005px; width: 180px; }
+.incoming-person { top: 446px; left: 1450px; width: 191px; }
+.reply-person { top: 548px; left: 1630px; width: 180px; }
+.draft-tag { position: absolute; color: #6a8296; font-size: 18px; line-height: 1.5; white-space: nowrap; }
+.draft-tag-edit { top: 630px; left: 811px; }
+.draft-tag-person { top: 629px; left: 1430px; }
+.draft-text { position: absolute; color: #245d89; font-size: 24px; line-height: 1.5; white-space: nowrap; }
+.draft-edit { top: 682px; left: 815px; width: 280px; }
+.draft-person { top: 682px; left: 1440px; width: 290px; }
+.owner-label { position: absolute; top: 444px; left: 1887px; width: 150px; color: var(--gold); font-size: 24px; font-weight: 700; line-height: 1.5; text-align: center; white-space: nowrap; }
+.scene-label { position: absolute; top: 812px; right: 94px; color: #60798d; font-size: 17px; line-height: 1.5; }
+.benchmark { position: absolute; top: 884px; left: 694px; width: 660px; height: 165px; padding: 10px 24px; text-align: center; }
+.benchmark h2 { color: #4e6b82; font-size: 21px; font-weight: 400; line-height: 1.5; white-space: nowrap; }
+.metric-line { display: flex; align-items: center; justify-content: center; gap: 37px; height: 102px; margin-top: 4px; }
+.metric-column { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.metric-column strong { display: block; color: var(--blue); font-size: 48px; font-weight: 700; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.metric-column span { display: block; color: #5b758a; font-size: 17px; line-height: 1.6; }
+.metric-after strong { color: var(--gold); }
+.metric-arrow { color: var(--gold); font-size: 40px; line-height: 1.5; }

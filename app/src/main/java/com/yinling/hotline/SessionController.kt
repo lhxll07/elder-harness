@@ -1,5 +1,8 @@
 package com.yinling.hotline
 
+import com.yinling.core.SavedSession
+import com.yinling.core.SessionStore
+
 import android.content.Intent
 import android.net.Uri
 import com.yinling.core.ActionApproval
@@ -39,6 +42,7 @@ data class SessionState(
     val message: String = "说出要办的事，我来帮您看下一步。",
     val phase: TaskPhase = TaskPhase.IDLE,
     val step: Int = 0,
+    val trialSkill: String = "",
     /** One-tap answers offered by the model while it waits for the person. */
     val options: List<String> = emptyList(),
     /** A confirmation is on screen; the answers apply to the call that is waiting. */
@@ -74,6 +78,11 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
     /** The trusted-circle server, if the family has paired this phone with one. */
     val server = ServerClient(app)
 
+    var excludedApps: Set<String>
+        get() = prefs.getString("excluded_apps", "com.eg.android.AlipayGphone,com.chinamworld,com.chinamworld.bocmbci,com.icbc")
+            .orEmpty().split(',', '\n').map(String::trim).filter(String::isNotEmpty).toSet()
+        set(value) { prefs.edit().putString("excluded_apps", value.joinToString(",")).apply() }
+
     /** Whether this phone can actually speak, for the settings screen. */
     fun speakerStatus(): String = app.speaker.status()
 
@@ -98,7 +107,10 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
             app.speaker.enabled = value
         }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val sessions = SessionStore(app)
+    private val sessions = SessionStore(app.filesDir, onFailure = {
+        LoopLog.event("[session] 保存失败，本次进度可能无法恢复")
+        android.widget.Toast.makeText(app, "进度未能保存，请不要关闭应用；可先停止后重试。", android.widget.Toast.LENGTH_LONG).show()
+    })
     private val mutableState = MutableStateFlow(initialState())
     val state = mutableState.asStateFlow()
 
@@ -124,12 +136,12 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
      * person is actually asked in normal use.
      */
     var autoConfirm: Boolean
-        get() = prefs.getBoolean("auto_confirm", false)
-        set(value) { prefs.edit().putBoolean("auto_confirm", value).apply() }
+        get() = BuildConfig.DEBUG && SkillCatalog.trial == null && prefs.getBoolean("auto_confirm", false)
+        set(value) { prefs.edit().putBoolean("auto_confirm", value && BuildConfig.DEBUG).apply() }
 
     /** Developer mode: the debug channel is open and the full loop is written to a log file. */
     var developerMode: Boolean
-        get() = prefs.getBoolean("developer_mode", false)
+        get() = BuildConfig.DEBUG && prefs.getBoolean("developer_mode", false)
         set(value) {
             prefs.edit().putBoolean("developer_mode", value).apply()
             LoopLog.enabled = value
@@ -146,8 +158,8 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         get() = cachedApiKey ?: SecretStore.load(app).also { cachedApiKey = it }
         set(value) {
             val trimmed = value.trim()
+            check(SecretStore.save(app, trimmed)) { "访问密钥未能安全保存，原配置未更换" }
             cachedApiKey = trimmed
-            SecretStore.save(app, trimmed)
         }
 
     private val phoneTools = AndroidPhoneTools(app)
@@ -185,6 +197,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         ?.takeIf { it.isNotBlank() }
         ?: newSessionId().also { prefs.edit().putString(KEY_CURRENT_SESSION, it).apply() }
     private var loop: AgentLoop? = null
+    private var nextSkillTrial: Skill? = null
     private var job: Job? = null
     private var skillJob: Job? = null
     private var confirmation: CompletableDeferred<Boolean>? = null
@@ -230,6 +243,13 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
 
     // ---- task lifecycle -----------------------------------------------------
 
+    fun queueSkillTrial(skill: Skill): Boolean {
+        if (!BuildConfig.DEBUG || !developerMode || com.yinling.core.SkillLint.lint(skill).rejected) return false
+        autoConfirm = false
+        nextSkillTrial = skill
+        return true
+    }
+
     fun start(goal: String) {
         LoopLog.event("[session] start goal=${goal.take(40)}")
         if (goal.isBlank()) return
@@ -250,13 +270,18 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         lastVerdict = ""
         runPromptTokens = 0
         runCompletionTokens = 0
-        mutableState.value = SessionState(goal.trim(), "正在看看当前页面。", TaskPhase.WORKING)
+        SkillCatalog.trial = nextSkillTrial.takeIf { BuildConfig.DEBUG && developerMode && !autoConfirm }
+        nextSkillTrial = null
+        mutableState.value = SessionState(goal.trim(), "正在看看当前页面。", TaskPhase.WORKING,
+            trialSkill = SkillCatalog.trial?.let { "${it.stableId}@${it.version}" }.orEmpty())
+        LoopLog.event("[session] mode auto_confirm=$autoConfirm trial=${state.value.trialSkill.ifBlank { "none" }}")
         launch(resume = false)
     }
 
     /** Continues a task from the saved list, restoring the exact conversation the model saw. */
     fun restore(id: String) {
         val saved = sessions.load(id) ?: return
+        SkillCatalog.trial = null
         val running = buildLoop()
         // Keep the task's own start time when it was saved, so a resumed run does not treat its
         // earlier work as history that predates the task.
@@ -818,6 +843,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 phase = TaskPhase.CONFIRMING,
                 hasPendingApproval = true,
             )
+            app.speaker.say(state.value.message + "如果看不到按钮，请从通知栏或桌面打开银龄专线。")
             return try {
                 val approved = answer.await()
                 // Remembered either way: a refusal must not become the same question on every
@@ -856,6 +882,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 phase = TaskPhase.CONFIRMING,
                 hasPendingApproval = true,
             )
+            this@SessionController.app.speaker.say(state.value.message + "如果看不到按钮，请从通知栏或桌面打开银龄专线。")
             return try {
                 val approved = answer.await()
                 if (approved) {
@@ -945,7 +972,6 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         val steps = running?.stepCount ?: 0
         LoopLog.transcript(running?.conversation.orEmpty())
         LoopLog.event("settle: ${outcome::class.simpleName} steps=$steps msg=${outcome.message}")
-        LoopLog.saveScreenshot()
         recordRunEvidence(outcome, steps)
         when (outcome) {
             is AgentOutcome.COMPLETED -> {
@@ -1086,6 +1112,7 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
         skillJob = null
         sessionId = newSessionId()
         loop = null
+        SkillCatalog.trial = null
         prefs.edit()
             .remove("goal")
             .putString(KEY_CURRENT_SESSION, sessionId)
@@ -1206,7 +1233,12 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
 
     override fun requestHelp(goal: String, reason: String) {
         stop()
-        val context = "目标：$goal\n卡在：${reason.ifBlank { "说不清楚，需要人看一下" }}"
+        val page = ScreenAccessService.active?.snapshot()
+        val context = com.yinling.core.PrivacyFilter.redact(
+            "目标：$goal\n卡在：${reason.ifBlank { "说不清楚，需要人看一下" }}\n" +
+                "已尝试 ${state.value.step} 步；当前应用：${page?.app ?: "未知"}。\n" +
+                "任务尚未完成；家人接手不代表任务已办成。",
+        )
         val startedSession = sessionId
         if (server.isConfigured()) {
             // Report success only after the server accepted the event. An optimistic "already told
@@ -1216,21 +1248,22 @@ class SessionController(private val app: HotlineApp) : FamilyGateway {
                 phase = TaskPhase.NEEDS_FAMILY,
             )
             scope.launch {
-                val ok = server.postEvent(
+                val receipt = server.postEvent(
                     kind = "help",
                     title = "${server.elderName.ifBlank { "老人" }}需要人帮忙",
                     body = reason.ifBlank { "需要人帮忙看一下" },
                     context = context,
                 )
                 if (sessionId != startedSession) return@launch
-                if (ok) {
+                if (receipt != null) {
                     mutableState.value = state.value.copy(
-                        message = "已经告诉家人了，他们会尽快联系您。",
+                        message = receipt.helpMessage,
                         phase = TaskPhase.NEEDS_FAMILY,
                     )
+                    app.speaker.say(receipt.helpMessage)
                 } else if (familyPhone.isNotBlank()) {
                     mutableState.value = state.value.copy(
-                        message = "服务器暂时联系不上，请在短信应用里点发送求助。",
+                        message = "求助没有登记成功。请在短信应用里点发送求助，或直接打电话。",
                         phase = TaskPhase.NEEDS_FAMILY,
                     )
                     smsHelp(goal, reason)

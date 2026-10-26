@@ -179,7 +179,7 @@ object EvidenceCheck {
                 )
             }
         }
-        val sameKind = facts.filter { it.kind == quantity.kind }
+        val sameKind = poolFor(quantity.kind, facts)
         if (sameKind.isNotEmpty()) {
             val byUnit = if (quantity.unit != null) sameKind.filter { it.unit == quantity.unit } else sameKind
             val pool = byUnit.ifEmpty { sameKind }
@@ -191,10 +191,23 @@ object EvidenceCheck {
             ValueKind.DATE -> "日期"
             ValueKind.NUMBER -> "数字"
         }
-        return OutcomeVerdict.Unverified(
-            "结论中的$what「${quantity.raw}」还没有在这一轮看到过",
-            EvidenceGap.WORLD_UNOBSERVED,
-        )
+        // "Never seen" and "seen, but not in the newest observation" are different findings, and the
+        // old text claimed the first for both. On the real device the model reported tomorrow's date
+        // from a page it had read a moment earlier; the reader was told the date "还没有在这一轮看到过"
+        // while it had in fact appeared fifteen times. Only the *state* was stale, not the reading —
+        // and the reason a model is given has to be true, or it re-reads the wrong thing.
+        val seenEarlier = facts.any { it.kind == quantity.kind && it.value == quantity.value }
+        return if (seenEarlier) {
+            OutcomeVerdict.Unverified(
+                "结论中的$what「${quantity.raw}」在页面上出现过，但不是最近一次读到的，可能已经变了",
+                EvidenceGap.WORLD_UNOBSERVED,
+            )
+        } else {
+            OutcomeVerdict.Unverified(
+                "结论中的$what「${quantity.raw}」还没有在这一轮看到过",
+                EvidenceGap.WORLD_UNOBSERVED,
+            )
+        }
     }
 
     /** The person is told the difference between "not seen" and "you typed it yourself". */
@@ -242,10 +255,41 @@ object EvidenceCheck {
             Fact(token.kind, token.canonical, token.raw, token.unit, token.field, token.total, observation, app)
         }
 
-    /** The value the run saw most recently among candidates: an older value cannot vouch for it. */
+    /**
+     * The values that can vouch for a claim, by kind.
+     *
+     * The first rule is unchanged and is the safety property: when the newest observation recorded
+     * facts of this kind, **only those count**. A stale reading may never vouch for a page that has
+     * since shown something else.
+     *
+     * What changed is the case where the newest observation recorded *nothing* of this kind. The old
+     * code then produced an empty pool and the run was reported as having no evidence, even though
+     * the value had been read off the same app one step earlier. On the real device that is exactly
+     * what happened to #14: the model read 「10月16日 明天 0° / 5°」 off 多日天气预报, took one more
+     * screenshot in which that block was no longer captured, and was then told the date
+     * "还没有在这一轮看到过" — about a number it had just read correctly. Looking again had destroyed
+     * its own evidence.
+     *
+     * So absence in the newest observation is not treated as absence on the page; it falls back
+     * through the recent window. Two observations of the *same kind* still cannot disagree: if the
+     * newest one has the kind at all, it wins outright.
+     */
     private fun newestValues(candidates: List<Fact>): Set<String> {
+        if (candidates.isEmpty()) return emptySet()
         val newest = candidates.maxOf { it.observation }
         return candidates.filter { it.observation == newest }.map { it.value }.toSet()
+    }
+
+    /**
+     * The pool a value of [kind] is checked against: the newest observation that saw *anything* of
+     * that kind, rather than the newest observation full stop. See [newestValues] for why the
+     * distinction matters.
+     */
+    private fun poolFor(kind: ValueKind, facts: List<Fact>): List<Fact> {
+        val sameKind = facts.filter { it.kind == kind }
+        if (sameKind.isEmpty()) return emptyList()
+        val newest = sameKind.maxOf { it.observation }
+        return sameKind.filter { it.observation == newest }
     }
 
     /**

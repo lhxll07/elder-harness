@@ -227,6 +227,9 @@ class OverlayService : Service() {
             return
         }
         val phaseChanged = state.phase != lastPhase
+        if (phaseChanged) {
+            Notices.updateTaskAttention(this, state.hasPendingApproval || state.phase == TaskPhase.ASKING)
+        }
         val circleMessage = state.circleMessage
         val circleChanged = circleMessage?.id != lastCircleMessageId
 
@@ -805,6 +808,7 @@ class OverlayService : Service() {
     }
 
     override fun onDestroy() {
+        Notices.updateTaskAttention(this, false)
         pulse?.cancel()
         if (active?.get() === this) active = null
         collector?.cancel()
@@ -831,4 +835,3 @@ private val AUTO_EXPAND = setOf(
 
 private fun TaskPhase.isResumable(): Boolean =
     this == TaskPhase.PAUSED || this == TaskPhase.CANNOT || this == TaskPhase.NEEDS_PERSON
-

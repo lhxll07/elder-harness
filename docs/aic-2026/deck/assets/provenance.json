@@ -1,0 +1,39 @@
+[
+  {
+    "asset": "home.png",
+    "source": "figures/shot-home.png",
+    "source_sha256": "ab5a2ce179e1d6e30b5b3740b3238b76f1ebf3e2d7cc2ee246d13a8013bb7d56",
+    "asset_sha256": "4bf7129205ff1fd13412408358feda5370c848abd23a44c197fe38fcd16f0f57",
+    "redacted_bounds": null,
+    "other_edits": "none",
+    "evidence_scope": "archived interface, not a new real-device run"
+  },
+  {
+    "asset": "parcel-page.png",
+    "source": "experiments/raw/R1-拼多多-原页面.png",
+    "source_sha256": "1fb05a99c32a6b332044189dbd88d27d259767fe4ab082a9dd4a8eab693e4aa0",
+    "asset_sha256": "dd731a590941094ea03dbe84bb8c1614f1186c4511a245d8c814d9b453d042ca",
+    "redacted_bounds": [
+      35,
+      1318,
+      1236,
+      1430
+    ],
+    "other_edits": "none",
+    "evidence_scope": "archived interface, not a new real-device run"
+  },
+  {
+    "asset": "parcel-result.png",
+    "source": "experiments/raw/R1-拼多多-答案卡.png",
+    "source_sha256": "3a7a7725a09569b5c1a528a46befa9efa47589a338b2ce663842e0ae47139413",
+    "asset_sha256": "1f6a8f9af74363dc5a70d558808e6e78f576db620de985f11db983bf0929dcf5",
+    "redacted_bounds": [
+      90,
+      1215,
+      1155,
+      1430
+    ],
+    "other_edits": "none",
+    "evidence_scope": "archived interface, not a new real-device run"
+  }
+]

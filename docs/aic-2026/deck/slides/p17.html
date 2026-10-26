@@ -1,57 +1,10 @@
-<div class="slide">
-  <div class="eyebrow">证据 · 实机案例 B</div>
-  <h1 class="title">同一个应用、同一台手机，三轮留下三种不同的失败模式</h1>
-  <div class="subtitle">老人一句话：“帮我看看明天有什么课。”</div>
-  <div class="head-rule"></div>
-
-  <div class="body">
-    <div class="cards c3" style="gap:20px">
-      <div class="card outline" style="padding:26px 26px;border-top:3px solid var(--bad)">
-        <div class="cn" style="color:var(--bad)">第一轮 · 9 步 · PAUSED</div>
-        <div class="ct">盲点，点到「死」</div>
-        <div class="cb" style="font-size:16px">
-          <code>tap_text</code> 打不开课表 → 改用盲坐标 <code>tap_xy(0.37,0.96)</code> → 撞上 <code>stale_screen</code>（页面在「观察 → 派发」之间已经变了）→ 翻到第 3 周，结论仍以 <code>Unverified</code> 收尾
-        </div>
-        <div class="sm mt16" style="color:var(--bad)"><strong>教训是「放弃太早」</strong>：一次都没试翻页就给了结论</div>
-      </div>
-
-      <div class="card outline" style="padding:26px 26px;border-top:3px solid var(--warn)">
-        <div class="cn" style="color:var(--warn)">第二轮 · 9 步 · PAUSED</div>
-        <div class="ct">点了正确的控件，但没生效</div>
-        <div class="cb" style="font-size:16px">
-          修好观察层后改用 <code>tap_text</code>，依次点中「我的课表」→「第3周」→<strong>「第4周」</strong>，页面确实切到了第 4 周；但结论里的日期「10月5日」在本轮页面文本里<strong>从未出现过</strong>
-        </div>
-        <div class="sm mt16" style="color:var(--warn)">系统如实拒绝，给出老人可核对的话术</div>
-      </div>
-
-      <div class="card outline" style="padding:26px 26px;border-top:3px solid var(--accent)">
-        <div class="cn">第三轮 · 13 步 · STUCK</div>
-        <div class="ct">声明了预期，被检测器停住</div>
-        <div class="cb" style="font-size:16px">
-          每步都写 <code>expectedEffect</code>，核验记录里出现了 <code>APPLIED</code>，也大量出现 <code>CHANGED_OTHER</code>；因页面来回振荡，最终由<strong>旧的振荡检测</strong>判 <code>STUCK</code>
-        </div>
-        <div class="sm mt16" style="color:var(--accent)">新阶梯实机触发 0 次——如实标注，不冒充</div>
-      </div>
-    </div>
-
-    <div class="cols c2 wide-l mt32" style="gap:48px;align-items:center">
-      <div>
-        <div class="takeaway" style="font-size:19px;padding:24px 28px">
-          <span class="k">这条弧线说明了什么</span>
-          失败模式从「盲点到死」→「点了正确的控件但没生效」→「被检测器停住」逐步演进。而<strong>期间每一次都由本地核验如实拒绝，没有任何一次谎报</strong>。
-        </div>
-        <p class="lead mt24" style="font-size:19px">
-          <strong>宁可少做，不可谎报；宁可停手，不可越权。</strong>
-        </p>
-      </div>
-      <div class="fig-wrap" style="max-height:250px">
-        <img src="../figures/fig11.png" alt="S1 查课表的三轮演进" style="max-height:250px">
-      </div>
-    </div>
+<section class="slide white appendix" data-section="appendix" data-title="安全样本版本对照">
+  <div class="topline"><span class="eyebrow">Q＆A / 已知样本，不外推未知风险</span><span class="brand">银龄智办</span></div>
+  <h1 class="title">15/20 是历史结果，20/20 是当前已知回归。</h1>
+  <div class="content">
+    <div class="version-history"><article><span class="pill neutral">历史基线</span><h3>修复前原始词表</h3><div class="number">6/20</div><p>显性 6 项被拦。<br>隐蔽 8 项、设备与账户边界 6 项未覆盖。</p></article><article><span class="pill neutral">历史报告</span><h3>当时的分级策略</h3><div class="number">15/20</div><p>显性 6 ＋ 隐蔽 8 ＋ 边界 1。<br>当时仍有 5 项边界漏拦。</p></article><article><span class="pill">当前离线核对</span><h3>已知样本回归</h3><div class="number green">20/20</div><p>这 6 项已知边界均交还本人。<br>这是回归通过，不是新的开放集评测。</p></article></div>
+    <div class="note">安全对照组 6 项，两组误拦均为 0；构造的 10 步任务中，逐步确认 10 次、策略组 1 次。<strong>不将构造次数写成真实老人平均打扰次数。</strong></div>
+    <p class="small muted rule">动作集：显性 6 项／隐蔽 8 项／设备与账户边界 6 项。测试调用同一个 ManualActionPolicy.checkScreen，保留原始历史词表作为基线。</p>
   </div>
-
-  <div class="footer">
-    <span class="src">S1-1004-170301 / S1-1004-175221 / S1-1004-175424 · 三轮均由真实模型与真实应用运行</span>
-    <span class="pno">17</span>
-  </div>
-</div>
+  <div class="footer"><span class="src">实现与样本：Harness.kt“执行约束三组对照”与“X8”；历史对照：方案书表 42。当前核对日期：2026-10-17。</span><span class="pno">17</span></div>
+</section>

@@ -664,6 +664,7 @@ object SkillSelect {
         version.regressionResult == "pass" &&
             version.verifiedRuns >= minVerifiedRuns &&
             version.falseDone == 0 &&
+            version.shadowingRate.isFinite() && version.shadowingRate >= 0.0 &&
             version.shadowingRate <= SkillAdmission.SHADOW_EPSILON
 
     fun chooseActive(
@@ -675,7 +676,7 @@ object SkillSelect {
 
     /** Rule-based applicability: app package and, when known, the goal family. */
     fun matches(skill: SkillMeta, app: String?, goalFamily: String?): Boolean {
-        if (app != null && skill.apps.isNotEmpty() && app !in skill.apps) return false
+        if (skill.apps.isNotEmpty() && app !in skill.apps) return false
         if (goalFamily != null && skill.goalFamily.isNotBlank() && skill.goalFamily != goalFamily) return false
         return true
     }

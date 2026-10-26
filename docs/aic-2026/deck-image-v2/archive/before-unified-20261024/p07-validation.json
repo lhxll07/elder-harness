@@ -1,0 +1,215 @@
+{
+  "page": 7,
+  "viewports": [
+    {
+      "viewport": [
+        3840,
+        2160
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "stageCount": 3,
+      "draftTexts": [
+        "我已到家，请放心。",
+        "我已到家，请放心。"
+      ],
+      "historyTexts": [
+        "到家了吗？",
+        "快到了。",
+        "到家了吗？",
+        "快到了。"
+      ],
+      "personLabel": "本人操作",
+      "benchmark": {
+        "stepwise": "10",
+        "graded": "1"
+      },
+      "imageTextZoneIssues": [],
+      "overflowingCards": [],
+      "overlappingTextBlocks": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "stageCount": 3,
+      "draftTexts": [
+        "我已到家，请放心。",
+        "我已到家，请放心。"
+      ],
+      "historyTexts": [
+        "到家了吗？",
+        "快到了。",
+        "到家了吗？",
+        "快到了。"
+      ],
+      "personLabel": "本人操作",
+      "benchmark": {
+        "stepwise": "10",
+        "graded": "1"
+      },
+      "imageTextZoneIssues": [],
+      "overflowingCards": [],
+      "overlappingTextBlocks": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "stageCount": 3,
+      "draftTexts": [
+        "我已到家，请放心。",
+        "我已到家，请放心。"
+      ],
+      "historyTexts": [
+        "到家了吗？",
+        "快到了。",
+        "到家了吗？",
+        "快到了。"
+      ],
+      "personLabel": "本人操作",
+      "benchmark": {
+        "stepwise": "10",
+        "graded": "1"
+      },
+      "imageTextZoneIssues": [],
+      "overflowingCards": [],
+      "overlappingTextBlocks": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        1024,
+        768
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "stageCount": 3,
+      "draftTexts": [
+        "我已到家，请放心。",
+        "我已到家，请放心。"
+      ],
+      "historyTexts": [
+        "到家了吗？",
+        "快到了。",
+        "到家了吗？",
+        "快到了。"
+      ],
+      "personLabel": "本人操作",
+      "benchmark": {
+        "stepwise": "10",
+        "graded": "1"
+      },
+      "imageTextZoneIssues": [],
+      "overflowingCards": [],
+      "overlappingTextBlocks": [],
+      "textIssues": []
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "fontsReady": true,
+      "fonts": [
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "400",
+          "status": "loaded"
+        },
+        {
+          "family": "Page Seven Sans SC",
+          "weight": "700",
+          "status": "loaded"
+        }
+      ],
+      "backgroundLoaded": true,
+      "slideFitsViewport": true,
+      "stageCount": 3,
+      "draftTexts": [
+        "我已到家，请放心。",
+        "我已到家，请放心。"
+      ],
+      "historyTexts": [
+        "到家了吗？",
+        "快到了。",
+        "到家了吗？",
+        "快到了。"
+      ],
+      "personLabel": "本人操作",
+      "benchmark": {
+        "stepwise": "10",
+        "graded": "1"
+      },
+      "imageTextZoneIssues": [],
+      "overflowingCards": [],
+      "overlappingTextBlocks": [],
+      "textIssues": []
+    }
+  ],
+  "runtimeErrors": [],
+  "fullscreenToggle": "passed",
+  "previousSlideNavigation": "passed",
+  "sixthToSeventhNavigation": "passed",
+  "passed": true
+}

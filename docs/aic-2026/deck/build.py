@@ -1,168 +1,143 @@
 #!/usr/bin/env python3
-"""把 deck/slides/pNN.html 与 deck.css 合成为两份产物：
-
-  1. deck/deck.print.html —— 单文件、连续分页，供 Chromium 打印 PDF
-  2. deck/deck.html       —— 带键盘导航的演示版（左右/空格翻页，供现场全屏演示）
-
-用法：
-    python3 deck/build.py          # 合成 HTML
-    bash deck/build_pdf.sh         # 合成 HTML 并导出 PDF
-
-单页文件约定：每个 slides/pNN.html 只写 <div class="slide">…</div>，
-样式一律来自 deck.css，不在页内写行内 <style>。
-"""
+"""Build a 14-page main presentation and 10-page appendix into live and print HTML."""
 
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
+
 DECK = Path(__file__).resolve().parent
-SLIDES = DECK / "slides"
-CSS = DECK / "deck.css"
-OUT_PRINT = DECK / "deck.print.html"
-OUT_LIVE = DECK / "deck.html"
-
-# 页面尺寸（与 build_pdf.sh 的 --print-to-pdf 尺寸一致）
-PAGE_W, PAGE_H = 1600, 900
+PAGE_WIDTH, PAGE_HEIGHT = 1600, 900
+MAIN_COUNT, APPENDIX_COUNT = 14, 10
 
 
-def load_slides() -> list[tuple[str, str]]:
-    files = sorted(SLIDES.glob("p*.html"))
-    if not files:
-        sys.exit(f"错误：{SLIDES} 下没有找到 p*.html")
-    slides: list[tuple[str, str]] = []
-    for f in files:
-        body = f.read_text(encoding="utf-8")
-        if 'class="slide' not in body:
-            sys.exit(f"错误：{f.name} 里没有找到 .slide 容器（单页文件只写 slide 内容）")
-        # 每页文件的页码占位：把 .pno 里的内容与文件名核对，防止漏页/串页
-        expected = f.stem[1:]  # p07 -> 07
-        m = re.search(r'class="pno">\s*(\d+)\s*<', body)
-        if m and m.group(1) != expected:
-            print(f"  ! {f.name} 页码标注为 {m.group(1)}，与文件名不符", file=sys.stderr)
-        slides.append((f.stem, body.strip()))
+def load_slides() -> list[str]:
+    files = sorted((DECK / "slides").glob("p*.html"))
+    if len(files) != MAIN_COUNT + APPENDIX_COUNT:
+        raise ValueError("Expected 14 main slides and 10 appendix slides")
+    slides = []
+    for page, source in enumerate(files, start=1):
+        if source.name != f"p{page:02d}.html":
+            raise ValueError(f"Slide sequence is not contiguous: {source.name}")
+        body = source.read_text(encoding="utf-8").strip()
+        section = "main" if page <= MAIN_COUNT else "appendix"
+        if f'data-section="{section}"' not in body:
+            raise ValueError(f"Wrong presentation section: {source.name}")
+        if not re.search(rf'class="pno">{page:02d}</span>', body):
+            raise ValueError(f"Wrong footer page number: {source.name}")
+        if body.count('<section class="slide') != 1 or body.count("<h1 ") != 1:
+            raise ValueError(f"Expected one slide and one headline: {source.name}")
+        for asset in re.findall(r'<img[^>]+src="([^"]+)"', body):
+            if not (DECK / asset).is_file():
+                raise ValueError(f"Missing local asset: {asset}")
+        slides.append(body.replace("<section ", f'<section id="p{page}" ', 1))
     return slides
 
 
-def build_print(slides: list[tuple[str, str]], css: str) -> str:
-    body = "\n\n".join(f"<!-- {name} -->\n{html}" for name, html in slides)
+def document(body: str, css: str, title: str, script: str = "") -> str:
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>银龄智办 · 答辩演示</title>
-<style>
-{css}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<style>{css}</style>
 </head>
 <body>
 {body}
+{script}
 </body>
 </html>
 """
 
 
-def build_live(slides: list[tuple[str, str]], css: str) -> str:
-    """演示版：只显示一页，方向键/空格/PageUp/PageDown 切换。"""
-    body = "\n\n".join(f"<!-- {name} -->\n{html}" for name, html in slides)
-    n = len(slides)
-    live_css = f"""
-html, body {{ background:#0B0E12; overflow:hidden; }}
-.stage {{
-  position:fixed; inset:0;
-  display:flex; align-items:center; justify-content:center;
-}}
-.stage .slide {{
-  display:none;
-  flex:none;
-  box-shadow:0 24px 80px rgba(0,0,0,.55);
-}}
-.stage .slide.on {{ display:flex; }}
-/* 等比缩放到视口 */
-#scale {{ transform-origin:center center; }}
-.hud {{
-  position:fixed; right:20px; bottom:16px;
-  font:600 13px/1 var(--mono);
-  color:#8A939E; letter-spacing:.06em;
-  background:rgba(11,14,18,.72); padding:8px 12px; border-radius:8px;
-  z-index:99; user-select:none;
-}}
-.hint {{
-  position:fixed; left:20px; bottom:16px;
-  font:500 12.5px/1.4 var(--sans);
-  color:#5C6672; z-index:99; user-select:none;
-}}
+def build_live(slides: list[str], css: str) -> str:
+    live_css = """
+html, body { background: #071c22; overflow: hidden; }
+.viewport { position: fixed; inset: 0 0 46px; display: flex; align-items: center; justify-content: center; }
+.stage { width: 1600px; height: 900px; flex: none; transform-origin: center; box-shadow: 0 20px 90px #0006; }
+.stage .slide { display: none; }
+.stage .slide.on { display: flex; }
+.hud { position: fixed; bottom: 0; left: 0; right: 0; height: 46px; display: flex; justify-content: space-between; align-items: center; padding: 0 28px; color: #adc5c3; font: 13px var(--sans); }
+.hud button { margin-left: 12px; background: none; border: 1px solid #355056; color: #d9eee5; padding: 4px 12px; cursor: pointer; font: inherit; }
+.hud button:focus-visible, .index-link:focus-visible { outline: 2px solid #77e6c3; outline-offset: 4px; }
 """
-    return f"""<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<title>银龄智办 · 答辩演示（演示版）</title>
-<style>
-{css}
-{live_css}
-</style>
-</head>
-<body>
-<div class="stage" id="scale">
-{body}
-</div>
-<div class="hud"><span id="cur">1</span> / {n}</div>
-<div class="hint">← → 翻页　·　F 全屏　·　Home / End 首尾</div>
-<script>
+    body = f"""<main class="viewport"><div class="stage" id="stage">{''.join(slides)}</div></main>
+<nav class="hud" aria-label="演示导航">
+<span>← → 翻页　·　F 全屏　·　A 备份　·　M 主讲</span>
+<span><span id="position" aria-live="polite"></span><button id="main-button">主讲</button><button id="appendix-button">备份目录</button></span>
+</nav>"""
+    script = f"""<script>
 const slides = [...document.querySelectorAll('.slide')];
-const stage  = document.getElementById('scale');
-const cur    = document.getElementById('cur');
-let i = 0;
+const stage = document.getElementById('stage');
+const position = document.getElementById('position');
+const mainCount = {MAIN_COUNT};
+let currentIndex = 0;
 
-function show(k) {{
-  i = Math.max(0, Math.min(slides.length - 1, k));
-  slides.forEach((s, n) => s.classList.toggle('on', n === i));
-  cur.textContent = i + 1;
-  location.hash = 'p' + (i + 1);
+function show(requestedIndex) {{
+  currentIndex = Math.max(0, Math.min(slides.length - 1, requestedIndex));
+  slides.forEach((slide, index) => {{
+    slide.classList.toggle('on', index === currentIndex);
+    slide.setAttribute('aria-hidden', String(index !== currentIndex));
+  }});
+  const isAppendix = currentIndex >= mainCount;
+  position.textContent = isAppendix
+    ? '备份 ' + (currentIndex - mainCount + 1) + ' / ' + (slides.length - mainCount)
+    : '主讲 ' + (currentIndex + 1) + ' / ' + mainCount;
+  history.replaceState(null, '', '#p' + (currentIndex + 1));
 }}
 
 function fit() {{
-  const s = Math.min(innerWidth / {PAGE_W}, innerHeight / {PAGE_H}) * 0.96;
-  stage.style.transform = 'scale(' + s + ')';
+  const scale = Math.min(innerWidth / {PAGE_WIDTH}, (innerHeight - 46) / {PAGE_HEIGHT}) * .98;
+  stage.style.transform = 'scale(' + scale + ')';
 }}
-addEventListener('resize', fit);
 
-addEventListener('keydown', e => {{
-  if (['ArrowRight','ArrowDown',' ','PageDown','Enter'].includes(e.key)) {{ show(i+1); e.preventDefault(); }}
-  else if (['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)) {{ show(i-1); e.preventDefault(); }}
-  else if (e.key === 'Home') {{ show(0); e.preventDefault(); }}
-  else if (e.key === 'End')  {{ show(slides.length-1); e.preventDefault(); }}
-  else if (e.key === 'f' || e.key === 'F') {{
-    document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+function advance(direction) {{
+  const lastIndex = currentIndex < mainCount ? mainCount - 1 : slides.length - 1;
+  show(Math.max(0, Math.min(lastIndex, currentIndex + direction)));
+}}
+
+addEventListener('resize', fit);
+addEventListener('keydown', event => {{
+  if (event.target.closest('button, a') && event.key === 'Enter') return;
+  if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(event.key)) {{ advance(1); event.preventDefault(); }}
+  else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(event.key)) {{ advance(-1); event.preventDefault(); }}
+  else if (event.key === 'Home') {{ show(currentIndex < mainCount ? 0 : mainCount); event.preventDefault(); }}
+  else if (event.key === 'End') {{ show(currentIndex < mainCount ? mainCount - 1 : slides.length - 1); event.preventDefault(); }}
+  else if (event.key.toLowerCase() === 'a') show(mainCount);
+  else if (event.key.toLowerCase() === 'm') show(0);
+  else if (event.key.toLowerCase() === 'f') {{
+    const operation = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    operation.catch(() => {{}});
   }}
 }});
-stage.addEventListener('click', e => show(i + (e.clientX < innerWidth/2 ? -1 : 1)));
-
-const fromHash = parseInt((location.hash.match(/^#p(\\d+)$/) || [])[1], 10);
+stage.addEventListener('click', event => {{
+  const link = event.target.closest('a[href^="#p"]');
+  if (link) {{ event.preventDefault(); show(Number(link.hash.slice(2)) - 1); return; }}
+  if (!event.target.closest('button, a')) advance(event.clientX < innerWidth / 2 ? -1 : 1);
+}});
+addEventListener('hashchange', () => {{
+  const page = Number(location.hash.slice(2));
+  if (Number.isInteger(page) && page >= 1 && page <= slides.length) show(page - 1);
+}});
+document.getElementById('main-button').addEventListener('click', () => show(0));
+document.getElementById('appendix-button').addEventListener('click', () => show(mainCount));
+const initialPage = /^#p\\d+$/.test(location.hash) ? Number(location.hash.slice(2)) : 1;
 fit();
-show(Number.isFinite(fromHash) ? fromHash - 1 : 0);
-</script>
-</body>
-</html>
-"""
+show(initialPage - 1);
+</script>"""
+    return document(body, css + live_css, "银龄智办 · 答辩重构版", script)
 
 
 def main() -> None:
-    css = CSS.read_text(encoding="utf-8")
+    css = (DECK / "deck.css").read_text(encoding="utf-8")
     slides = load_slides()
-
-    OUT_PRINT.write_text(build_print(slides, css), encoding="utf-8")
-    OUT_LIVE.write_text(build_live(slides, css), encoding="utf-8")
-
-    size = OUT_PRINT.stat().st_size / 1024
-    print(f"合成 {len(slides)} 页：")
-    for name, _ in slides:
-        print(f"  · {name}")
-    print(f"\n{OUT_PRINT.name}  {size:.0f} KB   （打印 / PDF）")
-    print(f"{OUT_LIVE.name}   （现场演示）")
+    (DECK / "deck.print.html").write_text(
+        document("\n".join(slides), css, "银龄智办 · 答辩重构版"), encoding="utf-8"
+    )
+    (DECK / "deck.html").write_text(build_live(slides, css), encoding="utf-8")
+    print(f"Built {MAIN_COUNT} main + {APPENDIX_COUNT} appendix slides, {PAGE_WIDTH}×{PAGE_HEIGHT}.")
 
 
 if __name__ == "__main__":

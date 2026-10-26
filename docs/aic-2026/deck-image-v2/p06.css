@@ -1,0 +1,444 @@
+@font-face {
+  font-family: "Page Six Sans SC";
+  src: url("assets/fonts/p06-sc-regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Page Six Sans SC";
+  src: url("assets/fonts/p06-sc-bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+}
+
+:root {
+  color-scheme: light;
+  font-family: "Page Six Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --navy: #102a43;
+  --blue: #1766ad;
+  --muted: #49667d;
+  --gold: #a77d41;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #0b2338;
+}
+
+p,
+h1,
+h2 {
+  margin: 0;
+}
+
+.viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 2048px;
+  width: 2048px;
+  height: 1152px;
+  overflow: hidden;
+  color: var(--navy);
+  isolation: isolate;
+  transform: scale(var(--slide-scale, 1));
+  transform-origin: center;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
+}
+
+.heading {
+  position: absolute;
+  top: 61px;
+  left: 91px;
+  width: 1740px;
+}
+
+.chapter {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+  color: var(--blue);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 2px;
+}
+
+.chapter::before {
+  width: 5px;
+  height: 22px;
+  border-radius: 2px;
+  background: #ba9557;
+  content: "";
+}
+
+.chapter span {
+  padding-left: 23px;
+  border-left: 1px solid #b8c7d3;
+  color: #60798d;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 1px;
+}
+
+h1 {
+  margin-top: 12px;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+h1 span {
+  color: var(--blue);
+}
+
+.brand {
+  position: absolute;
+  top: 65px;
+  right: 94px;
+  color: #506e86;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 3px;
+}
+
+.insight {
+  position: absolute;
+  left: 91px;
+  display: grid;
+  grid-template-columns: 45px 1fr;
+  gap: 15px;
+  width: 445px;
+  height: 135px;
+  padding-top: 4px;
+}
+
+.insight-snapshot {
+  top: 295px;
+}
+
+.insight-observe {
+  top: 445px;
+}
+
+.insight-rebind {
+  top: 596px;
+}
+
+.insight-index {
+  margin-top: 6px;
+  color: var(--gold);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+
+.insight h2 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.insight p {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.65;
+  white-space: nowrap;
+}
+
+.diagram-label {
+  position: absolute;
+  top: 197px;
+  right: 132px;
+  color: #5a778c;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+
+.page-caption {
+  position: absolute;
+  top: 235px;
+  height: 42px;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.caption-planned {
+  left: 570px;
+  width: 385px;
+}
+
+.caption-current {
+  left: 1265px;
+  width: 365px;
+}
+
+.page-caption h2 {
+  color: #1b557d;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.target-caption {
+  position: absolute;
+  height: 37px;
+  padding-top: 3px;
+  color: #1a597a;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.target-planned {
+  top: 385px;
+  left: 578px;
+  width: 235px;
+}
+
+.target-current {
+  top: 576px;
+  left: 1310px;
+  width: 280px;
+}
+
+.identity-copy {
+  position: absolute;
+  top: 280px;
+  left: 934px;
+  width: 282px;
+  height: 81px;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.identity-copy h2,
+.layout-note h2,
+.binding-update h2 {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+}
+
+.identity-copy p {
+  margin-top: 7px;
+  color: #376982;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+.layout-note {
+  position: absolute;
+  top: 344px;
+  left: 1300px;
+  width: 285px;
+  height: 88px;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.layout-note h2 {
+  color: #1c5d84;
+}
+
+.layout-note p {
+  margin-top: 7px;
+  color: #486f87;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+}
+
+.binding-update {
+  position: absolute;
+  top: 719px;
+  left: 1493px;
+  width: 335px;
+  height: 83px;
+  padding-top: 4px;
+}
+
+.binding-update p {
+  margin-top: 5px;
+  color: #3c637d;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.flow-step {
+  position: absolute;
+  top: 948px;
+  width: 410px;
+  height: 91px;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.flow-snapshot {
+  left: 91px;
+}
+
+.flow-observe {
+  left: 571px;
+}
+
+.flow-rebind {
+  left: 1067px;
+}
+
+.flow-execute {
+  left: 1545px;
+}
+
+.flow-step h2 {
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.flow-step p {
+  margin-top: 8px;
+  color: #4b687f;
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.footer-note {
+  position: absolute;
+  top: 1079px;
+  left: 94px;
+  color: #597286;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.footer-note span {
+  margin: 0 13px;
+  color: var(--gold);
+}
+
+.page-number {
+  position: absolute;
+  top: 1075px;
+  right: 94px;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  color: #587187;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-number strong {
+  color: var(--navy);
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.page-number span {
+  color: var(--gold);
+}
+
+@page {
+  size: 1280px 720px;
+  margin: 0;
+}
+
+@media print {
+  :root {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    width: 1280px;
+    height: 720px;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .viewport {
+    position: relative;
+    display: block;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: scale(0.625);
+    transform-origin: top left;
+  }
+}

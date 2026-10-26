@@ -11,7 +11,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-OUT="银龄智办-答辩演示-2026AIC.pdf"
+OUT="${OUT:-银龄智办-答辩重构版-2026AIC.pdf}"
 CHROME="${CHROME:-chromium}"
 
 python3 build.py

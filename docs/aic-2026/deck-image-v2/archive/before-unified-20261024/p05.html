@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>银龄智办 · 3PA 总体架构</title>
+    <link rel="stylesheet" href="p05.css">
+  </head>
+  <body>
+    <main class="viewport" aria-label="银龄智办答辩第五页：三平面可信执行总体架构">
+      <article class="slide" aria-labelledby="slide-title">
+        <img class="background" src="assets/p05-background.png" alt="深蓝蓝金架构图：三个并列机制平面共同连接五节点执行主干，底部由四个部署模块支撑">
+
+        <header class="heading">
+          <p class="chapter">总体架构<span>三平面协同 · 一条主干贯穿全程</span></p>
+          <h1 id="slide-title"><span>3PA</span>，让智能执行拥有系统级可信底座</h1>
+        </header>
+
+        <p class="brand">银龄智办</p>
+
+        <section class="trust-planes" aria-label="绑定面、授权面与证据面共同支撑同一执行过程">
+          <div class="plane-copy plane-binding">
+            <h2><span>P1</span>绑定面</h2>
+            <p class="plane-mechanism">页面版本绑定 · 唯一身份重绑<br>派发前再观察，对准当前页面</p>
+            <p class="plane-value">动作有对象</p>
+          </div>
+          <div class="plane-copy plane-authorization">
+            <h2><span>P2</span>授权面</h2>
+            <p class="plane-mechanism">类型化工具语义 · 分级执行<br>本地策略与一次性授权协同</p>
+            <p class="plane-value">执行有授权</p>
+          </div>
+          <div class="plane-copy plane-evidence">
+            <h2><span>P3</span>证据面</h2>
+            <p class="plane-mechanism">来源分型账本 · 分层完成核验<br>页面、工具事实支撑本轮结果</p>
+            <p class="plane-value">办结有依据</p>
+          </div>
+        </section>
+
+        <p class="section-label execution-label">执行主干</p>
+        <section class="execution" aria-label="观察、规划、派发、执行、收尾五个执行环节">
+          <div class="execution-node node-observe">
+            <h2>观察</h2>
+            <p>控件树与按需截图</p>
+          </div>
+          <div class="execution-node node-plan">
+            <h2>规划</h2>
+            <p>任务理解与动作规划</p>
+          </div>
+          <div class="execution-node node-dispatch">
+            <h2>派发</h2>
+            <p>页面再观察与策略检查</p>
+          </div>
+          <div class="execution-node node-execute">
+            <h2>执行</h2>
+            <p>工具调用与结果回收</p>
+          </div>
+          <div class="execution-node node-finish">
+            <h2>收尾</h2>
+            <p>本地核验与结果呈现</p>
+          </div>
+        </section>
+
+        <p class="section-label deployment-label">部署视图</p>
+        <section class="deployment" aria-label="交互层、核心层、Android平台层与协作服务层">
+          <div class="deployment-part deployment-interaction">
+            <h2>交互层</h2>
+            <p>语音 · 大字界面 · 悬浮交互</p>
+          </div>
+          <div class="deployment-part deployment-core">
+            <h2>核心层</h2>
+            <p>纯 <span>Kotlin</span> 执行与可信核验</p>
+          </div>
+          <div class="deployment-part deployment-android">
+            <h2><span>Android</span> 平台层</h2>
+            <p>无障碍控件树 · 按需截图</p>
+          </div>
+          <div class="deployment-part deployment-service">
+            <h2>协作服务层</h2>
+            <p><span>Web</span> 亲友端 · 事件与留言</p>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p class="footer-note">三平面信任视图<span>×</span>四层部署视图</p>
+          <p class="page-number" aria-label="第5页，共17页"><strong>05</strong><span>/</span>17</p>
+        </footer>
+      </article>
+    </main>
+    <script>
+      const slide = document.querySelector(".slide");
+      function fitSlide() {
+        const scale = Math.min(window.innerWidth / 2048, window.innerHeight / 1152);
+        slide.style.setProperty("--slide-scale", scale.toString());
+      }
+      fitSlide();
+      window.addEventListener("resize", fitSlide);
+      document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          } else {
+            document.documentElement.requestFullscreen();
+          }
+        }
+        if (event.key === "ArrowLeft") {
+          window.location.href = "p04.html";
+        }
+        if (event.key === "ArrowRight") {
+          window.location.href = "p06.html";
+        }
+      });
+      document.fonts.ready.then(() => {
+        document.documentElement.dataset.ready = "true";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TB
+  subgraph L1[第一层 · 老人端交互层 app]
+    direction LR
+    UI[大按钮入口] --- Voice[连续语音会话] --- TTS[结论播报]
+  end
+  subgraph L2[第二层 · 核心调度层 core]
+    direction LR
+    Loop[执行循环] --- Check[完成核验] --- Stall[停滞检测] --- Catalog[工具注册表] --- Gate[技能准入]
+  end
+  subgraph L3[第三层 · Android 原生执行驱动层 app]
+    direction LR
+    Access[控件树与截图] --- Guard[本地安全闸门] --- Skills[按需加载技能] --- Store[本机文本存档]
+  end
+  subgraph L4[第四层 · 云端轻量协同服务层 server]
+    direction LR
+    LLM[模型服务] --- Server[亲友服务] --- ASR[语音识别] --- Web[亲友网页]
+  end
+  L1 --> L2
+  L2 <-->|结构化对话记录 / 工具调用序列| L4
+  L2 -->|准入验证后安全下发| L3
+  L3 -.->|异常主动移交 handoff| L4
+  L4 -.->|亲友大字留言与异步回执| L1

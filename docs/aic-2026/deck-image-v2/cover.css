@@ -1,0 +1,338 @@
+@font-face {
+  font-family: "Cover Sans SC";
+  src: url("assets/fonts/cover-sc-regular.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Cover Sans SC";
+  src: url("assets/fonts/cover-sc-bold.otf") format("opentype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: "Cover Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --ivory: #f8faf8;
+  --gold: #e5c88f;
+  --muted: #bdccd8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #071a2b;
+}
+
+p,
+h1 {
+  margin: 0;
+}
+
+.viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 2048px;
+  width: 2048px;
+  height: 1152px;
+  overflow: hidden;
+  color: var(--ivory);
+  isolation: isolate;
+  transform: scale(var(--slide-scale, 1));
+  transform-origin: center;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
+}
+
+.event {
+  position: absolute;
+  top: 112px;
+  left: 91px;
+  width: 1010px;
+}
+
+.event-name {
+  color: #dce7ee;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.65;
+  letter-spacing: 0.7px;
+  white-space: nowrap;
+}
+
+.event-track {
+  margin-top: 9px;
+  color: var(--gold);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 3px;
+}
+
+.identity {
+  position: absolute;
+  top: 286px;
+  left: 83px;
+  width: 1000px;
+}
+
+h1 {
+  color: #fafbf5;
+  font-size: 184px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 9px;
+  white-space: nowrap;
+}
+
+h1 span {
+  color: var(--gold);
+}
+
+.subtitle {
+  margin-top: 25px;
+  margin-left: 9px;
+  color: #f1f5f7;
+  font-size: 49px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 2.5px;
+  white-space: nowrap;
+}
+
+.tagline {
+  margin-top: 43px;
+  margin-left: 11px;
+  color: #c7d7e1;
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1.75;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.capabilities {
+  position: absolute;
+  inset: 768px auto auto 0;
+  width: 100%;
+  height: 64px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capabilities li {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 198px;
+  height: 64px;
+  color: #e5eef2;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.capabilities li:nth-child(1) {
+  left: 88px;
+}
+
+.capabilities li:nth-child(2) {
+  left: 317px;
+}
+
+.capabilities li:nth-child(3) {
+  left: 545px;
+}
+
+.capabilities li:nth-child(4) {
+  left: 774px;
+}
+
+.latin {
+  color: var(--gold);
+  letter-spacing: 0.5px;
+}
+
+.phone-copy span {
+  position: absolute;
+  display: block;
+  white-space: nowrap;
+}
+
+.phone-status {
+  top: 365px;
+  left: 1542px;
+  color: #17202a;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 34px;
+}
+
+.phone-caption {
+  top: 543px;
+  left: 1445px;
+  width: 158px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+}
+
+.phone-hint {
+  top: 605px;
+  left: 1392px;
+  width: 264px;
+  color: #5d6d7e;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 26px;
+  text-align: center;
+}
+
+.team {
+  position: absolute;
+  top: 906px;
+  left: 94px;
+}
+
+.team-name {
+  color: #f0f4f6;
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: 2px;
+}
+
+.entry {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.8px;
+}
+
+.entry-number {
+  color: #d4e0e8;
+  letter-spacing: 1.4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.edition {
+  position: absolute;
+  top: 1068px;
+  left: 94px;
+  color: #99aebf;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1.3px;
+}
+
+.edition span {
+  margin: 0 11px;
+  color: #c3ac80;
+}
+
+.page-number {
+  position: absolute;
+  top: 1064px;
+  right: 94px;
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+  color: #b2c6d6;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.page-number strong {
+  color: #e6edf2;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.page-number span {
+  color: #c6b17f;
+}
+
+@page {
+  size: 1280px 720px;
+  margin: 0;
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html,
+  body {
+    width: 1280px;
+    height: 720px;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .viewport {
+    position: relative;
+    display: block;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: scale(0.625);
+    transform-origin: top left;
+  }
+}

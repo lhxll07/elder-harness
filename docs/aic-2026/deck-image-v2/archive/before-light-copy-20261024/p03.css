@@ -1,0 +1,26 @@
+@import url("unified.css");
+
+@font-face { font-family: "Page Three Unified SC"; src: url("assets/fonts/p03-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Page Three Unified SC"; src: url("assets/fonts/p03-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-style: normal; font-display: block; }
+:root { --slide-font: "Page Three Unified SC"; }
+.heading { top: 44px; }
+h1 { margin-top: 10px; font-size: 58px; }
+.capability { position: absolute; width: 231px; height: 119px; padding: 19px 18px; border-radius: 18px; }
+.capability-voice, .capability-execution, .capability-evidence { left: 69px; }
+.capability-experience, .capability-family, .capability-care { left: 1770px; }
+.capability-voice, .capability-experience { top: 284px; }
+.capability-execution, .capability-family { top: 531px; }
+.capability-evidence, .capability-care { top: 785px; }
+.capability h2 { font-size: 29px; font-weight: 700; line-height: 1.4; letter-spacing: 1px; white-space: nowrap; }
+.capability p { margin-top: 7px; color: var(--muted); font-size: 20px; line-height: 1.5; white-space: nowrap; }
+.phone-copy p { position: absolute; white-space: nowrap; }
+.phone-status { top: 309px; left: 894px; width: 120px; color: #172b36; font-size: 29px; font-weight: 700; line-height: 1.5; }
+.phone-caption { top: 571px; left: 928px; width: 178px; color: #fff; font-size: 22px; font-weight: 700; line-height: 1.5; text-align: center; }
+.phone-hint { top: 654px; left: 876px; width: 283px; color: #5f7481; font-size: 22px; line-height: 1.5; text-align: center; }
+.phone-entries { position: absolute; top: 854px; left: 862px; display: grid; grid-template-columns: 43px 100px 133px; align-items: center; gap: 6px; width: 288px; height: 45px; color: #607480; font-size: 17px; line-height: 1.5; text-align: center; white-space: nowrap; }
+.deployment { position: absolute; top: 984px; left: 91px; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; width: 1866px; height: 78px; padding: 8px 23px; }
+.deployment-part { text-align: center; }
+.deployment-part + .deployment-part { border-left: 1px solid rgba(104, 155, 191, 0.23); }
+.deployment-part h2 { font-size: 25px; font-weight: 700; line-height: 1.4; letter-spacing: 0.5px; white-space: nowrap; }
+.platform, .architecture { color: var(--blue); font-variant-numeric: tabular-nums; }
+.deployment-part p { margin-top: 3px; color: var(--muted); font-size: 18px; line-height: 1.5; white-space: nowrap; }

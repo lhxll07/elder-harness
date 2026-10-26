@@ -1,5 +1,7 @@
 package com.yinling.hotline
 
+import com.yinling.core.SavedSession
+
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -61,6 +63,7 @@ import com.yinling.hotline.settings.SettingsScreen
 class MainActivity : ComponentActivity() {
     private val session get() = (application as HotlineApp).session
     private var permissionVersion by mutableIntStateOf(0)
+    private var approvalAfterStop = false
 
     /**
      * Whether this phone can turn speech into text for us.
@@ -88,6 +91,26 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         OverlayService.setHiddenInApp(false)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (approvalAfterStop) {
+            approvalAfterStop = false
+            session.answer(true)
+        }
+    }
+
+    private fun confirmAndReturn(approved: Boolean) {
+        if (!approved) {
+            session.answer(false)
+            return
+        }
+        approvalAfterStop = true
+        if (!moveTaskToBack(true)) {
+            approvalAfterStop = false
+            Toast.makeText(this, "未能返回原页面，请回到原页面后再确认。", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -239,7 +262,7 @@ class MainActivity : ComponentActivity() {
                             onSettings = { settings = true },
                             onFinish = session::finish,
                             onStop = session::stop,
-                            onConfirm = session::answer,
+                            onConfirm = ::confirmAndReturn,
                             answer = answer,
                             onAnswerChange = { answer = it },
                             onAnswer = { text ->
@@ -355,6 +378,9 @@ private fun HomePage(
 
             Spacer(Modifier.weight(1f))
 
+            if (state.trialSkill.isNotBlank()) {
+                Text("候选技巧试验 · 请勿用于真实业务", fontSize = Elder.hint, color = Elder.attention)
+            }
             ElderStatusLine(statusLine, tone, modifier = Modifier.fillMaxWidth())
 
             Spacer(Modifier.height(Elder.gap))

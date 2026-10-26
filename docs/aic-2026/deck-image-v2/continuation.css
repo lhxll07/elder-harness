@@ -1,0 +1,136 @@
+@import url("unified.css");
+
+@font-face { font-family: "Yinling P09"; src: url("assets/fonts/p09-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P09"; src: url("assets/fonts/p09-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P10"; src: url("assets/fonts/p10-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P10"; src: url("assets/fonts/p10-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P11"; src: url("assets/fonts/p11-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P11"; src: url("assets/fonts/p11-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P12"; src: url("assets/fonts/p12-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P12"; src: url("assets/fonts/p12-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P13"; src: url("assets/fonts/p13-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P13"; src: url("assets/fonts/p13-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P14"; src: url("assets/fonts/p14-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P14"; src: url("assets/fonts/p14-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P15"; src: url("assets/fonts/p15-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P15"; src: url("assets/fonts/p15-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P16"; src: url("assets/fonts/p16-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P16"; src: url("assets/fonts/p16-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Yinling P17"; src: url("assets/fonts/p17-unified-sc-regular.otf") format("opentype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Yinling P17"; src: url("assets/fonts/p17-unified-sc-bold.otf") format("opentype"); font-weight: 700; font-display: block; }
+
+.p09 { --slide-font: "Yinling P09"; }
+.p10 { --slide-font: "Yinling P10"; }
+.p11 { --slide-font: "Yinling P11"; }
+.p12 { --slide-font: "Yinling P12"; }
+.p13 { --slide-font: "Yinling P13"; }
+.p14 { --slide-font: "Yinling P14"; }
+.p15 { --slide-font: "Yinling P15"; }
+.p16 { --slide-font: "Yinling P16"; }
+.p17 { --slide-font: "Yinling P17"; }
+.slide { font-family: var(--slide-font), "Noto Sans CJK SC", sans-serif; }
+.diagram-label { position: absolute; color: var(--navy); font-size: 30px; font-weight: 700; line-height: 1.5; text-align: center; white-space: nowrap; }
+.diagram-note { position: absolute; color: var(--muted); font-size: 24px; font-weight: 400; line-height: 1.5; text-align: center; white-space: nowrap; }
+.ordinal { margin-right: 13px; color: var(--gold); font-size: 21px; font-weight: 700; }
+
+.p09 .heading { top: 39px; }
+.p09 h1 { font-size: 58px; line-height: 1.45; }
+.p09 .brand { top: 47px; }
+.structure-caption { top: 452px; left: 745px; width: 464px; color: var(--blue); }
+.vision-caption { top: 830px; left: 744px; width: 464px; color: var(--blue); }
+.kernel-caption { top: 604px; left: 1390px; width: 242px; }
+.perception-label { top: 906px; width: 240px; font-size: 28px; }
+.perception-structure { left: 567px; }
+.perception-vision { left: 890px; }
+.perception-action { left: 1213px; }
+
+.experience-stage { position: absolute; top: 271px; width: 300px; color: var(--navy); font-size: 30px; line-height: 1.5; text-align: center; white-space: nowrap; }
+.experience-success { left: 53px; }
+.experience-candidate { left: 397px; }
+.experience-validation { left: 755px; }
+.experience-adoption { left: 1153px; }
+.experience-reuse { left: 1497px; }
+.experience-contract { position: absolute; top: 891px; left: 151px; color: var(--muted); font-size: 28px; line-height: 1.6; white-space: nowrap; }
+.experience-contract span { margin: 0 20px; color: var(--gold); }
+.experience-retrieval { top: 866px; left: 1482px; width: 485px; }
+
+.family-request { top: 924px; left: 192px; width: 339px; }
+.family-context { top: 526px; left: 680px; width: 250px; }
+.family-claim { top: 231px; left: 1277px; width: 436px; }
+.family-delivery { top: 887px; left: 716px; width: 220px; font-size: 26px; }
+.family-read { top: 887px; left: 534px; width: 220px; font-size: 26px; }
+.family-browser { top: 838px; left: 1278px; width: 542px; }
+
+.chart-group { position: absolute; top: 327px; width: 730px; height: 637px; }
+.risk-chart { left: 150px; }
+.evidence-chart { left: 1140px; }
+.chart-group h2 { font-size: 34px; line-height: 1.5; text-align: center; letter-spacing: 1px; }
+.chart-unit { position: absolute; top: 58px; left: 67px; color: var(--muted); font-size: 21px; line-height: 1.5; }
+.chart-plot { position: absolute; top: 156px; left: 67px; width: 636px; height: 390px; }
+.chart-grid { position: absolute; left: 0; width: 100%; border-top: 1px solid rgba(68, 116, 154, 0.15); }
+.grid-high { top: 0; }
+.grid-middle { top: 50%; }
+.grid-zero { top: 100%; border-top: 2px solid rgba(47, 88, 123, 0.42); }
+.axis-tick { position: absolute; left: -54px; width: 37px; color: #6c8396; font-size: 21px; line-height: 1.5; text-align: right; font-variant-numeric: tabular-nums; transform: translateY(-50%); }
+.tick-high { top: 0; }
+.tick-middle { top: 50%; }
+.tick-zero { top: 100%; }
+.chart-columns { position: absolute; inset: 0; display: flex; justify-content: space-around; gap: 30px; padding: 0 35px; }
+.chart-column { position: relative; flex: 1; height: 100%; max-width: 220px; }
+.chart-bar { position: absolute; left: 50%; bottom: 0; width: 112px; height: calc(var(--count) / var(--total) * 100%); border: 1px solid rgba(52, 112, 167, 0.2); border-radius: 12px 12px 0 0; background: linear-gradient(90deg, #a3bed0, #c8dce9 52%, #9dbbcf); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 4px 0 12px rgba(54, 111, 159, 0.08); transform: translateX(-50%); }
+.chart-column[data-count="0"] .chart-bar { border: 0; border-radius: 0; box-shadow: none; }
+.chart-column[data-count="0"]::after { position: absolute; left: calc(50% - 19px); bottom: -2px; width: 38px; height: 4px; border-radius: 2px; background: #8ea8bd; content: ""; }
+.chart-column.improved .chart-bar { background: linear-gradient(90deg, #287bc3, #62a5de 52%, #2375b8); border-color: rgba(27, 101, 165, 0.5); }
+.chart-column.complete .chart-bar { background: linear-gradient(90deg, #1c619c, #3a90d0 50%, #205f96); border-top: 4px solid #c5a261; }
+.chart-value { position: absolute; bottom: calc(var(--count) / var(--total) * 100% + 16px); left: -20px; right: -20px; color: var(--navy); font-size: 36px; font-weight: 700; line-height: 1.4; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chart-value span { color: var(--muted); font-size: 25px; font-weight: 400; }
+.chart-column.improved .chart-value, .chart-column.complete .chart-value { color: var(--blue); }
+.chart-label { position: absolute; top: calc(100% + 25px); left: -30px; right: -30px; font-size: 27px; line-height: 1.5; text-align: center; white-space: nowrap; }
+.chart-label.long-label { top: calc(100% + 20px); font-size: 25px; line-height: 1.4; white-space: normal; }
+.chart-conclusion { position: absolute; top: 1000px; left: 214px; width: 1620px; color: var(--blue); font-size: 27px; font-weight: 700; line-height: 1.5; text-align: center; letter-spacing: 2px; }
+.chart-conclusion span { margin: 0 45px; color: var(--gold); font-weight: 400; }
+
+.engineering-stat { position: absolute; top: 195px; width: 490px; text-align: center; }
+.engineering-core { left: 130px; }
+.engineering-chain { left: 778px; }
+.engineering-server { left: 1438px; }
+.stat-number { color: var(--blue); font-size: 74px; font-weight: 700; line-height: 1.45; font-variant-numeric: tabular-nums; }
+.stat-number span { margin-left: 11px; color: var(--gold); font-size: 27px; font-weight: 400; }
+.engineering-stat h2 { margin-top: 2px; color: var(--muted); font-size: 25px; font-weight: 400; line-height: 1.5; }
+.coverage { position: absolute; top: 903px; left: 125px; display: flex; width: 612px; height: 123px; align-items: center; justify-content: space-evenly; }
+.coverage-copy { min-width: 225px; text-align: center; }
+.coverage-copy + .coverage-copy { border-left: 1px solid rgba(91, 137, 172, 0.18); padding-left: 26px; }
+.coverage-copy p { color: var(--blue); font-size: 42px; font-weight: 700; line-height: 1.5; }
+.coverage-copy p span { margin-left: 8px; color: var(--gold); font-size: 23px; font-weight: 400; }
+.coverage-copy h2 { margin-top: 3px; color: var(--muted); font-size: 23px; font-weight: 400; line-height: 1.5; }
+
+.product-stage { top: 937px; width: 248px; font-size: 29px; }
+.product-understand { left: 149px; }
+.product-execute { left: 619px; }
+.product-verify { left: 1091px; }
+.product-deliver { left: 1587px; }
+.product-family { top: 829px; left: 700px; width: 272px; color: var(--blue); }
+
+.value-stage { position: absolute; text-align: center; }
+.value-stage h2 { color: var(--navy); font-size: 30px; line-height: 1.5; white-space: nowrap; }
+.value-stage p { margin-top: 31px; color: var(--muted); font-size: 24px; line-height: 1.5; white-space: nowrap; }
+.value-personal { top: 868px; left: 136px; width: 466px; }
+.value-family { top: 816px; left: 788px; width: 498px; }
+.value-community { top: 840px; left: 1462px; width: 487px; }
+
+.p16 .lead { margin-top: 10px; font-size: 25px; }
+.roadmap-stage { top: 944px; width: 480px; font-size: 33px; }
+.roadmap-home { left: 123px; }
+.roadmap-community { left: 784px; }
+.roadmap-ecosystem { left: 1474px; }
+
+.p17 { color: #f1f7ff; }
+.closing-heading { position: absolute; top: 72px; left: 104px; color: #d7ba83; font-size: 26px; line-height: 1.5; letter-spacing: 5px; }
+.closing-title { position: absolute; top: 259px; left: 97px; margin: 0; color: #f5faff; font-size: 116px; line-height: 1.5; letter-spacing: 9px; text-shadow: 0 4px 25px rgba(0, 22, 45, 0.2); }
+.closing-claim { position: absolute; top: 456px; left: 105px; color: #e2c995; font-size: 51px; font-weight: 700; line-height: 1.65; letter-spacing: 2px; white-space: nowrap; }
+.closing-capabilities { position: absolute; top: 720px; left: 109px; color: #d1e4f5; font-size: 27px; line-height: 1.5; letter-spacing: 1px; white-space: nowrap; }
+.closing-capabilities span { margin: 0 15px; color: #c8a56b; }
+.closing-team { position: absolute; top: 919px; left: 109px; color: #eef6fd; font-size: 28px; line-height: 1.5; letter-spacing: 3px; }
+.closing-entry { position: absolute; top: 976px; left: 109px; color: #abc7de; font-size: 21px; line-height: 1.5; letter-spacing: 2px; }
+.p17 .page-number, .p17 .page-number strong { color: #d4e5f4; }
+.p17 .page-number span { color: #d8b983; }

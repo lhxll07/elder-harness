@@ -97,7 +97,7 @@ TABLE_CAPTIONS = [
     "坐标定位命中率的空间分布",
     "实机实验发现的三个新问题",
     "典型应用场景与交接边界",
-    "20 位老年人的实地调查：五个维度的独立完成情况",
+    "10 位老人的三条件对照（31 组人×任务）",
     "如实披露的统计口径与局限",
     "研发方向：问题、现状与验收方式",
     "关键设计参数",
@@ -290,6 +290,7 @@ COL_WIDTHS = {
     "八项创新点及其差异与支撑证据": [3.0, 2.6, 4.6, 2.8, 2.0],
     "典型任务全流程走查（美团点餐至结算交接）": [1.5, 3.3, 3.4, 4.8, 2.0],
     "跨应用悬浮接线台的交互要素与工程细节": [3.6, 11.4],
+    "技能跨任务误匹配率（πm）的运行归档回放实测（275 决策点 / 31 条运行）": [2.6, 1.2, 1.3, 1.3, 2.0, 1.8, 2.4, 2.4],
 }
 
 
@@ -341,16 +342,160 @@ def shade_cell(cell, fill):
 TOKEN = re.compile(r"(\*\*.+?\*\*|`[^`]+?`)")
 
 
+def _take_group(s, start):
+    """s[start] == '{'，返回 (组内文本, 右括号之后的下标)。"""
+    depth = 0
+    for i in range(start, len(s)):
+        if s[i] == "{":
+            depth += 1
+        elif s[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return s[start + 1:i], i + 1
+    return s[start + 1:], len(s)
+
+
+def _replace_braced(s, cmd, fn):
+    out, i = [], 0
+    while i < len(s):
+        if s.startswith(cmd + "{", i):
+            body, end = _take_group(s, i + len(cmd))
+            out.append(fn(body))
+            i = end
+        else:
+            out.append(s[i])
+            i += 1
+    return "".join(out)
+
+
+def _latex_body(s):
+    """把 Gemini 稿里的 LaTeX 转成可读的 Unicode 文本。
+
+    只做排版层转换，不改变源码；复杂公式不追求排版级还原，但至少不把
+    `$\\longleftrightarrow$` 原样印进 Word。
+    """
+    s = s.replace("\\\\", " ")
+    s = _replace_braced(s, r"\text", lambda x: x.replace(r"\_", "_"))
+    s = _replace_braced(s, r"\mathcal", lambda x: x)
+    s = _replace_braced(s, r"\mathrm", lambda x: x)
+    s = _replace_braced(s, r"\operatorname", lambda x: x)
+    s = _replace_braced(s, r"\xrightarrow", lambda x: "→")
+    # \frac{A}{B} -> (A)/(B)
+    while r"\frac{" in s:
+        i = s.index(r"\frac{")
+        a, j = _take_group(s, i + len(r"\frac"))
+        if j < len(s) and s[j] == "{":
+            b, k = _take_group(s, j)
+        else:
+            b, k = "", j
+        s = s[:i] + f"({_latex_body(a)})/({_latex_body(b)})" + s[k:]
+    symbols = {
+        r"\longleftrightarrow": "↔", r"\longrightarrow": "→",
+        r"\rightharpoonup": "⇀", r"\rightarrow": "→", r"\leftarrow": "←",
+        r"\to": "→", r"\langle": "⟨", r"\rangle": "⟩",
+        r"\le": "≤", r"\leq": "≤", r"\ge": "≥", r"\geq": "≥",
+        r"\neq": "≠", r"\approx": "≈", r"\sim": "∼", r"\models": "⊨",
+        r"\prec": "≺", r"\preceq": "≼",
+        r"\not\sqsubseteq": "⋢", r"\sqsubseteq": "⊑", r"\sqsubset": "⊏",
+        r"\iff": "⇔", r"\forall": "∀", r"\exists": "∃", r"\land": "∧",
+        r"\in": "∈", r"\notin": "∉", r"\subseteq": "⊆", r"\subset": "⊂",
+        r"\emptyset": "∅", r"\setminus": "\\", r"\times": "×",
+        r"\circ": "∘", r"\dots": "…", r"\quad": "  ",
+        r"\blacksquare": "■", r"\mid": "|", r"\pm": "±",
+        r"\pi": "π", r"\kappa": "κ", r"\Omega": "Ω", r"\rho": "ρ",
+        r"\sigma": "σ", r"\mu": "μ", r"\Sigma": "Σ", r"\lambda": "λ",
+        r"\theta": "θ", r"\Delta": "Δ", r"\epsilon": "ε", r"\phi": "φ",
+        r"\psi": "ψ", r"\omega": "ω",
+        r"\_": "_", r"\{": "{", r"\}": "}", r"\%": "%",
+    }
+    # 长命令优先，避免 \le 先吃掉 \leq
+    for k in sorted(symbols, key=len, reverse=True):
+        s = s.replace(k, symbols[k])
+    # 上下标：_{...} / ^{...}；单字符下标直接去掉下划线。
+    s = _replace_braced(s, "_", lambda x: f"({x})")
+    s = _replace_braced(s, "^", lambda x: f"^({x})")
+    s = re.sub(r"_([A-Za-z0-9])", r"\1", s)
+    s = re.sub(r"\^([A-Za-z0-9*])", r"\1", s)
+    s = s.replace("{", "").replace("}", "")
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def math_to_text(s):
+    """只转换成对的 $...$ / $$...$$，普通美元符号不动。"""
+    return re.sub(
+        r"\$\$(.+?)\$\$|\$(.+?)\$",
+        lambda m: _latex_body(m.group(1) if m.group(1) is not None else m.group(2)),
+        s,
+        flags=re.S,
+    )
+
+
+CITE_GROUP = re.compile(r"(\[\d+(?:\s*[,，、]\s*\d+)*\])")
+
+
+def begin_bookmark(p, name, bid):
+    """在段落开头放一个 Word 书签，供正文引用跳转。"""
+    el = OxmlElement("w:bookmarkStart")
+    el.set(qn("w:id"), str(bid))
+    el.set(qn("w:name"), name)
+    p._p.append(el)
+
+
+def end_bookmark(p, bid):
+    el = OxmlElement("w:bookmarkEnd")
+    el.set(qn("w:id"), str(bid))
+    p._p.append(el)
+
+
+def add_internal_link(p, text, anchor, size=BODY, bold=False):
+    """插入一个指向书签的内部超链接（不是外链）。"""
+    r = p.add_run(text)
+    set_font(r, FONT, size, bold)
+    r.font.color.rgb = RGBColor(0x1F, 0x4E, 0x79)
+    p._p.remove(r._r)
+    hl = OxmlElement("w:hyperlink")
+    hl.set(qn("w:anchor"), anchor)
+    hl.append(r._r)
+    p._p.append(hl)
+
+
+def add_citation_group(p, group, size=BODY, bold=False):
+    """把 [2, 17] 拆成两个数字链接，括号和逗号仍按正文排版。"""
+    inner = group[1:-1]
+    set_font(p.add_run("["), FONT, size, bold)
+    for part in re.split(r"([,，、]\s*)", inner):
+        if not part:
+            continue
+        if part.strip().isdigit() and 1 <= int(part.strip()) <= len(REFS):
+            add_internal_link(p, part, f"ref_{int(part.strip())}", size, bold)
+        else:
+            set_font(p.add_run(part), FONT, size, bold)
+    set_font(p.add_run("]"), FONT, size, bold)
+
+
+def add_text_with_citations(p, text, size=BODY, bold=False):
+    for seg in CITE_GROUP.split(text):
+        if not seg:
+            continue
+        m = re.fullmatch(r"\[\d+(?:\s*[,，、]\s*\d+)*\]", seg)
+        if m:
+            add_citation_group(p, seg, size, bold)
+        else:
+            set_font(p.add_run(seg), FONT, size, bold)
+
+
 def add_runs(p, text, size=BODY, bold=False):
+    text = math_to_text(text)
     for part in TOKEN.split(text):
         if not part:
             continue
         if part.startswith("**") and part.endswith("**") and len(part) > 4:
-            set_font(p.add_run(part[2:-2]), FONT, size, True)
+            add_text_with_citations(p, part[2:-2], size, True)
         elif part.startswith("`") and part.endswith("`") and len(part) > 2:
             set_font(p.add_run(part[1:-1]), MONO, size * 0.94, bold)
         else:
-            set_font(p.add_run(part), FONT, size, bold)
+            add_text_with_citations(p, part, size, bold)
     return p
 
 
@@ -490,11 +635,14 @@ def new_document():
     return doc
 
 
-def build_cover(doc, title, subtitle, infos):
+def build_cover(doc, title, subtitle, infos, underline_count=3):
     """封面严格照搬大赛模板的排版。
 
     规格取自模板样式表（用 LibreOffice 转换后逐段读取）：
       标题区 黑体，22/20/18pt，居中；信息区 仿宋 16pt，首行缩进 7.25 字符。
+
+    underline_count 控制前几条信息带下划线，最后一条（日期）不划线。
+    原稿是 3 条信息 + 日期；Gemini 整理稿多一行“参赛组别”，故允许 4 条信息 + 日期。
     """
     def line(text, size, font, align=None, indent_chars=None, before=0, after=0):
         p = spacing(doc.add_paragraph(), before, after)
@@ -535,6 +683,9 @@ def build_cover(doc, title, subtitle, infos):
 
     def info_line(text, underline):
         """信息行：标签不划线、填写内容划线；整段左缩进 7.25 字符，换行后仍对齐。"""
+        # 封面信息在 Gemini 稿里是 Markdown 粗体（**团队名称**：…），
+        # 封面用模板的仿宋排版，不保留 ** 字面量。
+        text = text.replace("**", "")
         p = spacing(doc.add_paragraph(), 0, 0)
         p.paragraph_format.line_spacing = 1.5
         p.alignment = L
@@ -568,15 +719,16 @@ def build_cover(doc, title, subtitle, infos):
     line(topic, 18, HEI, align=C, indent_chars=0)
     line("技术报告", 20, HEI, align=C, indent_chars=0)
     line("", 22, HEI)
-    # 前三条信息带下划线，其后再空 6 行，最后是日期（模板中日期不划线）
-    for info in infos[:3]:
+    # 前 underline_count 条信息带下划线，其后再空 6 行，最后是日期（模板中日期不划线）
+    for info in infos[:underline_count]:
         info_line(info, underline=True)
     # 模板在此处留 6 个空行，但 1.5 倍行距下会把日期挤到第 2 页；
     # 减为 2 个，保证封面（含日期）完整落在第一页内。
-    for _ in range(2):
+    # 5 行信息（多“参赛组别”）时再减为 1 个空行，避免日期被挤到第 2 页。
+    for _ in range(1 if len(infos) >= 5 else 2):
         line("", 22, HEI)
-    if len(infos) >= 4:
-        info_line(infos[3], underline=False)
+    if len(infos) > underline_count:
+        info_line(infos[-1], underline=False)
 
 
 # ---------------------------------------------------------------- 正文渲染
@@ -593,10 +745,12 @@ def tighten_table(table):
 
 
 def add_table(doc, rows, caption, number):
-    cap = spacing(doc.add_paragraph(), 4, 1)
-    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    cap.paragraph_format.keep_with_next = True
-    add_runs(cap, f"表 {number}　{caption}" if number else caption, NOTE, True)
+    # 数据驱动模式允许没有题注的表：不生成题注段，也不猜编号。
+    if caption:
+        cap = spacing(doc.add_paragraph(), 4, 1)
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cap.paragraph_format.keep_with_next = True
+        add_runs(cap, f"表 {number}　{caption}" if number else caption, NOTE, True)
 
     header, body = rows[0], rows[1:]
     t = doc.add_table(rows=1, cols=len(header))
@@ -672,19 +826,22 @@ def add_figure(doc, png, caption, number, max_h_cm=MAX_FIG_H_CM):
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.keep_with_next = True
     p.add_run().add_picture(str(png), width=Cm(width_cm))
-    cap = spacing(doc.add_paragraph(), 2, 6)
-    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    add_runs(cap, f"图 {number}　{caption}", NOTE, True)
+    if caption:
+        cap = spacing(doc.add_paragraph(), 2, 6)
+        cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        add_runs(cap, f"图 {number}　{caption}" if number else caption, NOTE, True)
 
 
-def render(doc, text, num):
+def render(doc, text, num, data_driven=False):
     lines = text.split("\n")
     i = 0
     pending = []
+    pending_caption = None   # 数据驱动模式：表格前面的“### 表 N：题注”
     tno = fno = 0          # fno：Mermaid 图序号（对应 figN.png 与 FIGURE_CAPTIONS）
     shot = 0               # 真机截图数量
     fdisp = 0              # “图 N”的显示序号，按文档出现顺序
     cited = set()
+    in_refs = False        # 是否已进入“参考文献”条目区，用于给每条文献加书签
 
     def expand(s):
         """把 [@key] / [@key1; @key2] 换成 [序号] / [序号, 序号]，并记录引用过哪些文献。"""
@@ -700,12 +857,21 @@ def render(doc, text, num):
         return CITE_RE.sub(sub, s)
 
     def flush():
-        nonlocal pending, tno
+        nonlocal pending, tno, pending_caption
         if pending:
             tno += 1
-            cap = TABLE_CAPTIONS[tno - 1] if tno <= len(TABLE_CAPTIONS) else "（缺题注）"
-            number = TABLE_NUMBERS[tno - 1] if tno <= len(TABLE_NUMBERS) else tno
-            add_table(doc, pending, cap, number)
+            if data_driven:
+                # 有显式题注就按原文编号/标题；没有题注就只排表，不臆造题注。
+                if pending_caption:
+                    number, cap = pending_caption
+                else:
+                    number, cap = None, None
+                add_table(doc, pending, cap, number)
+                pending_caption = None
+            else:
+                cap = TABLE_CAPTIONS[tno - 1] if tno <= len(TABLE_CAPTIONS) else "（缺题注）"
+                number = TABLE_NUMBERS[tno - 1] if tno <= len(TABLE_NUMBERS) else tno
+                add_table(doc, pending, cap, number)
             pending = []
 
     while i < len(lines):
@@ -724,6 +890,16 @@ def render(doc, text, num):
             i += 1
             continue
 
+        # 数据驱动模式：`### 表 N：题注` 是这张表的题注，不是正文标题。
+        # 先暂存，等紧随其后的表格 flush 时再连同表格一起排出。
+        if data_driven:
+            mt = (re.match(r"^#{2,4}\s*表\s*(\d+)\s*[：:]\s*(.*)$", s)
+                  or re.match(r"^\*\*表\s*(\d+)\s*[：:]\s*(.*?)\*\*$", s))
+            if mt:
+                pending_caption = (int(mt.group(1)), mt.group(2).strip())
+                i += 1
+                continue
+
         # 参考文献表：按分组顺序自动生成，编号与正文一致
         if s == "[REFERENCES]":
             for group_title, prefix in REF_GROUPS:
@@ -734,10 +910,14 @@ def render(doc, text, num):
                 gp.paragraph_format.keep_with_next = True
                 set_font(gp.add_run(group_title), FONT, S["小四"], True)
                 for k, t in items:
+                    n = num[k]
                     rp = spacing(doc.add_paragraph(), 0, 0)
                     rp.paragraph_format.left_indent = Cm(0.9)
                     rp.paragraph_format.first_line_indent = Cm(-0.9)
-                    add_runs(rp, f"[{num[k]}] {t}", S["五号"])
+                    begin_bookmark(rp, f"ref_{n}", 1000 + n)
+                    set_font(rp.add_run(f"[{n}] "), FONT, S["五号"])
+                    add_runs(rp, t, S["五号"])
+                    end_bookmark(rp, 1000 + n)
             i += 1
             continue
 
@@ -766,10 +946,28 @@ def render(doc, text, num):
             i += 1
             fno += 1
             fdisp += 1
-            png = FIGDIR / f"fig{fno}.png"
+            if data_driven:
+                # Gemini 稿的 Mermaid 与原稿不是同一批图，必须用单独的渲染目录，
+                # 否则会静默插入原稿的 fig1..figN，图题与内容全错。
+                png = FIGDIR / "gemini" / f"fig{fno}.png"
+            else:
+                png = FIGDIR / f"fig{fno}.png"
             if png.exists():
-                cap = FIGURE_CAPTIONS[fno - 1] if fno <= len(FIGURE_CAPTIONS) else ""
-                add_figure(doc, png, cap, fdisp)
+                if data_driven:
+                    # 图题写在 Mermaid 块之后：**图 N：题注**
+                    cap = None
+                    j = i
+                    while j < len(lines) and not lines[j].strip():
+                        j += 1
+                    if j < len(lines):
+                        mf = re.match(r"^\*\*图\s*(\d+)\s*[：:]\s*(.*?)\*\*$", lines[j].strip())
+                        if mf:
+                            cap = mf.group(2).strip()
+                            i = j + 1
+                    add_figure(doc, png, cap, fdisp)
+                else:
+                    cap = FIGURE_CAPTIONS[fno - 1] if fno <= len(FIGURE_CAPTIONS) else ""
+                    add_figure(doc, png, cap, fdisp)
             else:
                 p = spacing(doc.add_paragraph(), 6, 10)
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -806,10 +1004,11 @@ def render(doc, text, num):
                 # 用 page_break_before 而不是插入分页符：标题已经在页首时不会多出一张空页。
                 if lvl == 1:
                     p.paragraph_format.page_break_before = True
+                in_refs = ("参考文献" in s)
                 break
         else:
             # 列表
-            if s.startswith("- "):
+            if s.startswith("- ") or s.startswith("* "):
                 p = spacing(doc.add_paragraph(), 0, 0)
                 p.paragraph_format.left_indent = Cm(0.74)
                 p.paragraph_format.first_line_indent = Cm(-0.37)
@@ -818,7 +1017,13 @@ def render(doc, text, num):
                 p = spacing(doc.add_paragraph(), 0, 0)
                 p.paragraph_format.left_indent = Cm(0.74)
                 p.paragraph_format.first_line_indent = Cm(-0.37)
+                mref = re.match(r"^(\d+)\.\s", s)
+                ref_no = int(mref.group(1)) if (in_refs and mref) else None
+                if ref_no:
+                    begin_bookmark(p, f"ref_{ref_no}", 1000 + ref_no)
                 add_runs(p, expand(s), BODY)
+                if ref_no:
+                    end_bookmark(p, 1000 + ref_no)
             else:
                 p = spacing(doc.add_paragraph(), 0, 0)
                 p.paragraph_format.first_line_indent = Pt(BODY * 2)
@@ -829,8 +1034,14 @@ def render(doc, text, num):
     return tno, fdisp, cited, shot
 
 
-def main():
-    src = SRC.read_text(encoding="utf-8")
+def main(src_path=None):
+    src_path = Path(src_path) if src_path else SRC
+    if not src_path.is_absolute():
+        src_path = HERE / src_path
+    src = src_path.read_text(encoding="utf-8")
+    # 数据驱动模式：文档自带 `### 表 N：题注`，按实际表数/图数构建，
+    # 不再用 TABLE_CAPTIONS / FIGURE_CAPTIONS 的固定条数做断言。
+    data_driven = bool(re.search(r"^(?:#{2,4}\s*表|\*\*表)\s*\d+\s*[：:]", src, re.M))
     src = re.sub(r"<!--.*?-->", "", src, flags=re.S)
     lines = src.split("\n")
 
@@ -857,14 +1068,15 @@ def main():
             continue
         body.append(line)
 
-    if len(infos) != 4:
-        print(f"!! 封面信息行数为 {len(infos)}，预期 4（团队名称/参赛编号/作品名称/日期）")
+    if len(infos) not in ((4, 5) if data_driven else (4,)):
+        print(f"!! 封面信息行数为 {len(infos)}，预期 {'4 或 5' if data_driven else '4'}（团队名称/参赛编号/作品名称/日期）")
         for x in infos[:10]:
             print("   ", x[:60])
         return 1
 
     doc = new_document()
-    build_cover(doc, title, subtitle, infos)
+    build_cover(doc, title, subtitle, infos,
+                underline_count=(len(infos) - 1 if data_driven else 3))
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
     p = spacing(doc.add_paragraph(), 0, 12)
@@ -875,10 +1087,16 @@ def main():
     doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
 
     num = build_ref_numbers()
-    ntab, nfig, cited, nshot = render(doc, "\n".join(body), num)
-    doc.save(OUT)
+    ntab, nfig, cited, nshot = render(doc, "\n".join(body), num, data_driven=data_driven)
+    out = OUT if src_path == SRC else HERE / f"{src_path.stem}-2026AIC-AI+软件创新.docx"
+    doc.save(out)
 
-    print(f"输出：{OUT}")
+    print(f"输出：{out}")
+    if data_driven:
+        print(f"数据驱动模式：表格 {ntab} 张；插图 {nfig} 张（Mermaid {nfig - nshot} 张、截图 {nshot} 张）")
+        print("参考文献：保留原文编号，未使用 REFS 自动编号")
+        return 0
+
     print(f"表格 {ntab} 张（题注 {len(TABLE_CAPTIONS)} 条）｜插图 {nfig} 张（其中 Mermaid 流程图 {len(FIGURE_CAPTIONS)} 张、图片 {nshot} 张）")
     print(f"参考文献 {len(REFS)} 条，正文引用 {len(cited)} 条")
     unused = [k for k, _ in REFS if k not in cited]
@@ -894,4 +1112,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    arg = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    sys.exit(main(arg))

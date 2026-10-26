@@ -1,0 +1,88 @@
+{
+  "blender": "5.2.2 LTS",
+  "engine": "Cycles",
+  "device": "OPTIX",
+  "samples": 64,
+  "native_plate_resolution": [
+    3840,
+    2160
+  ],
+  "palette": [
+    "depth",
+    "system",
+    "compiler",
+    "family",
+    "precision",
+    "evidence",
+    "method",
+    "lab",
+    "adoption",
+    "human"
+  ],
+  "plates": [
+    {
+      "name": "depth",
+      "file": "plate-depth-4k.png",
+      "render_seconds": 38.94
+    },
+    {
+      "name": "system",
+      "file": "plate-system-4k.png",
+      "render_seconds": 40.16
+    },
+    {
+      "name": "compiler",
+      "file": "plate-compiler-4k.png",
+      "render_seconds": 40.16
+    },
+    {
+      "name": "family",
+      "file": "plate-family-4k.png",
+      "render_seconds": 40.18
+    },
+    {
+      "name": "precision",
+      "file": "plate-precision-4k.png",
+      "render_seconds": 40.16
+    },
+    {
+      "name": "evidence",
+      "file": "plate-evidence-4k.png",
+      "render_seconds": 39.79
+    },
+    {
+      "name": "method",
+      "file": "plate-method-4k.png",
+      "render_seconds": 39.4
+    },
+    {
+      "name": "lab",
+      "file": "plate-lab-4k.png",
+      "render_seconds": 39.71
+    },
+    {
+      "name": "adoption",
+      "file": "plate-adoption-4k.png",
+      "render_seconds": 39.82
+    },
+    {
+      "name": "human",
+      "file": "plate-human-4k.png",
+      "render_seconds": 40.51
+    }
+  ],
+  "asset_sha256": {
+    "plate-depth-4k.png": "f47140efeb08112e914c4dcef196bad5d7f5917502c79552b684f3c23760246a",
+    "plate-system-4k.png": "ef369607e63907bd96862c7e2a6902ba1efa924b6120e963694f3bcb938a9ed2",
+    "plate-compiler-4k.png": "2a078cf2a7a1dcce7c4d89161743453691570b3a02dcbb8ee3daf6cfb29ce909",
+    "plate-family-4k.png": "2a93da628199b25dac710648c437273fddc56c06a0758a0d3061e128d4656e64",
+    "plate-precision-4k.png": "a32853c80f7eeb77806ec0314f1ef447dca351580fc48ab35630e648aa5ff3b7",
+    "plate-evidence-4k.png": "4515a15cd431afa7f6f2047b171c52a4a609df51591d8e314ca3b53a833765a7",
+    "plate-method-4k.png": "2ec77c4ddd667b0683d4d8fab37f9b973aaa1a6a2d56e4ee80e4811e49fd0411",
+    "plate-lab-4k.png": "169585d6e0cbc2277dca1a30ea8f9dda90ca9ac9c3150523e637c7dcec051fff",
+    "plate-adoption-4k.png": "54dd9785052d1ec1db7b399476c4cc83f73a0b75c237761281d449cd07656c36",
+    "plate-human-4k.png": "5138ac36f0b10b43e08d9014b2b91de363d75441ed10368a9f37baae43ce3b5a",
+    "studio-reflections.hdr": "ea231eee4dece071cb888402eaa1e6a19577b50b14d856749bf61f590e487d25"
+  },
+  "purpose": "Original physically lit architectural backplates and HDR reflection environment; no stock assets"
+}

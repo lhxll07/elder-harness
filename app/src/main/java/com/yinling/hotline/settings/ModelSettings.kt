@@ -24,6 +24,7 @@ internal fun ModelSettings(session: SessionController) {
     var model by remember { mutableStateOf(session.model) }
     var apiKey by remember { mutableStateOf(session.apiKey) }
     var vision by remember { mutableStateOf(session.visionEnabled) }
+    var excludedApps by remember { mutableStateOf(session.excludedApps.joinToString("\n")) }
     var feedback by remember { mutableStateOf("") }
     var attempted by remember { mutableStateOf(false) }
     val addressError = ServiceAddress.error(endpoint)
@@ -45,16 +46,24 @@ internal fun ModelSettings(session: SessionController) {
         )
         Text("密钥保存在本机 Android Keystore 加密存储；留空保存会清除已有密钥。这里不进行付费模型调用。", fontSize = 14.sp, color = Elder.inkSoft)
         SettingsToggle("允许屏幕图像出网", "仅在模型支持图片时开启；盲页面截图会发送给该模型。", vision) { vision = it; feedback = "" }
+        OutlinedTextField(
+            value = excludedApps, onValueChange = { excludedApps = it }, label = { Text("不读取和操作的应用包名（每行一个）") },
+            supportingText = { Text("被排除的应用不会发送页面文字或截图；请本人操作。号码脱敏不等于所有隐私都已识别。") },
+            modifier = Modifier.fillMaxWidth(),
+        )
         Text("办事时，页面可见文字会发送给模型。不要把不同提供方的密钥填到未经核实的服务地址。", fontSize = 14.sp, color = Elder.attention)
         Button(
             onClick = {
                 attempted = true
                 if (addressError == null && modelError == null) {
-                    session.endpoint = endpoint.trim().trimEnd('/')
-                    session.model = model.trim()
-                    session.apiKey = apiKey.trim()
-                    session.visionEnabled = vision
-                    feedback = "已保存，下一次任务使用新的配置"
+                    runCatching {
+                        session.apiKey = apiKey.trim()
+                        session.endpoint = endpoint.trim().trimEnd('/')
+                        session.model = model.trim()
+                        session.visionEnabled = vision
+                        session.excludedApps = excludedApps.split(',', '\n').map(String::trim).filter(String::isNotEmpty).toSet()
+                    }.onSuccess { feedback = "已保存，下一次任务使用新的配置" }
+                        .onFailure { feedback = it.message ?: "配置保存失败，请重试" }
                 }
             },
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),

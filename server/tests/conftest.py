@@ -22,7 +22,7 @@ def client(tmp_path):
     main._join_failures.clear()
     # No `with`: the lifespan's background watcher is not wanted in tests; silence is checked
     # explicitly through app.watch.check_silence().
-    return TestClient(main.app)
+    return TestClient(main.app, client=("127.0.0.1", 50000))
 
 
 @pytest.fixture()

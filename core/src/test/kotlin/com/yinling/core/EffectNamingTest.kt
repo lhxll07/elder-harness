@@ -43,7 +43,7 @@ class EffectNamingTest {
     @Test
     fun `the two enums carry different vocabularies and cannot be conflated`(): Unit {
         assertEquals(
-            setOf("APPLIED", "LOCAL_ONLY", "CHANGED_OTHER", "NO_EFFECT", "UNKNOWN"),
+            setOf("APPLIED", "CHANGED_OTHER", "NO_EFFECT", "UNKNOWN"),
             ActionEffect.entries.map { it.name }.toSet(),
         )
         assertEquals(

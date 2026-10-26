@@ -1,0 +1,14 @@
+%%{init: {"theme":"neutral","themeVariables":{"fontFamily":"Noto Sans CJK SC, sans-serif","fontSize":"16px"}}}%%
+flowchart TD
+  O["观察当前目标页面"] --> Q1{"控件树中存在<br/>可操作文字节点?"}
+  Q1 -->|是| A["路径一：结构化精准模式<br/>按编号点击/输入"]
+  Q1 -->|否| Q2{"是否存在可操作<br/>无标签叶子控件?"}
+  Q2 -->|是| B["路径二：拓扑补全模式<br/>提取包围盒统一序列化"]
+  Q2 -->|否| C["路径三：纯视觉降级模式<br/>原生截图 + 比例刻度网格"]
+  A --> G["统一接入 3PA 三平面可信执行约束<br/>安全闸门 + 版本绑定 + 事实核验"]
+  B --> G
+  C --> G
+  classDef path fill:#eef4f3,stroke:#0f7b6c,stroke-width:1px;
+  classDef gate fill:#0f7b6c,color:#fff,stroke:#0b5a4f,stroke-width:1px;
+  class A,B,C path;
+  class G gate;
